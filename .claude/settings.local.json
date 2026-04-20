@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo:*)",
+      "Bash(find '/c/Users/sharo/OneDrive/שולחן העבודה/Micro sas/global-domination-game/_bmad-output/planning-artifacts/' -type f -name *.md)",
+      "Read(//c/Users/sharo/OneDrive/**)",
+      "Read(//c/Users/sharo/.claude/skills/gds-create-story/**)"
+    ]
+  }
+}
