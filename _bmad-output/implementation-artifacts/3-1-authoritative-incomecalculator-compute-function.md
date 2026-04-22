@@ -1,6 +1,6 @@
 # Story 3.1: Authoritative `IncomeCalculator.compute` Function
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,30 +24,30 @@ So that there is one source of truth for income rates and no duplicate math can 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `BalanceConfig` with pinned multiplier constants (AC: 1)
-  - [ ] 1.1 Create `lib/game/config/balance.dart` (new folder `lib/game/config/`)
-  - [ ] 1.2 Define `abstract final class BalanceConfig` containing:
+- [x] Task 1: Create `BalanceConfig` with pinned multiplier constants (AC: 1)
+  - [x] 1.1 Create `lib/game/config/balance.dart` (new folder `lib/game/config/`)
+  - [x] 1.2 Define `abstract final class BalanceConfig` containing:
     - `static final Decimal ipMultPerLevel = Decimal.parse('0.1');` (placeholder — Epic 10 retunes; do not change here without Epic 10 coordination)
     - `static const Map<LeaderTier, String> leaderMultipliers = { none: '1.0', tier1: '1.5', tier2: '2.0', tier3: '3.0' };` — use `String` constants so the map is `const`, then parse to `Decimal` at lookup time (or expose `leaderMultiplier(LeaderTier) → Decimal` helper; either is fine, but keep the raw table `const`)
-  - [ ] 1.3 Add a short doc comment: "Balance constants. Values pinned here are placeholders until Epic 10 final tuning pass. Re-tuning changes happen ONLY in this file + content JSON."
-  - [ ] 1.4 No Flutter imports. Pure Dart.
+  - [x] 1.3 Add a short doc comment: "Balance constants. Values pinned here are placeholders until Epic 10 final tuning pass. Re-tuning changes happen ONLY in this file + content JSON."
+  - [x] 1.4 No Flutter imports. Pure Dart.
 
-- [ ] Task 2: Extend `GameState` with zero-effect multiplier fields (AC: 1, 3)
-  - [ ] 2.1 Open `lib/game/game_state.dart` and add these fields (all immutable, with zero-effect defaults):
+- [x] Task 2: Extend `GameState` with zero-effect multiplier fields (AC: 1, 3)
+  - [x] 2.1 Open `lib/game/game_state.dart` and add these fields (all immutable, with zero-effect defaults):
     - `final Map<ContinentId, bool> continentCompletions;` — default `const {}` (no continent completed)
     - `final Set<String> earnedAchievementIds;` — default `const {}` (no achievements earned)
     - `final Set<String> activeGlobalUpgradeIds;` — default `const {}` (no global upgrades active)
     - `final Decimal goldenOpportunityMultiplier;` — default `Decimal.one`
     - `final Decimal boostMultiplier;` — default `Decimal.one`
-  - [ ] 2.2 Update `GameState` constructor to accept/default these fields. Use `Decimal.one` (not `Decimal.parse('1')` every time) as a top-level `final _one = Decimal.one;` if needed; `Decimal.one` already exists in the `decimal` package.
-  - [ ] 2.3 Update `copyWith` to include all new fields.
-  - [ ] 2.4 Update `==`, `hashCode`, `toString` to include all new fields. For `Set` equality, use `SetEquality` from `package:collection` (already a dependency per project-context) — or explicit set equality via `a.length == b.length && a.containsAll(b)`.
-  - [ ] 2.5 In `GameState.initialSeed`, keep these fields at their zero-effect defaults (do not override). `Map.unmodifiable({})` and `Set` literals `const {}` are preferred.
-  - [ ] 2.6 Do NOT change existing fields (`countries`, `totalInfluence`) — backwards-compatible extension only.
+  - [x] 2.2 Update `GameState` constructor to accept/default these fields. Use `Decimal.one` (not `Decimal.parse('1')` every time) as a top-level `final _one = Decimal.one;` if needed; `Decimal.one` already exists in the `decimal` package.
+  - [x] 2.3 Update `copyWith` to include all new fields.
+  - [x] 2.4 Update `==`, `hashCode`, `toString` to include all new fields. For `Set` equality, use `SetEquality` from `package:collection` (already a dependency per project-context) — or explicit set equality via `a.length == b.length && a.containsAll(b)`.
+  - [x] 2.5 In `GameState.initialSeed`, keep these fields at their zero-effect defaults (do not override). `Map.unmodifiable({})` and `Set` literals `const {}` are preferred.
+  - [x] 2.6 Do NOT change existing fields (`countries`, `totalInfluence`) — backwards-compatible extension only.
 
-- [ ] Task 3: Create `IncomeCalculator.compute` (AC: 1, 2)
-  - [ ] 3.1 Create `lib/game/features/economy/income_calculator.dart`
-  - [ ] 3.2 Implement `abstract final class IncomeCalculator` with static method:
+- [x] Task 3: Create `IncomeCalculator.compute` (AC: 1, 2)
+  - [x] 3.1 Create `lib/game/features/economy/income_calculator.dart`
+  - [x] 3.2 Implement `abstract final class IncomeCalculator` with static method:
     ```dart
     static Influence compute(
       CountryState country,
@@ -55,11 +55,11 @@ So that there is one source of truth for income rates and no duplicate math can 
       ContentRegistry content,
     ) { ... }
     ```
-  - [ ] 3.3 **Early returns (AC 2):**
+  - [x] 3.3 **Early returns (AC 2):**
     - If `!country.unlocked` → return `Influence.zero`.
     - Lookup `def = content.countries[country.id]`; if `def == null` → return `Influence.zero`.
     - If `def.baseInfluence == Decimal.zero` → return `Influence.zero` (short-circuit — no need to run the stack).
-  - [ ] 3.4 **Multiplier stack, applied in this exact order (AC 1):**
+  - [x] 3.4 **Multiplier stack, applied in this exact order (AC 1):**
     1. `rate = def.baseInfluence`
     2. `rate *= Decimal.one + Decimal.fromInt(country.ipLevel) * BalanceConfig.ipMultPerLevel`  // IP
     3. `rate *= _leaderMultiplier(country.leaderTier)`  // none=1.0, tier1=1.5, tier2=2.0, tier3=3.0
@@ -68,71 +68,71 @@ So that there is one source of truth for income rates and no duplicate math can 
     6. `rate *= _globalUpgradeAmplifier(state, content)`  // product over active upgrades; 1.0 if empty
     7. `rate *= state.goldenOpportunityMultiplier`  // 1.0 default
     8. `rate *= state.boostMultiplier`  // 1.0 default
-  - [ ] 3.5 Return `Influence(rate)`.
-  - [ ] 3.6 Helper: `_leaderMultiplier(LeaderTier) → Decimal` — reads `BalanceConfig.leaderMultipliers` table.
-  - [ ] 3.7 Helper: `_continentCompletionBonus(country, state, content) → Decimal` — `content.countries[id].continent` gives `ContinentId`; if `state.continentCompletions[continentId] == true`, return `Decimal.one + content.continents[continentId].completionBonus`; otherwise `Decimal.one`.
-  - [ ] 3.8 Helper: `_sumAchievementMultipliers(state, content) → Decimal` — iterate `state.earnedAchievementIds`, for each id find the `AchievementDef` in `content.achievements` (list lookup by id), and if `rewardType == 'influenceMultiplier'` add `rewardValue` to the sum. Other reward types contribute `Decimal.zero` to this specific sum. Return the `Decimal` sum (starts at `Decimal.zero`). Precompute `Map<String, AchievementDef>` inside the function only if it matters for perf — do NOT cache globally (content is immutable but state is not, and the function stays pure).
-  - [ ] 3.9 Helper: `_globalUpgradeAmplifier(state, content) → Decimal` — iterate `state.activeGlobalUpgradeIds`, for each id find the `GlobalUpgradeDef` in `content.globalUpgrades` (list lookup by id), multiply their `influenceAmplifier` values. Return `Decimal.one` if the set is empty.
-  - [ ] 3.10 Pure Dart only — no Flutter imports, no `DateTime.now()`, no RNG, no logging.
-  - [ ] 3.11 Add a `/// `-level doc comment on `compute` that spells out the multiplier stack order. This is the single source of truth.
+  - [x] 3.5 Return `Influence(rate)`.
+  - [x] 3.6 Helper: `_leaderMultiplier(LeaderTier) → Decimal` — reads `BalanceConfig.leaderMultipliers` table.
+  - [x] 3.7 Helper: `_continentCompletionBonus(country, state, content) → Decimal` — `content.countries[id].continent` gives `ContinentId`; if `state.continentCompletions[continentId] == true`, return `Decimal.one + content.continents[continentId].completionBonus`; otherwise `Decimal.one`.
+  - [x] 3.8 Helper: `_sumAchievementMultipliers(state, content) → Decimal` — iterate `state.earnedAchievementIds`, for each id find the `AchievementDef` in `content.achievements` (list lookup by id), and if `rewardType == 'influenceMultiplier'` add `rewardValue` to the sum. Other reward types contribute `Decimal.zero` to this specific sum. Return the `Decimal` sum (starts at `Decimal.zero`). Precompute `Map<String, AchievementDef>` inside the function only if it matters for perf — do NOT cache globally (content is immutable but state is not, and the function stays pure).
+  - [x] 3.9 Helper: `_globalUpgradeAmplifier(state, content) → Decimal` — iterate `state.activeGlobalUpgradeIds`, for each id find the `GlobalUpgradeDef` in `content.globalUpgrades` (list lookup by id), multiply their `influenceAmplifier` values. Return `Decimal.one` if the set is empty.
+  - [x] 3.10 Pure Dart only — no Flutter imports, no `DateTime.now()`, no RNG, no logging.
+  - [x] 3.11 Add a `/// `-level doc comment on `compute` that spells out the multiplier stack order. This is the single source of truth.
 
-- [ ] Task 4: Route `tickCountries` through `IncomeCalculator.compute` (AC: 4)
-  - [ ] 4.1 Open `lib/game/features/countries/countries_reducer.dart`.
-  - [ ] 4.2 Replace the inline `deltaDecimal = def.baseInfluence * ratio` computation. New approach:
+- [x] Task 4: Route `tickCountries` through `IncomeCalculator.compute` (AC: 4)
+  - [x] 4.1 Open `lib/game/features/countries/countries_reducer.dart`.
+  - [x] 4.2 Replace the inline `deltaDecimal = def.baseInfluence * ratio` computation. New approach:
     - `final ratePerSecond = IncomeCalculator.compute(state, gameState, content);` — rate in Influence per second.
     - `final delta = ratePerSecond.value * ratio; // ratio = dt / generationSeconds, see existing logic`
     - The existing `generationSeconds` scaling stays — it is a content-driven "tick cadence" independent of the multiplier stack. `compute()` returns the per-tick-cadence base rate; multiplying by `ratio` converts it to the real-time delta over `dt`.
-  - [ ] 4.3 The `tickCountries` signature now needs `GameState` (not just the countries map). Update signature to `Map<CountryId, CountryState> tickCountries(GameState state, Duration dt, ContentRegistry content)` and update `GameWorld.tick()` caller accordingly.
-  - [ ] 4.4 Alternative (if GameState change is too invasive): pass only the extra fields needed (e.g., `continentCompletions`, `earnedAchievementIds`, `activeGlobalUpgradeIds`, `goldenOpportunityMultiplier`, `boostMultiplier`) via a dedicated `MultiplierContext` value object. PREFER the direct `GameState` pass — it's simpler and matches arch test pattern `IncomeCalculator.compute(s.countries['egypt']!, s)`.
-  - [ ] 4.5 Do NOT delete the `ratio = dtMicros / genMicros` calculation — `generationSeconds` governs tick cadence, not the multiplier stack. Keep that division logic intact.
-  - [ ] 4.6 Verify `GameWorld.tick()` still passes all existing Story 2.5 / 2.7 tests (Egypt generates, Nigeria does not).
+  - [x] 4.3 The `tickCountries` signature now needs `GameState` (not just the countries map). Update signature to `Map<CountryId, CountryState> tickCountries(GameState state, Duration dt, ContentRegistry content)` and update `GameWorld.tick()` caller accordingly.
+  - [x] 4.4 Alternative (if GameState change is too invasive): pass only the extra fields needed (e.g., `continentCompletions`, `earnedAchievementIds`, `activeGlobalUpgradeIds`, `goldenOpportunityMultiplier`, `boostMultiplier`) via a dedicated `MultiplierContext` value object. PREFER the direct `GameState` pass — it's simpler and matches arch test pattern `IncomeCalculator.compute(s.countries['egypt']!, s)`.
+  - [x] 4.5 Do NOT delete the `ratio = dtMicros / genMicros` calculation — `generationSeconds` governs tick cadence, not the multiplier stack. Keep that division logic intact.
+  - [x] 4.6 Verify `GameWorld.tick()` still passes all existing Story 2.5 / 2.7 tests (Egypt generates, Nigeria does not).
 
-- [ ] Task 5: Unit tests — `IncomeCalculator.compute` multiplier stack (AC: 1, 2, 3)
-  - [ ] 5.1 Create `test/game/features/economy/income_calculator_test.dart` using `package:test/test.dart` (NOT `flutter_test`).
-  - [ ] 5.2 Build a test `ContentRegistry` fixture helper (inline or in `test/helpers/`) containing:
+- [x] Task 5: Unit tests — `IncomeCalculator.compute` multiplier stack (AC: 1, 2, 3)
+  - [x] 5.1 Create `test/game/features/economy/income_calculator_test.dart` using `package:test/test.dart` (NOT `flutter_test`).
+  - [x] 5.2 Build a test `ContentRegistry` fixture helper (inline or in `test/helpers/`) containing:
     - 3 countries (egypt in africa `baseInfluence=1`, nigeria in africa `baseInfluence=5`, tokyo in asia `baseInfluence=100`)
     - 2 continents (africa `completionBonus=0.25`, asia `completionBonus=0.75`)
     - 3 achievements (`ach_mult_small` rewardType=`influenceMultiplier` rewardValue=`0.10`, `ach_mult_big` `influenceMultiplier` `0.25`, `ach_intel` `intelBoost` `5.0` — this last must NOT contribute to the sum)
     - 2 global upgrades (`upg_small` amp=`1.5`, `upg_big` amp=`2.0`)
-  - [ ] 5.3 Baseline test: all defaults (ipLevel=0, none, no completion, no achievements, no upgrades, golden=1.0, boost=1.0) → rate == `baseInfluence`. Verify for egypt.
-  - [ ] 5.4 IP isolation: ipLevel=10 → `rate == baseInfluence × (1 + 10 × 0.1) = 2 × baseInfluence`. ipLevel=0 → `1 × baseInfluence`. ipLevel=200 → `21 × baseInfluence`.
-  - [ ] 5.5 Leader isolation: `LeaderTier.none` → `1.0 × baseInfluence`; `tier1` → `1.5×`; `tier2` → `2.0×`; `tier3` → `3.0×`.
-  - [ ] 5.6 Continent completion isolation: egypt with `continentCompletions[africa]=true` → `rate ×= (1 + 0.25) = 1.25`.
-  - [ ] 5.7 Achievement isolation:
+  - [x] 5.3 Baseline test: all defaults (ipLevel=0, none, no completion, no achievements, no upgrades, golden=1.0, boost=1.0) → rate == `baseInfluence`. Verify for egypt.
+  - [x] 5.4 IP isolation: ipLevel=10 → `rate == baseInfluence × (1 + 10 × 0.1) = 2 × baseInfluence`. ipLevel=0 → `1 × baseInfluence`. ipLevel=200 → `21 × baseInfluence`.
+  - [x] 5.5 Leader isolation: `LeaderTier.none` → `1.0 × baseInfluence`; `tier1` → `1.5×`; `tier2` → `2.0×`; `tier3` → `3.0×`.
+  - [x] 5.6 Continent completion isolation: egypt with `continentCompletions[africa]=true` → `rate ×= (1 + 0.25) = 1.25`.
+  - [x] 5.7 Achievement isolation:
     - Earning `ach_mult_small` alone → rate ×= `(1 + 0.10) = 1.10`.
     - Earning both `ach_mult_small` + `ach_mult_big` → rate ×= `(1 + 0.35) = 1.35` (additive, then +1).
     - Earning `ach_intel` alone → rate unchanged (rewardType filter).
-  - [ ] 5.8 Global upgrade isolation:
+  - [x] 5.8 Global upgrade isolation:
     - `activeGlobalUpgradeIds = {upg_small}` → rate ×= `1.5`.
     - `activeGlobalUpgradeIds = {upg_small, upg_big}` → rate ×= `1.5 × 2.0 = 3.0` (product, not sum).
-  - [ ] 5.9 Golden isolation: `goldenOpportunityMultiplier = Decimal.parse('10')` → rate ×= 10.
-  - [ ] 5.10 Boost isolation: `boostMultiplier = Decimal.parse('2')` → rate ×= 2.
-  - [ ] 5.11 Composed test (stack order regression): Egypt with ipLevel=100, leaderTier=tier2, africa completed, both mult achievements earned, both global upgrades active, golden=10, boost=2. Compute expected rate manually: `1 × (1 + 100*0.1) × 2.0 × (1 + 0.25) × (1 + 0.35) × (1.5 × 2.0) × 10 × 2 = 1 × 11 × 2.0 × 1.25 × 1.35 × 3.0 × 10 × 2`. Pin this exact `Decimal` value in an assertion. If the order of multipliers is ever reordered, the test fails.
-  - [ ] 5.12 Locked country: `country.unlocked=false` → `Influence.zero`.
-  - [ ] 5.13 Missing def: build a `CountryState` with `CountryId('atlantis')` that is NOT in content → `Influence.zero`.
-  - [ ] 5.14 Zero `baseInfluence`: a fixture country with `baseInfluence: '0'` → `Influence.zero` even with full multiplier stack.
-  - [ ] 5.15 Precision test: ipLevel=200, leader=tier3, africa completed, 20 × 10% achievements earned, 10 × 10x global upgrades active, golden=100, boost=2 → result is finite and exact (no `toDouble` anywhere in `compute`). Precision guard: the result's `Decimal` string representation should be computable without exception.
+  - [x] 5.9 Golden isolation: `goldenOpportunityMultiplier = Decimal.parse('10')` → rate ×= 10.
+  - [x] 5.10 Boost isolation: `boostMultiplier = Decimal.parse('2')` → rate ×= 2.
+  - [x] 5.11 Composed test (stack order regression): Egypt with ipLevel=100, leaderTier=tier2, africa completed, both mult achievements earned, both global upgrades active, golden=10, boost=2. Compute expected rate manually: `1 × (1 + 100*0.1) × 2.0 × (1 + 0.25) × (1 + 0.35) × (1.5 × 2.0) × 10 × 2 = 1 × 11 × 2.0 × 1.25 × 1.35 × 3.0 × 10 × 2`. Pin this exact `Decimal` value in an assertion. If the order of multipliers is ever reordered, the test fails.
+  - [x] 5.12 Locked country: `country.unlocked=false` → `Influence.zero`.
+  - [x] 5.13 Missing def: build a `CountryState` with `CountryId('atlantis')` that is NOT in content → `Influence.zero`.
+  - [x] 5.14 Zero `baseInfluence`: a fixture country with `baseInfluence: '0'` → `Influence.zero` even with full multiplier stack.
+  - [x] 5.15 Precision test: ipLevel=200, leader=tier3, africa completed, 20 × 10% achievements earned, 10 × 10x global upgrades active, golden=100, boost=2 → result is finite and exact (no `toDouble` anywhere in `compute`). Precision guard: the result's `Decimal` string representation should be computable without exception.
 
-- [ ] Task 6: Integration tests — `tickCountries` uses `IncomeCalculator.compute` (AC: 4)
-  - [ ] 6.1 Update `test/game/game_world_test.dart` with a test: seed Egypt unlocked, ipLevel=10, leaderTier=none, tick for 1 second → egypt.bankedInfluence ≈ `baseInfluence × (1 + 10*0.1) × 1 × 1 × 1 × 1 × 1 × 1 / 1s × 1s = 2 × baseInfluence`. Pin the exact `Decimal`.
-  - [ ] 6.2 Second test: with `leaderTier = LeaderTier.tier2` and a completed continent, tick for 1 second → expected banked influence per the full stack.
-  - [ ] 6.3 Verify existing Story 2.5 / 2.7 test expectations still hold — if a baseline test asserts "tick 1s on a fresh-seed Egypt produces baseInfluence delta", that remains true only when `ipLevel == 1` is the seed → the expected rate becomes `baseInfluence × (1 + 1*0.1) = 1.1 × baseInfluence` instead of `1.0 ×`. This is EXPECTED; **update those tests** to reflect the IP-level-1 multiplier and document in the commit that the change reflects the new authoritative stack. DO NOT revert tests to mask the change.
-  - [ ] 6.4 Ticks with `identical(newCountries, state.countries)` short-circuit must still hold when no countries are unlocked (no rate computation happens → no allocation).
+- [x] Task 6: Integration tests — `tickCountries` uses `IncomeCalculator.compute` (AC: 4)
+  - [x] 6.1 Update `test/game/game_world_test.dart` with a test: seed Egypt unlocked, ipLevel=10, leaderTier=none, tick for 1 second → egypt.bankedInfluence ≈ `baseInfluence × (1 + 10*0.1) × 1 × 1 × 1 × 1 × 1 × 1 / 1s × 1s = 2 × baseInfluence`. Pin the exact `Decimal`.
+  - [x] 6.2 Second test: with `leaderTier = LeaderTier.tier2` and a completed continent, tick for 1 second → expected banked influence per the full stack.
+  - [x] 6.3 Verify existing Story 2.5 / 2.7 test expectations still hold — if a baseline test asserts "tick 1s on a fresh-seed Egypt produces baseInfluence delta", that remains true only when `ipLevel == 1` is the seed → the expected rate becomes `baseInfluence × (1 + 1*0.1) = 1.1 × baseInfluence` instead of `1.0 ×`. This is EXPECTED; **update those tests** to reflect the IP-level-1 multiplier and document in the commit that the change reflects the new authoritative stack. DO NOT revert tests to mask the change.
+  - [x] 6.4 Ticks with `identical(newCountries, state.countries)` short-circuit must still hold when no countries are unlocked (no rate computation happens → no allocation).
 
-- [ ] Task 7: Grep-guard test — no duplicate income math (AC: 4)
-  - [ ] 7.1 Create `test/architecture/no_duplicate_income_math_test.dart` (new folder `test/architecture/` if not already present — check `test/` listing first).
-  - [ ] 7.2 The test walks every `.dart` file under `lib/game/` via `Directory`. For each file whose path is NOT `lib/game/features/economy/income_calculator.dart`, it reads the contents and asserts that none of these regex patterns match:
+- [x] Task 7: Grep-guard test — no duplicate income math (AC: 4)
+  - [x] 7.1 Create `test/architecture/no_duplicate_income_math_test.dart` (new folder `test/architecture/` if not already present — check `test/` listing first).
+  - [x] 7.2 The test walks every `.dart` file under `lib/game/` via `Directory`. For each file whose path is NOT `lib/game/features/economy/income_calculator.dart`, it reads the contents and asserts that none of these regex patterns match:
     - `def\.baseInfluence\s*\*` (raw multiplication of `baseInfluence` outside the calculator)
     - `country\.baseInfluence\s*\*` (same)
     - `baseInfluence\s*\*\s*ratio` (the specific pattern extracted from the old `tickCountries`)
-  - [ ] 7.3 If any match is found, `fail('Duplicate income math detected in $path — route through IncomeCalculator.compute')`.
-  - [ ] 7.4 This test runs as part of the standard `flutter test` suite. It is the enforcement mechanism for the "one source of truth" rule.
+  - [x] 7.3 If any match is found, `fail('Duplicate income math detected in $path — route through IncomeCalculator.compute')`.
+  - [x] 7.4 This test runs as part of the standard `flutter test` suite. It is the enforcement mechanism for the "one source of truth" rule.
 
-- [ ] Task 8: Full validation (AC: all)
-  - [ ] 8.1 `flutter analyze` — 0 warnings.
-  - [ ] 8.2 `dart format --set-exit-if-changed .` — clean.
-  - [ ] 8.3 `flutter test` — all pass (existing + new).
-  - [ ] 8.4 Manually run the grep guard mentally: search `lib/` for `baseInfluence *` — only `income_calculator.dart` should match.
+- [x] Task 8: Full validation (AC: all)
+  - [x] 8.1 `flutter analyze` — 0 warnings.
+  - [x] 8.2 `dart format --set-exit-if-changed .` — clean.
+  - [x] 8.3 `flutter test` — all pass (existing + new).
+  - [x] 8.4 Manually run the grep guard mentally: search `lib/` for `baseInfluence *` — only `income_calculator.dart` should match.
 
 ## Dev Notes
 
@@ -311,10 +311,27 @@ Alternative rejected: building an "empty" compute that ignores missing fields an
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `BalanceConfig`, extended `GameState` with multiplier fields (defaults identity), `IncomeCalculator.compute` with ordered Decimal stack and early returns; `tickCountries` now takes `GameState` and uses `compute` × ratio; architecture grep-guard + unit/integration tests; `flutter analyze`, `dart format`, `flutter test` clean.
+
 ### File List
+
+- lib/game/config/balance.dart
+- lib/game/features/economy/income_calculator.dart
+- lib/game/game_state.dart
+- lib/game/features/countries/countries_reducer.dart
+- lib/game/game_world.dart
+- test/game/features/economy/income_calculator_test.dart
+- test/game/features/countries/countries_reducer_test.dart
+- test/game/game_world_test.dart
+- test/game/game_state_test.dart
+- test/architecture/no_duplicate_income_math_test.dart
+
+### Change Log
+
+- 2026-04-22: Story 3.1 — authoritative income multiplier stack (`IncomeCalculator.compute`), `GameState` multiplier snapshot fields, `tickCountries` routing, tests + grep guard; seed Egypt tick expectation updated to 1.1× base (ipLevel 1).

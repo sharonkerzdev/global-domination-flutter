@@ -32,7 +32,7 @@ class GameWorld {
     assert(!dt.isNegative, 'tick dt must be non-negative, got $dt');
     assert(dt.inMilliseconds <= 100, 'tick dt should be clamped to 100ms');
 
-    final newCountries = tickCountries(_state.countries, dt, _content);
+    final newCountries = tickCountries(_state, dt, _content);
     if (identical(newCountries, _state.countries)) return;
 
     _state = _state.copyWith(countries: newCountries);

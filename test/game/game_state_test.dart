@@ -27,7 +27,12 @@ void main() {
     test('toString returns expected representation', () {
       expect(
         GameState().toString(),
-        equals('GameState(countries: 0 entries, totalInfluence: Influence(0))'),
+        equals(
+          'GameState(countries: 0 entries, totalInfluence: Influence(0), '
+          'continentCompletions: 0, earnedAchievementIds: 0, '
+          'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
+          'boostMultiplier: 1)',
+        ),
       );
     });
 

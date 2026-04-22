@@ -36,7 +36,8 @@ class MapScreen extends ConsumerWidget {
 
 CountryVisualState _toVisualState(CountryState cs) {
   if (!cs.unlocked) return CountryVisualState.locked;
-  if (cs.bankedInfluence > Influence.zero) return CountryVisualState.readyToCollect;
+  if (cs.bankedInfluence > Influence.zero)
+    return CountryVisualState.readyToCollect;
   return CountryVisualState.unlocked;
 }
 
@@ -149,8 +150,10 @@ class _MapViewState extends ConsumerState<_MapView> {
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final canvasSize =
-                  Size(constraints.maxWidth, constraints.maxHeight);
+              final canvasSize = Size(
+                constraints.maxWidth,
+                constraints.maxHeight,
+              );
               return GestureDetector(
                 onScaleStart: _onScaleStart,
                 onScaleUpdate: _onScaleUpdate,
@@ -167,7 +170,10 @@ class _MapViewState extends ConsumerState<_MapView> {
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),

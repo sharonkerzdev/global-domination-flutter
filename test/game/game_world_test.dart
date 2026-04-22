@@ -11,6 +11,7 @@ import 'package:global_domination/game/game_error.dart';
 import 'package:global_domination/game/game_event.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
+import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
@@ -528,17 +529,75 @@ void main() {
     });
 
     test(
-      '5.2: tick for 1 second → Egypt bankedInfluence > zero (Egypt generates)',
+      '5.2: tick for 1 second → Egypt bankedInfluence matches IP multiplier (seed ipLevel=1)',
       () {
         final w = GameWorld(content: threeCountryContent, clock: clock);
-        // 10 × 100ms = 1 second
+        // 10 × 100ms = 1 second; base 1 × (1 + 1×0.1) = 1.1 / s
         for (var i = 0; i < 10; i++) {
           w.tick(const Duration(milliseconds: 100));
         }
         expect(
-          w.state.countries[const CountryId('egypt')]!.bankedInfluence >
-              Influence.zero,
-          isTrue,
+          w.state.countries[const CountryId('egypt')]!.bankedInfluence.value,
+          equals(Decimal.parse('1.1')),
+        );
+        w.dispose();
+      },
+    );
+
+    test(
+      'Story 3.1: tick 1s with ipLevel=10 → banked = base × (1 + 10×0.1)',
+      () {
+        final egypt = CountryState(
+          id: const CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 10,
+          leaderTier: LeaderTier.none,
+          bankedInfluence: Influence.zero,
+        );
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          initialState: GameState(
+            countries: {const CountryId('egypt'): egypt},
+            totalInfluence: Influence.zero,
+          ),
+        );
+        for (var i = 0; i < 10; i++) {
+          w.tick(const Duration(milliseconds: 100));
+        }
+        expect(
+          w.state.countries[const CountryId('egypt')]!.bankedInfluence.value,
+          equals(Decimal.parse('2')),
+        );
+        w.dispose();
+      },
+    );
+
+    test(
+      'Story 3.1: tick 1s tier2 + continent complete → full stack on base rate',
+      () {
+        final egypt = CountryState(
+          id: const CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 0,
+          leaderTier: LeaderTier.tier2,
+          bankedInfluence: Influence.zero,
+        );
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          initialState: GameState(
+            countries: {const CountryId('egypt'): egypt},
+            totalInfluence: Influence.zero,
+            continentCompletions: {const ContinentId('africa'): true},
+          ),
+        );
+        for (var i = 0; i < 10; i++) {
+          w.tick(const Duration(milliseconds: 100));
+        }
+        expect(
+          w.state.countries[const CountryId('egypt')]!.bankedInfluence.value,
+          equals(Decimal.parse('2.5')),
         );
         w.dispose();
       },

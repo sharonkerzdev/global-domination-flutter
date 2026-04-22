@@ -110,7 +110,7 @@ development_status:
 
   # Epic 3: Power Up — Upgrades, Leaders, and Automation
   epic-3: in-progress
-  3-1-authoritative-incomecalculator-compute-function: ready-for-dev
+  3-1-authoritative-incomecalculator-compute-function: review
   3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: backlog
   3-3-leader-hire-and-tier-system: backlog
   epic-3-retrospective: optional
