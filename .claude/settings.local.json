@@ -4,7 +4,14 @@
       "Bash(npx expo:*)",
       "Bash(find '/c/Users/sharo/OneDrive/שולחן העבודה/Micro sas/global-domination-game/_bmad-output/planning-artifacts/' -type f -name *.md)",
       "Read(//c/Users/sharo/OneDrive/**)",
-      "Read(//c/Users/sharo/.claude/skills/gds-create-story/**)"
+      "Read(//c/Users/sharo/.claude/skills/gds-create-story/**)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Edit(/.claude/skills/gds-code-review/**)",
+      "PowerShell($null = [System.Management.Automation.PSParser]::Tokenize\\(\\(Get-Content -Raw dev-loop.ps1\\), [ref]$null\\); if \\($?\\) { \"OK\" } else { \"ERR\" })"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\sharo\\.claude\\projects"
     ]
   }
 }

@@ -1,0 +1,4 @@
+# Claude Code Instructions
+
+## Output Style
+Keep all text responses as short as possible — 1-2 sentences max unless the task genuinely requires more detail. No summaries, no narration, no restating what was just done. Code quality and tool use are unaffected.

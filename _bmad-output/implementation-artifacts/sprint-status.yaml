@@ -1,0 +1,190 @@
+# generated: 2026-04-21
+# last_updated: 2026-04-22
+# 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute pure function + BalanceConfig + GameState multiplier-field extension; tickCountries refactored through compute; grep-guard test)
+# 2026-04-22: Epic 3 status backlog → in-progress (first story created)
+# 2026-04-22: Story 2-7 code review passed → done (0 HIGH, 1 MEDIUM + 2 LOW fixed: gameWorldProvider empty-content assert landmine removed via initialState fallback, seed sets lastCollectedAt: null explicitly + tests assert it, de-duped test 4.6; 401 tests pass)
+# 2026-04-22: Story 2-7 implemented → review (GameState.initialSeed: Egypt unlocked/ipLevel=1, 401 tests pass)
+# 2026-04-22: Epics 3–11 story consolidation — 57 stories → 45 stories. Merged: 3.2+3.3, 3.4+3.5, 5.1+5.2, 6.1+6.2, 6.3+6.4, 8.1+8.2, 8.5+8.6, 9.1+9.2, 10.1+10.2+10.3, 11.1+11.2+11.3. Story IDs updated throughout.
+# 2026-04-22: Story 2-5 code review passed → done (0 HIGH, 0 MEDIUM; clean review — 4/4 ACs implemented, 10/10 tasks verified, 377 tests pass, analyze+format clean)
+# 2026-04-22: Story 2-4 code review passed → done (0 HIGH, 2 MEDIUM + 3 LOW fixed: added applyCommand(TapCountry) GameWorld tests, added post-zoom widget test for AC #1 any pan/zoom, _bboxCache → Map.unmodifiable, replaced trivially-true edge test with four-sided nudge-inside test, added TapCountry equality/hashCode/toString/switch tests; 350 tests pass)
+# 2026-04-22: Story 2-3 code review passed → done (2 HIGH + 3 MEDIUM fixed: extracted CountryPaints palette to eliminate per-frame Paint allocation in gesture hot path, added paint-reuse + post-gesture stability tests covering AC #4, corrected stale task descriptions; 331 tests pass)
+# 2026-04-22: Story 2-7 created → ready-for-dev (GameState.initialSeed: Egypt unlocked ipLevel=1, optional initialState param for Epic 6 persistence)
+# 2026-04-22: Story 2-6 created → ready-for-dev (TapCountry collect reducer: banked→total transfer, CountryTapped event, zero-banked no-op)
+# 2026-04-22: Story 2-5 created → ready-for-dev (CountryState + countries reducer + GameLoop ticker + gameWorldProvider; baseInfluence-only accumulation, no multipliers)
+# 2026-04-22: Story 2-4 created → ready-for-dev (PolygonHitTester: inverse-transform + bbox reject + ray-casting, TapCountry command, onTapUp wiring in MapScreen)
+# 2026-04-21: Story 2-3 created → ready-for-dev (Pan/zoom: GestureDetector + Matrix4 viewTransform, zoom clamp 1x–15x, focal-point zoom, no InteractiveViewer)
+# 2026-04-21: Story 2-2 created → ready-for-dev (WorldMapPainter: ocean+continent fills+country state fills+borders, CountryColors ThemeExtension, MapScreen)
+# 2026-04-21: Story 2-1 created → ready-for-dev (GeoJSON parser + CountryPath cache: production parser, ID/continent mapping, geoProvider FutureProvider)
+# 2026-04-21: Story 1-11 implemented → review (spike: GeoJSON parser + CustomPainter + pan/zoom screen + FPS overlay; 5 new tests, 278 total; Task 7 profiling pending user device run)
+# project: global-domination-flutter
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-21
+last_updated: 2026-04-22
+# 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
+# 2026-04-22: Story 2-4 code-review → done
+# 2026-04-22: Story 2-2 code-review → done
+# 2026-04-22: Story 2-7 created → ready-for-dev
+# 2026-04-22: Story 2-6 created → ready-for-dev
+# 2026-04-22: Story 2-4 created → ready-for-dev
+# 2026-04-21: Story 2-3 created → ready-for-dev
+# 2026-04-21: Story 1-10 code review passed → done (3 MEDIUM fixed: clipboard-setData await+failure handling, CrashLogLevelConverter unknown-enum fallback, concurrent-append test strengthened to assert exact 100 survivors; 278 tests, analyze+format clean)
+# 2026-04-21: Story 1-11 code review passed (0 HIGH, 0 MEDIUM, 2 LOW) → in-progress (AC2 pending device profiling)
+# 2026-04-21: Story 1-9 code review passed → done (3 MEDIUM fixed: idempotent dispose, tick no-event test, tick negative-Duration assert; +3 tests, 211 pure-Dart, 215 in-scope Flutter tests)
+# 2026-04-21: Story 1-9 implemented → review (skeleton GameWorld + Clock/State/Command/Event + 31 new tests, 208 pure-Dart, 235 full suite)
+# 2026-04-21: Story 1-11 created → ready-for-dev (Canvas performance spike: throwaway GeoJSON parser + CustomPainter + pan/zoom on low-end Android API 21; FPS measurement + optimization findings)
+# 2026-04-21: Story 1-10 created → ready-for-dev (CrashLogs Drift table + ring-buffer CrashLogRepository + SupportScreen with Copy All; schema v1→v2 migration; CrashReporter.attach wiring)
+# 2026-04-21: Story 1-9 created → ready-for-dev (skeleton GameWorld with tick, applyCommand, GameState, GameCommand, GameEvent)
+# 2026-04-21: Story 1-8 code review passed → done (clean review, 0 issues, 56 tests)
+# 2026-04-21: Story 1-8 implemented → review (56 new tests, 178 total)
+# 2026-04-21: Story 1-8 created → ready-for-dev (GameError sealed hierarchy + Result<T, GameError>)
+project: global-domination-flutter
+# 2026-04-21: Story 1-7 code review passed → done (0 HIGH, 1 MEDIUM fixed, 149 tests pass)
+# 2026-04-21: Story 1-7 implemented → review (31 new tests, 149 total)
+# 2026-04-21: Story 1-4 moved review → done after code review (0 HIGH, 1 MEDIUM, 1 LOW, all fixed)
+# 2026-04-21: Story 1-5 implemented → review (73 new tests, 97 total)
+# 2026-04-21: Story 1-6 created → ready-for-dev (precision spike)
+# 2026-04-21: Story 1-6 implemented → review (21 new tests, 118 total, precision spike PASS)
+# 2026-04-21: Story 1-7 created → ready-for-dev (ContentRegistry loads from assets)
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Foundation — Architecture Boundaries, Persistence Scaffold, and Safety Net
+  epic-1: in-progress
+  1-1-wire-global-safety-net-and-portrait-lock-in-main-dart: done
+  1-2-configure-lint-and-analysis-options: done
+  1-3-enforce-no-flutter-in-lib-game-boundary: done
+  1-4-scaffold-drift-database-and-apply-migrations: done
+  1-5-create-influence-and-intel-value-objects-wrapping-decimal: done
+  1-6-big-number-precision-spike-property-tests-at-1e38: done
+  1-7-contentregistry-loads-from-assets-at-boot: done
+  1-8-define-gameerror-sealed-hierarchy-and-result-t-gameerror: done
+  1-9-skeleton-gameworld-with-tick-and-applycommand-no-op: done
+  1-10-crash-log-ring-buffer-and-support-screen: done
+  1-11-canvas-performance-spike-on-low-end-android: review
+  epic-1-retrospective: optional
+
+  # Epic 2: Playable Map — Tap a Country, Earn Influence
+  epic-2: in-progress
+  2-1-geojson-parser-and-countrypath-cache: done
+  2-2-worldmappainter-renders-ocean-country-fills-borders: done
+  2-3-pan-and-zoom-with-matrix4-view-transform: done
+  2-4-point-in-polygon-hit-testing-on-tap: done
+  2-5-gameworld-tick-drives-influence-generation-per-country: done
+  2-6-tap-to-collect-collects-banked-influence: done
+  2-7-initial-seed-one-or-more-countries-unlocked-by-default: done
+  epic-2-retrospective: optional
+
+  # Epic 3: Power Up — Upgrades, Leaders, and Automation
+  epic-3: in-progress
+  3-1-authoritative-incomecalculator-compute-function: ready-for-dev
+  3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: backlog
+  3-3-leader-hire-and-tier-system: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Expand — Unlocks, Continents, and Completion Bonuses
+  epic-4: backlog
+  4-1-unlock-next-country-in-current-continent: backlog
+  4-2-unlock-continent-at-influence-threshold: backlog
+  4-3-continent-milestone-rewards-at-25-50-75-100: backlog
+  4-4-continent-completion-permanent-multiplier: backlog
+  4-5-next-unlock-teaser-data-on-state: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Active Play — Goldens, Boosts, Missions, Dailies, Achievements
+  epic-5: backlog
+  5-1-golden-opportunity-spawn-and-claim: backlog
+  5-2-activate-boost-2x-30s-using-intel: backlog
+  5-3-missions-cycle-rotating-objectives-rewarding-intel: backlog
+  5-4-7-day-daily-reward-streak: backlog
+  5-5-27-achievements-granting-permanent-multipliers: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Never Lose Progress — Persistence and Offline Earnings
+  epic-6: backlog
+  6-1-drift-schema-and-gamestatemapper: backlog
+  6-2-persistence-write-strategy-event-driven-and-debounced-snapshot: backlog
+  6-3-typed-migrations-and-schema-backup-v-n-sqlite: backlog
+  6-4-offline-earnings-calculation-on-resume: backlog
+  6-5-offline-reward-modal-on-resume: backlog
+  6-6-save-recovery-path-on-corrupt-database: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Complete the Shell — Navigation, HUD, Stats, Settings, Upgrades & Leaders Screens
+  epic-7: backlog
+  7-1-theme-tokens-and-design-system-foundation: backlog
+  7-2-app-scaffold-with-5-tab-bottom-navigation-and-indexedstack: backlog
+  7-3-global-hud-with-influence-and-intel-currency-badges: backlog
+  7-4-sequential-modal-queue-with-priority: backlog
+  7-5-stats-screen-reachable-from-hud: backlog
+  7-6-settings-modal-overlay-from-hud-gear-icon: backlog
+  7-7-upgrades-tab-unlocked-countries-next-unlock-teaser-per-continent: backlog
+  7-8-leaders-tab-grouped-by-continent-accordion: backlog
+  7-9-map-as-default-cold-launch-screen-auto-focus-post-tutorial: backlog
+  7-10-continent-progression-visual-indicators: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Juice — Game Feel Layer
+  epic-8: backlog
+  8-1-sfx-and-haptics-event-bus-wiring: backlog
+  8-2-flying-number-animation-on-country-tap: backlog
+  8-3-breathing-pulse-animation-on-ready-to-collect-countries: backlog
+  8-4-celebration-animations-country-unlock-and-continent-completion: backlog
+  8-5-number-flyout-hud-counter-country-pulse-all-share-one-ticker-budget: backlog
+  epic-8-retrospective: optional
+
+  # Epic 9: Onboard — Tutorial and Contextual Hints
+  epic-9: backlog
+  9-1-tutorial-state-persistence-and-overlay-ui: backlog
+  9-2-auto-advance-on-triggering-action: backlog
+  9-3-skip-tutorial-option-returning-player: backlog
+  9-4-post-tutorial-contextual-hints-one-shot: backlog
+  epic-9-retrospective: optional
+
+  # Epic 10: Tune — Economy and Balance
+  epic-10: backlog
+  10-1-populate-core-content-json-files: backlog
+  10-2-balanceconfig-constants-pinned-and-playtest-reviewed: backlog
+  10-3-instrumented-late-game-run-and-final-tuning-pass: backlog
+  epic-10-retrospective: optional
+
+  # Epic 11: Harden — Accessibility and Performance
+  epic-11: backlog
+  11-1-accessibility-pass-semantics-non-color-cues-touch-targets: backlog
+  11-2-cold-start-performance-profiling-and-fix: backlog
+  11-3-60fps-map-performance-on-low-end-android-api-21: backlog
+  11-4-app-size-under-50mb: backlog
+  epic-11-retrospective: optional

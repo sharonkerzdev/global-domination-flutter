@@ -1,0 +1,51 @@
+[
+  {
+    "id": "africa",
+    "name": "Africa",
+    "unlockThreshold": "0",
+    "completionBonus": "0.25",
+    "milestoneRewards": []
+  },
+  {
+    "id": "europe",
+    "name": "Europe",
+    "unlockThreshold": "1000000000",
+    "completionBonus": "0.50",
+    "milestoneRewards": []
+  },
+  {
+    "id": "middle_east",
+    "name": "Middle East",
+    "unlockThreshold": "1000000000000",
+    "completionBonus": "0.60",
+    "milestoneRewards": []
+  },
+  {
+    "id": "asia",
+    "name": "Asia",
+    "unlockThreshold": "100000000000000",
+    "completionBonus": "0.75",
+    "milestoneRewards": []
+  },
+  {
+    "id": "north_america",
+    "name": "North America",
+    "unlockThreshold": "100000000000000000000",
+    "completionBonus": "1.00",
+    "milestoneRewards": []
+  },
+  {
+    "id": "south_america",
+    "name": "South America",
+    "unlockThreshold": "100000000000000000000000000",
+    "completionBonus": "1.25",
+    "milestoneRewards": []
+  },
+  {
+    "id": "oceania",
+    "name": "Oceania",
+    "unlockThreshold": "1e38",
+    "completionBonus": "1.75",
+    "milestoneRewards": []
+  }
+]

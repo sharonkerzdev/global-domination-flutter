@@ -3,7 +3,7 @@ name: 'step-04-complete'
 description: 'Complete the brainstorming session with summary and next steps'
 
 # Path Definitions
-workflow_path: '{project-root}/_bmad/gds/workflows/1-preproduction/gds-brainstorm-game'
+workflow_path: '{installed_path}'
 
 # File References
 thisStepFile: './step-04-complete.md'
@@ -11,8 +11,8 @@ workflowFile: '{workflow_path}/workflow.md'
 outputFile: '{output_folder}/brainstorming-session-{date}.md'
 
 # Handoff References
-gameBriefWorkflow: '{project-root}/_bmad/gds/workflows/1-preproduction/gds-create-game-brief/workflow.yaml'
-gddWorkflow: '{project-root}/_bmad/gds/workflows/2-design/gds-create-gdd/workflow.yaml'
+gameBriefWorkflow: 'skill:gds-create-game-brief'
+gddWorkflow: 'skill:gds-create-gdd'
 ---
 
 # Step 4: Complete Session
@@ -274,3 +274,9 @@ The Brainstorm Game workflow facilitates creative game ideation through 4 collab
 4. **Complete** - Summarize results and provide next steps
 
 This step-file architecture ensures consistent, creative brainstorming with user collaboration throughout.
+
+## On Complete
+
+Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow.on_complete`
+
+If the resolved `workflow.on_complete` is non-empty, follow it as the final terminal instruction before exiting.

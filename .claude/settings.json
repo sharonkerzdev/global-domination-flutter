@@ -1,10 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find 'c:\\\\Users\\\\sharo\\\\OneDrive\\\\שולחן העבודה\\\\Micro sas\\\\global-domination-game\\\\_bmad-output' -name *.md -exec ls -lh {})",
-      "Bash(2)",
-      "Bash(npx @kayvan/markdown-tree-parser explode \"_bmad-output/planning-artifacts/epics.md\" \"_bmad-output/planning-artifacts/epics/\")",
-      "Bash(flutter --version)"
+      "Bash(flutter --version)",
+      "Bash(flutter test *)",
+      "Bash(flutter test)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter analyze)",
+      "Bash(dart test *)",
+      "Bash(dart format *)"
+    ],
+    "deny": [
+      "mcp__dart*"
     ]
   }
 }

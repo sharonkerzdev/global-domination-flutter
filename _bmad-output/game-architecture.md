@@ -11,7 +11,7 @@ platform: 'Mobile — iOS 16+, Android API 21+'
 
 # Source Documents
 gdd: '_bmad-output/planning-artifacts/gdd.md'
-epics: '_bmad-output/planning-artifacts/epics-rn-archive/epic-list.md'
+epics: '_bmad-output/planning-artifacts/epics.md'
 brief: null
 ---
 
@@ -52,7 +52,7 @@ This architecture document was produced through the GDS Architecture Workflow (9
 
 **Global Domination** — mobile-first idle/incremental strategy game. Players accumulate Influence to conquer 79 countries across 7 continents on an interactive canvas-rendered world map. Blends idle-game dopamine with a finite geographic progression fantasy. Core promise: *short sessions feel powerful, long-term play feels meaningful*.
 
-This is a **v2 Flutter rewrite** of a shipped React Native codebase. The GDD's Flutter Epics 1–12 are the active scope; RN epics 1–18 in `epics-rn-archive/` are reference for design intent only.
+This is a **fresh Flutter build**. The GDD v2 Epics 1–12 are the active scope and the sole design source of truth.
 
 ### Technical Scope
 
@@ -1386,7 +1386,7 @@ The architecture is complete and ready to drive implementation. Two parallel pat
 Downstream skills should use:
 - This document (`_bmad-output/game-architecture.md`)
 - The GDD (`_bmad-output/planning-artifacts/gdd.md`)
-- The archived RN epics (`_bmad-output/planning-artifacts/epics-rn-archive/`) — **for design intent only**, not implementation
+- The Flutter epics (`_bmad-output/planning-artifacts/epics.md`)
 
 ### Document Location
 

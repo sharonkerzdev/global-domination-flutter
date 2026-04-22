@@ -1,0 +1,26 @@
+[
+  {
+    "id": "egypt",
+    "continent": "africa",
+    "baseInfluence": "1",
+    "unlockCost": "0",
+    "tier": 1,
+    "generationSeconds": 1
+  },
+  {
+    "id": "nigeria",
+    "continent": "africa",
+    "baseInfluence": "5",
+    "unlockCost": "5",
+    "tier": 1,
+    "generationSeconds": 1
+  },
+  {
+    "id": "south_africa",
+    "continent": "africa",
+    "baseInfluence": "15",
+    "unlockCost": "25",
+    "tier": 1,
+    "generationSeconds": 2
+  }
+]

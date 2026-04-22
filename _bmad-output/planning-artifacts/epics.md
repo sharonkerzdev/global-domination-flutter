@@ -3,16 +3,15 @@ stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - '_bmad-output/planning-artifacts/gdd.md'
   - '_bmad-output/game-architecture.md'
-  - '_bmad-output/planning-artifacts/epics-rn-archive/requirements-inventory.md'  # design-intent reference only (RN v1, deprecated implementation)
 ---
 
 # global-domination-flutter - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for global-domination-flutter, decomposing the requirements from the GDD v2 (Flutter rewrite) and the Game Architecture into implementable stories.
+This document provides the complete epic and story breakdown for global-domination-flutter, decomposing the requirements from the GDD v2 and the Game Architecture into implementable stories.
 
-The GDD v2 defines 12 active Flutter-rewrite epics (Epics 1-12) plus 5 future epics (13-17) out of scope for v1.0. The archived RN requirements (`epics-rn-archive/requirements-inventory.md`) are retained as **design intent reference only** — implementation has changed (Flutter/Drift/Riverpod/CustomPainter, not RN/AsyncStorage/SVG/Zustand).
+The GDD v2 defines 12 active Flutter-rewrite epics (Epics 1-12) plus 5 future epics (13-17) out of scope for v1.0. **This is a fresh Flutter build — the GDD v2 is the sole design source of truth.**
 
 ## Requirements Inventory
 
@@ -190,19 +189,17 @@ NFR27: Game constants (`lib/game/config/constants.dart`), balance values (`lib/g
 
 ### UX Design Requirements
 
-**The Flutter rewrite is not a port.** UX decisions are being re-made for the Flutter stack with the benefit of hindsight from the v1 React Native build. No RN/Expo/AsyncStorage/Zustand/SVG-library/Reanimated-specific patterns carry over as implementation constraints — all UI is built fresh on Flutter widgets, `CustomPainter`, Riverpod, and Drift.
-
-No dedicated UX Design document exists for this rewrite yet. UX intent currently comes from the GDD sections "Controls and Input," "Art and Audio Direction," "Level Design Framework," and the mechanic feel descriptions. The archived RN requirements inventory (`epics-rn-archive/requirements-inventory.md`) is retained as **historical reference only** — a record of what the v1 team tried, what worked, and what they would reconsider. It is not a design spec and must not be treated as one during story implementation.
+All UI is built fresh on Flutter widgets, `CustomPainter`, Riverpod, and Drift. UX intent comes from the GDD sections "Controls and Input," "Art and Audio Direction," and "Level Design Framework."
 
 **Strongly recommended: author a Flutter UX Design Specification via `gds-create-ux-design` before Epic 7 stories are picked up.**
 
 Why before Epic 7 specifically: Epic 7 ("Complete the Shell") locks in the concrete app structure — tab set and order, HUD layout and typography, screen wireframes for Upgrades / Leaders / Stats / Settings, modal system behavior, country-state visual palette, and the reusable component inventory (currency badges, upgrade cards, leader rows, floating action cards, etc.). These are cheap to decide up front and expensive to rework once six stories have implemented against prose descriptions. A UX spec lets Epic 7 stories cite a wireframe and design tokens instead of re-describing layout in acceptance criteria.
 
-Without a UX spec, the following Epic 7 stories inherit implicit defaults from the GDD + RN archive that the product owner has not explicitly re-confirmed for Flutter v2:
+The following Epic 7 decisions still need explicit confirmation from Sharon before stories are written:
 
-- **Story 7.2 — 5-tab bottom nav set and order.** Current default: Map / Upgrades / Leaders / Achievements / Minigames (Settings via HUD gear). Needs explicit confirmation.
+- **Story 7.2 — 5-tab bottom nav set and order.** Current GDD default: Map / Upgrades / Leaders / Achievements / Minigames (Settings via HUD gear).
 - **Story 7.3 — HUD content and layout.** Currencies + icons + stats icon + gear — positions and sizes unspecified.
-- **Story 7.4 — Modal queue priority.** Currently: Offline > Daily > Continent-complete > Achievement > Purchase confirm. Needs confirmation.
+- **Story 7.4 — Modal queue priority.** Currently: Offline > Daily > Continent-complete > Achievement > Purchase confirm.
 - **Story 7.7 — Upgrades tab structure.** Unlocked countries + next-unlock teaser per continent — layout and interaction detail unspecified.
 - **Story 7.8 — Leaders tab accordion design.** Grouped-by-continent — expand/collapse behavior, row design unspecified.
 - **Epic 8 visuals** — country-state palette (locked / generating / ready / automated colors), breathing-pulse animation parameters, celebration-animation choreography.
@@ -792,11 +789,11 @@ So that there is one source of truth for income rates and no duplicate math can 
 **When** grep'd for duplicate inline income math (e.g. `baseInfluence *` outside `IncomeCalculator`)
 **Then** no duplicates exist.
 
-### Story 3.2: Purchase Influence Power Upgrade (1×)
+### Story 3.2: IP Upgrade — Single and Bulk Purchase (1×/10×/25×)
 
 As a player,
-I want to spend Influence to increase a country's IP by 1,
-So that the country generates more Influence per collection/tick.
+I want to spend Influence to increase a country's IP level, with a toggle for 1×, 10×, or 25× bulk purchases,
+So that I can power up efficiently without tapping Upgrade repeatedly.
 
 **Acceptance Criteria:**
 
@@ -816,14 +813,6 @@ So that the country generates more Influence per collection/tick.
 **When** `ipLevel = L` and `baseCost = B`
 **Then** cost = `B × (1.5 ^ L)` per the GDD (tuned values land in Epic 10).
 
-### Story 3.3: Bulk Purchase 10× and 25×
-
-As a player,
-I want a toggle to buy 10 or 25 IP levels in a single action,
-So that I don't have to tap Upgrade 10 or 25 times when momentum is high.
-
-**Acceptance Criteria:**
-
 **Given** a country with `ipLevel + bulk ≤ 200` and enough Influence for the full stack
 **When** I dispatch `PurchaseUpgrade(countryId, bulk: 10)` or `bulk: 25`
 **Then** `ipLevel` increments by exactly 10 or 25, Influence decreases by the summed geometric-series cost, and one `UpgradePurchased` event fires with `bulk` and `totalCost` fields.
@@ -840,11 +829,11 @@ So that I don't have to tap Upgrade 10 or 25 times when momentum is high.
 **When** `bulk` purchases from level L
 **Then** `cost = B × (1.5^L) × (1.5^bulk - 1) / (1.5 - 1)` — exact geometric sum, unit-tested.
 
-### Story 3.4: Hire Leader When IP Level ≥ 10
+### Story 3.3: Leader Hire and Tier System
 
 As a player,
-I want to hire a Leader for a country once its IP reaches level 10,
-So that country generates Influence passively even when I'm not tapping.
+I want to hire a Leader for a country once its IP reaches level 10, then upgrade that Leader through tiers,
+So that my countries generate Influence passively and grow more powerful over time.
 
 **Acceptance Criteria:**
 
@@ -864,14 +853,6 @@ So that country generates Influence passively even when I'm not tapping.
 **When** the game loop processes the country
 **Then** the country's income is continuous (per-second) rather than timer-gated — banked influence accumulates without needing a generation cycle to complete.
 
-### Story 3.5: Upgrade Leader Through Tiers (1→2→3)
-
-As a player,
-I want to upgrade a Leader from tier 1 → 2 → 3 by spending Influence,
-So that my automated countries produce at 1.5×, 2×, and finally 3× multiplier.
-
-**Acceptance Criteria:**
-
 **Given** a country with `leaderTier == tier1` and enough Influence
 **When** I dispatch `UpgradeLeader(countryId)`
 **Then** `leaderTier` becomes `tier2`, Influence decreases by the tier-2 cost, and `LeaderUpgraded` fires with the new tier.
@@ -888,9 +869,9 @@ So that my automated countries produce at 1.5×, 2×, and finally 3× multiplier
 
 **Given** the multiplier lookup
 **When** `LeaderTier` values are read
-**Then** they map per the final mapping pinned in `BalanceConfig` at Epic 10 — the GDD documents `1.0× → 1.5× → 2.0× → 3.0×` across 4 tiers and the architecture lists `0 / 1.0 / 1.5 / 2.0 / 3.0`. This story implements the lookup as a single named-constant table; the exact values may be adjusted during Epic 10 tuning but will not require code changes beyond that table.
+**Then** they map per the final mapping pinned in `BalanceConfig` at Epic 10 — the GDD documents `1.0× → 1.5× → 2.0× → 3.0×` across 4 tiers. This story implements the lookup as a single named-constant table; exact values may be adjusted during Epic 10 tuning without code changes beyond that table.
 
-> **Design note for implementation:** Pin the tier-count decision (3 upgradeable tiers vs 4) during Story 3.5 kickoff and reflect it in both the `LeaderTier` enum AND `BalanceConfig.leaderMultipliers`. Flag this explicitly in the story PR description.
+> **Design note:** Pin the tier-count decision (3 upgradeable tiers vs 4) at kickoff and reflect it in both the `LeaderTier` enum AND `BalanceConfig.leaderMultipliers`.
 
 ---
 
@@ -1006,11 +987,11 @@ _(UI rendering of this teaser lands in Epic 7 — this story provides the derive
 
 **Goal:** Deliver the burst / retention layer. Golden Opportunities spawn for 10–100× bursts, Boosts give 2× for 30s, Missions reward Intel for active play, Daily Rewards encourage streaks, and Achievements grant permanent multipliers.
 
-### Story 5.1: Golden Opportunity Scheduler
+### Story 5.1: Golden Opportunity — Spawn and Claim
 
 As a player,
-I want Golden Opportunities to randomly spawn on my owned countries with a time-limited window,
-So that I have reasons to return to the app and be rewarded for active attention.
+I want Golden Opportunities to randomly spawn on my owned countries and be claimable by tapping for a 10–100× multiplier burst,
+So that active play feels explosive and rewarding.
 
 **Acceptance Criteria:**
 
@@ -1026,14 +1007,6 @@ So that I have reasons to return to the app and be rewarded for active attention
 **When** tests run
 **Then** golden spawns are deterministic — exactly reproducible from seed + clock.
 
-### Story 5.2: Claim Golden Opportunity
-
-As a player,
-I want to tap a spawned Golden on the map and receive its 10–100× multiplier burst on my next N seconds of collection,
-So that my active play feels explosive.
-
-**Acceptance Criteria:**
-
 **Given** an active Golden on country X
 **When** I tap the Golden (hit-test resolves to a Golden overlay, not just the country)
 **Then** `ClaimGolden(goldenId)` fires, the Golden is removed from `activeGoldens`, a `GoldenClaimed(multiplier, duration)` event fires, and `state.activeGoldenEffect` is set with `expiresAt = now + duration`.
@@ -1046,7 +1019,7 @@ So that my active play feels explosive.
 **When** tick runs
 **Then** the effect is cleared and `GoldenExpired` fires.
 
-### Story 5.3: Activate Boost (2× / 30s) Using Intel
+### Story 5.2: Activate Boost (2× / 30s) Using Intel
 
 As a player,
 I want to spend Intel to activate a 30-second 2× Boost,
@@ -1070,7 +1043,7 @@ So that I can amplify a tap burst on my own schedule.
 **When** tick runs
 **Then** the boost clears and `BoostExpired` fires.
 
-### Story 5.4: Missions Cycle Rotating Objectives Rewarding Intel
+### Story 5.3: Missions Cycle Rotating Objectives Rewarding Intel
 
 As a player,
 I want a small set of rotating missions ("claim 3 Goldens," "activate 2 Boosts," "stay active 5 minutes") visible in a Missions UI,
@@ -1090,7 +1063,7 @@ So that I have short-term goals that pay Intel for active engagement.
 **When** the rotation logic runs
 **Then** a new mission is drawn from the catalog (excluding currently-active missions) to replace it.
 
-### Story 5.5: 7-Day Daily Reward Streak
+### Story 5.4: 7-Day Daily Reward Streak
 
 As a player,
 I want a once-per-day reward that grows over a 7-day consecutive-return streak,
@@ -1110,7 +1083,7 @@ So that I have gentle reason to return daily without being punished for missing.
 **When** I next open the app
 **Then** the streak resets to day 1 — the game does NOT penalize past progress, only resets the streak counter.
 
-### Story 5.6: 27 Achievements Granting Permanent Multipliers
+### Story 5.5: 27 Achievements Granting Permanent Multipliers
 
 As a player,
 I want 27 discoverable achievements with permanent multiplier rewards,
@@ -1140,17 +1113,17 @@ So that my long-term play is rewarded with growing base power.
 
 **Goal:** Deliver the Offline Respectful pillar. All state persists to Drift/SQLite with typed migrations and `schema_backup_v{n}.sqlite` snapshots. On resume, offline earnings are computed from Leader-automated countries only (8h cap, stable multipliers) and presented via the Offline Reward Modal before any other UI.
 
-### Story 6.1: Normalized Drift Schema for Game State
+### Story 6.1: Drift Schema and `GameStateMapper`
 
 As a developer,
-I want a normalized Drift schema with tables `meta`, `countries`, `leaders`, `upgrades`, `achievements`, `missions`, `boosts`, `goldens`, `daily_rewards`, `settings`, `crash_logs`, `tutorial_state`,
-So that game state persists in a form that supports targeted per-event writes and typed migrations.
+I want a normalized Drift schema for all game state tables and a `GameStateMapper` that converts between `GameState` and Drift rows,
+So that the simulation layer stays ignorant of persistence details and state round-trips losslessly.
 
 **Acceptance Criteria:**
 
 **Given** the Drift schema at the end of this story
 **When** `dart run build_runner build` runs
-**Then** generated code compiles cleanly for all listed tables.
+**Then** generated code compiles cleanly for all listed tables: `meta`, `countries`, `leaders`, `upgrades`, `achievements`, `missions`, `boosts`, `goldens`, `daily_rewards`, `settings`, `crash_logs`, `tutorial_state`.
 
 **Given** each table
 **When** examined
@@ -1159,14 +1132,6 @@ So that game state persists in a form that supports targeted per-event writes an
 **Given** the `meta` table
 **When** queried
 **Then** it contains `schemaVersion`, `lastSavedAt` (UTC ISO8601), `totalInfluence`, `totalIntel`, `dailyStreak` (JSON), `tutorialCompleted` flag.
-
-### Story 6.2: `GameStateMapper` Converts Between `GameState` and Drift Rows
-
-As a developer,
-I want a `GameStateMapper` that maps a `GameState` snapshot to a set of Drift row inserts/updates and vice-versa,
-So that the simulation layer stays ignorant of persistence details.
-
-**Acceptance Criteria:**
 
 **Given** a fully-populated `GameState`
 **When** `mapper.toRows(state)` is called
@@ -1180,11 +1145,11 @@ So that the simulation layer stays ignorant of persistence details.
 **When** `mapper.fromRows` is called
 **Then** it returns the initial `GameState` seeded from `ContentRegistry`.
 
-### Story 6.3: Event-Driven Writes From `GameWorld` Events
+### Story 6.2: Persistence Write Strategy — Event-Driven Writes and Debounced Snapshot
 
 As a developer,
-I want the `SaveRepository` to subscribe to `GameWorld.events` and persist targeted row updates for each event type,
-So that saves happen per-event (not per-tick) with minimal DB churn.
+I want the `SaveRepository` to persist targeted row updates per `GameEvent` and a 2-second debounced snapshot of currency totals,
+So that saves happen with minimal DB churn and no per-tick writes.
 
 **Acceptance Criteria:**
 
@@ -1200,14 +1165,6 @@ So that saves happen per-event (not per-tick) with minimal DB churn.
 **When** they fire
 **Then** they do NOT trigger a DB write (handled by the debounced snapshot below).
 
-### Story 6.4: Debounced `totalInfluence` / `totalIntel` Snapshot
-
-As a developer,
-I want a 2-second debounced snapshot of `totalInfluence` and `totalIntel` to the `meta` table,
-So that currency totals persist without a DB write every tick.
-
-**Acceptance Criteria:**
-
 **Given** `totalInfluence` or `totalIntel` changes
 **When** 2 seconds elapse without another change
 **Then** a single `UPDATE meta SET totalInfluence = ?, totalIntel = ?, lastSavedAt = ?` fires.
@@ -1220,7 +1177,7 @@ So that currency totals persist without a DB write every tick.
 **When** the lifecycle observer fires
 **Then** any pending debounced write is flushed immediately before the ticker stops.
 
-### Story 6.5: Typed Migrations and `schema_backup_v{n}.sqlite`
+### Story 6.3: Typed Migrations and `schema_backup_v{n}.sqlite`
 
 As a developer,
 I want Drift's `MigrationStrategy` wired such that every schema version bump has a typed migration, and a backup `schema_backup_v{n}.sqlite` is copied before the migration runs,
@@ -1240,7 +1197,7 @@ So that migration failures are recoverable without data loss.
 **When** complete
 **Then** `schema_backup_v{n}.sqlite` from before the migration is retained (not deleted) for at least 3 subsequent launches as a safety net.
 
-### Story 6.6: Offline Earnings Calculation on Resume
+### Story 6.4: Offline Earnings Calculation on Resume
 
 As a player,
 I want my Leader-automated countries to have earned Influence while the app was closed (up to 8 hours), presented to me when I return,
@@ -1264,7 +1221,7 @@ So that closing the app feels respectful of my time.
 **When** applied
 **Then** a single `OfflineEarningsApplied(totalEarned, elapsed)` event fires and `totalInfluence` increments by `totalEarned`.
 
-### Story 6.7: Offline Reward Modal On Resume
+### Story 6.5: Offline Reward Modal On Resume
 
 As a player,
 I want a modal that shows how much Influence I earned while away when I return,
@@ -1284,7 +1241,7 @@ So that the reward is celebrated instead of silently appearing in my total.
 **When** shown
 **Then** it displays the formatted earned amount, elapsed duration, and a single "Collect" CTA that dismisses.
 
-### Story 6.8: Save Recovery Path on Corrupt Database
+### Story 6.6: Save Recovery Path on Corrupt Database
 
 As a player,
 I want a clear path to recover if my save file becomes corrupt,
@@ -1521,11 +1478,11 @@ So that I can eyeball progress without counting.
 
 **Goal:** Every `GameEvent` routes through `AudioService` and `HapticsService` (no scattered `playSound()` in UI). Five core SFX wired. Flying numbers on tap. Ready-to-collect breathing pulse. Unlock + continent-complete celebrations.
 
-### Story 8.1: `AudioService` Subscribes to `GameEvent` Stream
+### Story 8.1: SFX and Haptics Event Bus Wiring
 
 As a developer,
-I want an `AudioService` that subscribes to `GameWorld.events` and plays mapped SFX via `audioplayers`,
-So that game-world events drive sound automatically and UI code never calls `playSound()`.
+I want `AudioService` and `HapticsService` that both subscribe to `GameWorld.events` and play mapped SFX / haptic patterns,
+So that every meaningful action has audio and tactile feedback with no scattered `playSound()` calls in UI code.
 
 **Acceptance Criteria:**
 
@@ -1543,19 +1500,11 @@ So that game-world events drive sound automatically and UI code never calls `pla
 
 **Given** rapid-fire taps
 **When** 10 `CountryTapped` events fire in 500ms
-**Then** the service rate-limits / polyphones so SFX don't stutter or lag (concrete policy in implementation; criterion is subjective "feels smooth" — validated on device).
+**Then** the service rate-limits / polyphones so SFX don't stutter or lag (validated on device).
 
 **Given** `AudioService`
 **When** grep'd
-**Then** it is the ONLY place `AudioPlayer.play` is called from — no UI widget calls `audioplayers` directly.
-
-### Story 8.2: `HapticsService` Subscribes to `GameEvent` Stream
-
-As a developer,
-I want a `HapticsService` that subscribes to `GameEvent` and fires mapped haptic patterns via `HapticFeedback`,
-So that every meaningful action has tactile confirmation.
-
-**Acceptance Criteria:**
+**Then** it is the ONLY place `AudioPlayer.play` is called — no UI widget calls `audioplayers` directly.
 
 **Given** `HapticsService` initialized
 **When** `CountryTapped` fires
@@ -1569,7 +1518,7 @@ So that every meaningful action has tactile confirmation.
 **When** events fire
 **Then** no haptics play.
 
-### Story 8.3: Flying Number Animation on Country Tap
+### Story 8.2: Flying Number Animation on Country Tap
 
 As a player,
 I want a floating "+X" number to rise and fade above a tapped country,
@@ -1589,7 +1538,7 @@ So that the collect action has satisfying visual weight.
 **When** processed
 **Then** no flying number spawns.
 
-### Story 8.4: Breathing Pulse Animation on Ready-To-Collect Countries
+### Story 8.3: Breathing Pulse Animation on Ready-To-Collect Countries
 
 As a player,
 I want ready-to-collect countries to subtly pulse,
@@ -1609,11 +1558,11 @@ So that my eye is drawn to where I can collect right now.
 **When** the state changes
 **Then** the pulse stops on that country.
 
-### Story 8.5: Country Unlock Celebration Animation
+### Story 8.4: Celebration Animations — Country Unlock and Continent Completion
 
 As a player,
-I want a visual celebration when I unlock a country,
-So that the moment feels earned.
+I want a visual celebration when I unlock a country and a bigger fanfare when I complete an entire continent,
+So that both moments feel earned and proportionally rewarding.
 
 **Acceptance Criteria:**
 
@@ -1629,14 +1578,6 @@ So that the moment feels earned.
 **When** I switch to the Map tab
 **Then** the animation does not replay — it fired once when the event occurred.
 
-### Story 8.6: Continent Completion Fanfare
-
-As a player,
-I want a bigger celebration when I complete a whole continent,
-So that finishing feels like a real milestone.
-
-**Acceptance Criteria:**
-
 **Given** `ContinentCompleted` event fires
 **When** the UI receives it
 **Then** a full-screen celebration modal (queued per Epic 7 modal queue) shows the continent name, "+X.XX× Global Multiplier" reward, and a "Continue" CTA — with a continent-complete fanfare SFX if available in `assets/audio/continent_complete.mp3`.
@@ -1645,7 +1586,7 @@ So that finishing feels like a real milestone.
 **When** dismissed
 **Then** the queue advances to the next modal (if any) and the map smoothly animates a highlight over the completed continent region.
 
-### Story 8.7: Number Flyout, HUD Counter, Country Pulse All Share One `Ticker` Budget
+### Story 8.5: Number Flyout, HUD Counter, Country Pulse All Share One `Ticker` Budget
 
 As a developer,
 I want all decorative animations (HUD counter tweens, flying numbers, breathing pulses, celebration animations) to respect frame budget,
@@ -1667,11 +1608,11 @@ So that the map's 60fps target is never compromised by UI polish.
 
 **Goal:** First-time players get a guided tutorial through the core loop (tap, upgrade, hire Leader, unlock). Steps auto-advance on the triggering action. Progress survives restart. Post-tutorial one-time hints fire on new-system first-exposures.
 
-### Story 9.1: Tutorial State in `GameWorld` and Persisted
+### Story 9.1: Tutorial State, Persistence, and Overlay UI
 
-As a developer,
-I want tutorial state (`currentStepId`, `completed`, `skipped`, `hintsShown`) managed inside `GameWorld` as part of `GameState` and persisted via Drift,
-So that the tutorial survives app restart and is testable via the same reducer pipeline as all other features.
+As a developer and first-time player,
+I want tutorial state managed in `GameWorld`, persisted via Drift, and rendered as a spotlight overlay that guides me through the core loop,
+So that the tutorial survives app restarts and I learn the game without trial and error.
 
 **Acceptance Criteria:**
 
@@ -1687,14 +1628,6 @@ So that the tutorial survives app restart and is testable via the same reducer p
 **When** the app loads
 **Then** `state.tutorial.currentStepId` loads from Drift and the tutorial resumes at the same step.
 
-### Story 9.2: Tutorial Overlay UI With Spotlight and Step Card
-
-As a first-time player,
-I want a visible overlay that spotlights the current target (e.g. "tap this country") and shows a step card explaining what to do,
-So that I learn the core loop without trial and error.
-
-**Acceptance Criteria:**
-
 **Given** `state.tutorial.currentStepId != null` and `completed == false`
 **When** the app renders
 **Then** a `TutorialOverlay` renders above the current screen with a dim layer, a spotlight cutout at the step's target (screen-space Rect defined in the step data), and a step card with text + optional arrow.
@@ -1707,7 +1640,7 @@ So that I learn the core loop without trial and error.
 **When** the target is on a different tab (e.g. step 9+ is on Leaders tab)
 **Then** the overlay coordinates with the tab system to switch tabs before spotlighting — or the step explicitly instructs me to tap the Leaders tab (which is its own spotlit target).
 
-### Story 9.3: Auto-Advance on Triggering Action
+### Story 9.2: Auto-Advance on Triggering Action
 
 As a player,
 I want the tutorial to advance automatically when I perform the action it's teaching (e.g. tap a country → next step),
@@ -1727,7 +1660,7 @@ So that I don't have to tap "Next" after doing exactly what I was told.
 **When** advanced
 **Then** `state.tutorial.completed = true`, `TutorialCompleted` event fires, and the overlay unmounts permanently.
 
-### Story 9.4: Skip Tutorial Option (Returning Player)
+### Story 9.3: Skip Tutorial Option (Returning Player)
 
 As a returning player or a genre-familiar player,
 I want a "Skip Tutorial" button,
@@ -1747,7 +1680,7 @@ So that I can jump straight to playing without being forced through basics I alr
 **When** tapped
 **Then** `state.tutorial.completed = false`, `currentStepId = 'tap_to_collect'`, and the overlay re-appears (useful for QA and curious players).
 
-### Story 9.5: Post-Tutorial Contextual Hints (One-Shot)
+### Story 9.4: Post-Tutorial Contextual Hints (One-Shot)
 
 As a player who finished the tutorial,
 I want a one-time contextual hint the first time I encounter a new system (Golden Opportunity, Boost-ready, Leader-eligible, milestone approaching),
@@ -1773,11 +1706,11 @@ So that new mechanics don't surprise me without explanation.
 
 **Goal:** Populate content JSON with tuned values; populate `BalanceConfig` constants; revisit pacing walls on the new smoother Flutter tick loop; refine late-game curves via instrumented runs.
 
-### Story 10.1: Populate `countries.json` With All 79 Countries
+### Story 10.1: Populate Core Content JSON Files
 
 As a developer,
-I want `assets/data/countries.json` populated with all 79 countries' data (id, continent, base influence, unlock cost, tier, generation seconds),
-So that the game has real content matching the GDD's geographic scope.
+I want `countries.json`, `continents.json`, and `achievements.json` fully populated with real game data,
+So that all content-driven systems have the values they need to function correctly.
 
 **Acceptance Criteria:**
 
@@ -1791,15 +1724,7 @@ So that the game has real content matching the GDD's geographic scope.
 
 **Given** the values
 **When** ported from v1 or authored fresh
-**Then** exponential scaling holds: within each continent, consecutive countries' `unlockCost` increases by ~5× (loose validation; Epic 10.4 refines).
-
-### Story 10.2: Populate `continents.json` With Thresholds and Completion Bonuses
-
-As a developer,
-I want `assets/data/continents.json` with all 7 continents (unlock threshold, completion bonus, milestone rewards),
-So that continent gating and completion logic has real data.
-
-**Acceptance Criteria:**
+**Then** exponential scaling holds: within each continent, consecutive countries' `unlockCost` increases by ~5× (loose validation; Story 10.2 refines).
 
 **Given** `assets/data/continents.json`
 **When** parsed
@@ -1809,14 +1734,6 @@ So that continent gating and completion logic has real data.
 **When** checked for milestone rewards
 **Then** 25/50/75/100% milestone rewards are defined (type + value per tier).
 
-### Story 10.3: Populate `achievements.json` With 27 Achievements
-
-As a developer,
-I want `assets/data/achievements.json` with all 27 achievements (condition predicate, reward),
-So that the achievement system has real content covering milestone / activity / completion categories.
-
-**Acceptance Criteria:**
-
 **Given** `assets/data/achievements.json`
 **When** parsed
 **Then** exactly 27 achievements load, spanning the three GDD categories (milestone, activity, completion).
@@ -1825,7 +1742,7 @@ So that the achievement system has real content covering milestone / activity / 
 **When** the `AchievementEvaluator` runs against varying game states
 **Then** the condition function evaluates correctly (unit-tested with fixture states).
 
-### Story 10.4: `BalanceConfig` Constants Pinned and Playtest-Reviewed
+### Story 10.2: `BalanceConfig` Constants Pinned and Playtest-Reviewed
 
 As a game designer,
 I want `lib/game/config/balance.dart` to contain all tunable constants (`ipCostMultiplier`, `leaderUnlockIpLevel`, `maxIpLevel`, `boostMultiplier`, `boostDurationSeconds`, `boostIntelCost`, `goldenSpawnProbability`, `goldenMinMultiplier`, `goldenMaxMultiplier`, `goldenDurationSeconds`, `missionCatalogSize`, `ipMultPerLevel`, `offlineCapHours`, etc.),
@@ -1845,7 +1762,7 @@ So that all balance tuning happens in one file without touching code.
 **When** measured
 **Then** pacing matches "Mid Game (Days 2-7)" — adjustments made as needed.
 
-### Story 10.5: Instrumented Late-Game Run and Final Tuning Pass
+### Story 10.3: Instrumented Late-Game Run and Final Tuning Pass
 
 As a game designer,
 I want a debug cheat panel that fast-forwards to late-game states (fully unlocked continents 1–4, partial 5+) and an instrumentation dump of effective rates per continent,
@@ -1871,11 +1788,11 @@ So that I can observe and tune late-game pacing walls without grinding.
 
 **Goal:** Every interactive widget wrapped in `Semantics`. Non-color cues on country states. Touch targets meet platform minimums. 60fps sustained on low-end Android. Cold start < 3s. App size < 50MB.
 
-### Story 11.1: Semantics Labels on Every Interactive Widget
+### Story 11.1: Accessibility Pass — Semantics, Non-Color Cues, and Touch Targets
 
-As a player using a screen reader (VoiceOver / TalkBack),
-I want every button, card, country, and interactive element to announce its purpose and state,
-So that I can play the game without visual access.
+As a player using a screen reader, having color blindness, or with limited dexterity,
+I want every interactive element to be screen-reader labelled, distinguishable without color, and large enough to tap reliably,
+So that the game is playable regardless of accessibility needs.
 
 **Acceptance Criteria:**
 
@@ -1885,19 +1802,11 @@ So that I can play the game without visual access.
 
 **Given** map countries (rendered via `CustomPainter`, not widgets)
 **When** a screen reader focuses the map region
-**Then** a `Semantics` layer or `MergeSemantics` exposes a list of focusable country regions each announced as "{countryName}, {state}, tap to {action}" — exact implementation (semantics_explorer / custom SemanticsNode layer) documented in the story.
+**Then** a `Semantics` layer or `MergeSemantics` exposes focusable country regions each announced as "{countryName}, {state}, tap to {action}" — exact implementation documented in the story.
 
 **Given** widget tests
 **When** run with a11y checks
 **Then** no interactive widget is missing a label.
-
-### Story 11.2: Non-Color Cues on Country States (Color-Blind Support)
-
-As a color-blind player,
-I want country states distinguishable by more than color,
-So that I can tell locked vs ready vs automated without relying on hue.
-
-**Acceptance Criteria:**
 
 **Given** a country in each state (locked / generating / ready / automated)
 **When** rendered
@@ -1905,15 +1814,7 @@ So that I can tell locked vs ready vs automated without relying on hue.
 
 **Given** a high-contrast simulation or color-blind filter applied
 **When** the map renders
-**Then** all four states are distinguishable (verified by visual review during QA — documented criterion, no automated check).
-
-### Story 11.3: Touch Targets Meet Platform a11y Minimums
-
-As a player with limited dexterity or on a small screen,
-I want tappable UI elements to be at least 44pt (iOS) / 48dp (Android),
-So that I can tap reliably.
-
-**Acceptance Criteria:**
+**Then** all four states are distinguishable (verified by visual review during QA — no automated check).
 
 **Given** any tappable widget in UI code
 **When** audited
@@ -1923,7 +1824,7 @@ So that I can tap reliably.
 **When** a country renders small at low zoom
 **Then** the hit-test accepts taps within a small radius around tiny-country polygons (documented padding in px), making them reachable without maxing zoom.
 
-### Story 11.4: Cold-Start Performance Profiling and Fix
+### Story 11.2: Cold-Start Performance Profiling and Fix
 
 As a player launching the app
 I want cold start to be under 3 seconds on mid-range devices,
@@ -1939,7 +1840,7 @@ So that the game feels responsive and I don't lose interest before it loads.
 **When** the startup trace is analyzed
 **Then** GeoJSON parsing, content JSON loading, and Drift boot are identified; any single step > 500ms is optimized (deferred parsing, background isolate, cached Path blob, etc.) until the total fits under 3s.
 
-### Story 11.5: 60fps Map Performance on Low-End Android (API 21)
+### Story 11.3: 60fps Map Performance on Low-End Android (API 21)
 
 As a player on a low-end Android device,
 I want the world map to pan, zoom, and display animations at 60fps,
@@ -1955,7 +1856,7 @@ So that the core gameplay surface feels smooth regardless of my phone.
 **When** Epic 11 runs
 **Then** those optimizations are implemented (e.g. `Path → Picture` cache invalidated only on country-state version change).
 
-### Story 11.6: App Size Under 50MB
+### Story 11.4: App Size Under 50MB
 
 As a player downloading the app
 I want the install footprint to be under 50MB,

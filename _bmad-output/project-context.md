@@ -339,7 +339,7 @@ analyzer:
 linter:
   rules:
     - always_declare_return_types
-    - avoid_returning_null_for_future
+    # avoid_returning_null_for_future — removed in Dart 3.3.0; do not re-add
     - prefer_final_fields
     - prefer_final_locals
     - require_trailing_commas
