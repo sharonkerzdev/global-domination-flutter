@@ -1,6 +1,6 @@
 ---
 name: gds-code-review
-description: 'Review code changes adversarially using parallel review layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) with structured triage into actionable categories. Use when the user says "run code review" or "review this code"'
+description: 'Review code changes adversarially using parallel review layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) with structured triage into actionable categories. Optional workflow flag `continuous_to_completion` (see customize.toml / _bmad/custom/gds-code-review.user.toml) runs through Step 4 without interactive HALTs and applies all patch findings automatically. Use when the user says "run code review" or "review this code"'
 ---
 
 # Code Review Workflow
@@ -71,7 +71,7 @@ This uses **step-file architecture** for disciplined execution:
 
 1. **READ COMPLETELY**: Read the entire step file before acting
 2. **FOLLOW SEQUENCE**: Execute sections in order
-3. **WAIT FOR INPUT**: Halt at checkpoints and wait for human
+3. **WAIT FOR INPUT**: Halt at checkpoints and wait for human **unless** merged workflow customization has `continuous_to_completion = true` — then follow each step file’s **Continuous mode** branches and do not halt for those checkpoints.
 4. **LOAD NEXT**: When directed, read fully and follow the next step file
 
 ### Critical Rules (NO EXCEPTIONS)
@@ -79,8 +79,8 @@ This uses **step-file architecture** for disciplined execution:
 - **NEVER** load multiple step files simultaneously
 - **ALWAYS** read entire step file before execution
 - **NEVER** skip steps or optimize the sequence
-- **ALWAYS** follow the exact instructions in the step file
-- **ALWAYS** halt at checkpoints and wait for human input
+- **ALWAYS** follow the exact instructions in the step file (including **Continuous mode** overrides when `continuous_to_completion` is true)
+- **When `continuous_to_completion` is false**: **ALWAYS** halt at checkpoints and wait for human input as written in the step files
 
 
 ## INITIALIZATION SEQUENCE

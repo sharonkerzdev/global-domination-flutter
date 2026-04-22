@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/achievement_def.dart';
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/content/country_def.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
@@ -40,7 +41,7 @@ abstract final class IncomeCalculator {
         Decimal.one +
         Decimal.fromInt(country.ipLevel) * BalanceConfig.ipMultPerLevel;
     rate *= _leaderMultiplier(country.leaderTier);
-    rate *= _continentCompletionBonus(country, state, content);
+    rate *= _continentCompletionBonus(def, state, content);
     rate *= Decimal.one + _sumAchievementMultipliers(state, content);
     rate *= _globalUpgradeAmplifier(state, content);
     rate *= state.goldenOpportunityMultiplier;
@@ -53,12 +54,10 @@ abstract final class IncomeCalculator {
       BalanceConfig.leaderMultiplier(tier);
 
   static Decimal _continentCompletionBonus(
-    CountryState country,
+    CountryDef def,
     GameState state,
     ContentRegistry content,
   ) {
-    final def = content.countries[country.id];
-    if (def == null) return Decimal.one;
     final continentId = def.continent;
     if (state.continentCompletions[continentId] != true) return Decimal.one;
     final continentDef = content.continents[continentId];
@@ -102,5 +101,56 @@ abstract final class IncomeCalculator {
       }
     }
     return product;
+  }
+
+  /// Geometric cost for `bulk` consecutive IP levels starting at [currentLevel].
+  ///
+  /// `B = def.baseInfluence × BalanceConfig.ipUpgradeBaseInfluenceScale`,
+  /// `r = BalanceConfig.ipUpgradeCostMultiplier`, per-level at level L is `B×r^L`
+  /// (sum matches `B × r^L × (r^k - 1) / (r - 1)`). Implemented as a [Decimal] sum
+  /// to avoid [Rational] from division.
+  static Influence leaderHireCost(CountryDef def) {
+    return Influence(
+      def.baseInfluence * BalanceConfig.leaderHireBaseInfluenceScale,
+    );
+  }
+
+  /// [fromTier] must be [LeaderTier.tier1] (→ tier2) or [LeaderTier.tier2] (→ tier3).
+  static Influence leaderUpgradeCost(CountryDef def, LeaderTier fromTier) {
+    final scale = switch (fromTier) {
+      LeaderTier.tier1 => BalanceConfig.leaderUpgradeT1T2BaseInfluenceScale,
+      LeaderTier.tier2 => BalanceConfig.leaderUpgradeT2T3BaseInfluenceScale,
+      _ => throw ArgumentError.value(
+        fromTier,
+        'fromTier',
+        'only tier1 and tier2 can upgrade',
+      ),
+    };
+    return Influence(def.baseInfluence * scale);
+  }
+
+  static Influence upgradeCost(CountryDef def, int currentLevel, int bulk) {
+    assert(currentLevel >= 0, 'currentLevel must be non-negative');
+    assert(bulk >= 1, 'bulk must be at least 1');
+    final b = def.baseInfluence * BalanceConfig.ipUpgradeBaseInfluenceScale;
+    final r = BalanceConfig.ipUpgradeCostMultiplier;
+    var total = Decimal.zero;
+    for (var i = 0; i < bulk; i++) {
+      final level = currentLevel + i;
+      total += b * _powDecimal(r, level);
+    }
+    return Influence(total);
+  }
+
+  static Decimal _powDecimal(Decimal base, int exp) {
+    if (exp < 0) {
+      throw ArgumentError.value(exp, 'exp', 'must be non-negative');
+    }
+    if (exp == 0) return Decimal.one;
+    var out = Decimal.one;
+    for (var i = 0; i < exp; i++) {
+      out *= base;
+    }
+    return out;
   }
 }

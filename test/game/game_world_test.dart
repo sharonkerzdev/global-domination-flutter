@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_error.dart';
@@ -400,6 +401,123 @@ void main() {
       await sub.cancel();
       w.dispose();
     });
+
+    test(
+      'applyCommand(PurchaseUpgrade) updates state and emits UpgradePurchased',
+      () async {
+        final egypt = CountryState(
+          id: CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 1,
+          leaderTier: LeaderTier.none,
+          bankedInfluence: Influence.zero,
+          lastCollectedAt: null,
+        );
+        final def = content.countries[const CountryId('egypt')]!;
+        final cost = IncomeCalculator.upgradeCost(def, 1, 1);
+        final s = GameState(
+          countries: {CountryId('egypt'): egypt},
+          totalInfluence: cost,
+        );
+        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        final r = w.applyCommand(
+          const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1),
+        );
+        expect(r.isSuccess, isTrue);
+        expect(w.state.countries[CountryId('egypt')]!.ipLevel, equals(2));
+        expect(w.state.totalInfluence, equals(Influence.zero));
+        await Future<void>.delayed(Duration.zero);
+        expect(events, isA<List<GameEvent>>());
+        expect(events, hasLength(1));
+        expect(events.first, isA<UpgradePurchased>());
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'applyCommand(HireLeader) updates leader tier and emits LeaderHired',
+      () async {
+        final cDef = content.countries[const CountryId('egypt')]!;
+        final hireCost = IncomeCalculator.leaderHireCost(cDef);
+        final egypt = CountryState(
+          id: CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 10,
+          leaderTier: LeaderTier.none,
+          bankedInfluence: Influence.zero,
+          lastCollectedAt: null,
+        );
+        final s = GameState(
+          countries: {CountryId('egypt'): egypt},
+          totalInfluence: hireCost,
+        );
+        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        final r = w.applyCommand(
+          const HireLeader(countryId: CountryId('egypt')),
+        );
+        expect(r.isSuccess, isTrue);
+        expect(
+          w.state.countries[CountryId('egypt')]!.leaderTier,
+          LeaderTier.tier1,
+        );
+        expect(w.state.totalInfluence, Influence.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(events, hasLength(1));
+        expect(events.first, isA<LeaderHired>());
+        final h = events.first as LeaderHired;
+        expect(h.cost, equals(hireCost));
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'applyCommand(UpgradeLeader) updates tier and emits LeaderUpgraded',
+      () async {
+        final cDef = content.countries[const CountryId('egypt')]!;
+        final upgradeCost = IncomeCalculator.leaderUpgradeCost(
+          cDef,
+          LeaderTier.tier1,
+        );
+        final egypt = CountryState(
+          id: CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 10,
+          leaderTier: LeaderTier.tier1,
+          bankedInfluence: Influence.zero,
+          lastCollectedAt: null,
+        );
+        final s = GameState(
+          countries: {CountryId('egypt'): egypt},
+          totalInfluence: upgradeCost,
+        );
+        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        final r = w.applyCommand(
+          const UpgradeLeader(countryId: CountryId('egypt')),
+        );
+        expect(r.isSuccess, isTrue);
+        expect(
+          w.state.countries[CountryId('egypt')]!.leaderTier,
+          LeaderTier.tier2,
+        );
+        expect(w.state.totalInfluence, Influence.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(events, hasLength(1));
+        expect(events.first, isA<LeaderUpgraded>());
+        final ev = events.first as LeaderUpgraded;
+        expect(ev.newTier, LeaderTier.tier2);
+        expect(ev.cost, equals(upgradeCost));
+        await sub.cancel();
+        w.dispose();
+      },
+    );
   });
 
   group('GameWorld.applyCommand TapCountry collect flow (Story 2.6)', () {

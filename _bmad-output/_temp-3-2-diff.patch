@@ -1,0 +1,703 @@
+﻿diff --git a/_bmad-output/implementation-artifacts/sprint-status.yaml b/_bmad-output/implementation-artifacts/sprint-status.yaml
+index 510ce0a..e2c16a1 100644
+--- a/_bmad-output/implementation-artifacts/sprint-status.yaml
++++ b/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@ -1,5 +1,8 @@
+ # generated: 2026-04-21
+ # last_updated: 2026-04-22
++# 2026-04-22: Story 3-2 implemented ΓåÆ review (PurchaseUpgrade, UpgradePurchased, IncomeCalculator.upgradeCost, upgrades_reducer; tests)
++# 2026-04-22: Story 3-2 ΓåÆ in-progress (IP upgrade single and bulk purchase)
++# 2026-04-22: Story 3-2 created ΓåÆ ready-for-dev (IP upgrade single and bulk purchase)
+ # 2026-04-22: Story 3-1 created ΓåÆ ready-for-dev (IncomeCalculator.compute pure function + BalanceConfig + GameState multiplier-field extension; tickCountries refactored through compute; grep-guard test)
+ # 2026-04-22: Epic 3 status backlog ΓåÆ in-progress (first story created)
+ # 2026-04-22: Story 2-7 code review passed ΓåÆ done (0 HIGH, 1 MEDIUM + 2 LOW fixed: gameWorldProvider empty-content assert landmine removed via initialState fallback, seed sets lastCollectedAt: null explicitly + tests assert it, de-duped test 4.6; 401 tests pass)
+@@ -52,6 +55,7 @@
+ 
+ generated: 2026-04-21
+ last_updated: 2026-04-22
++# 2026-04-22: Story 3-2 created ΓåÆ ready-for-dev (IP upgrade single and bulk purchase)
+ # 2026-04-22: Story 3-1 created ΓåÆ ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
+ # 2026-04-22: Story 2-4 code-review ΓåÆ done
+ # 2026-04-22: Story 2-2 code-review ΓåÆ done
+@@ -110,8 +114,8 @@ development_status:
+ 
+   # Epic 3: Power Up ΓÇö Upgrades, Leaders, and Automation
+   epic-3: in-progress
+-  3-1-authoritative-incomecalculator-compute-function: review
+-  3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: backlog
++  3-1-authoritative-incomecalculator-compute-function: done
++  3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: review
+   3-3-leader-hire-and-tier-system: backlog
+   epic-3-retrospective: optional
+ 
+diff --git a/lib/game/config/balance.dart b/lib/game/config/balance.dart
+index 33719c4..1ad2c36 100644
+--- a/lib/game/config/balance.dart
++++ b/lib/game/config/balance.dart
+@@ -5,6 +5,14 @@ import 'package:global_domination/game/features/leaders/leader_tier.dart';
+ /// Balance constants. Values pinned here are placeholders until Epic 10 final
+ /// tuning pass. Re-tuning changes happen ONLY in this file + content JSON.
+ abstract final class BalanceConfig {
++  /// Per-level cost multiplier for IP upgrades (1.5^L curve); Epic 10 retune target.
++  static final Decimal ipUpgradeCostMultiplier = Decimal.parse('1.5');
++
++  /// B in `cost = B ├ù 1.5^L` ΓÇö `B = baseInfluence ├ù` this (Epic 10 may split `baseCost`).
++  static final Decimal ipUpgradeBaseInfluenceScale = Decimal.fromInt(10);
++
++  static const int maxIpLevel = 200;
++
+   /// Placeholder ΓÇö Epic 10 retunes; do not change here without Epic 10 coordination.
+   static final Decimal ipMultPerLevel = Decimal.parse('0.1');
+ 
+diff --git a/lib/game/features/economy/income_calculator.dart b/lib/game/features/economy/income_calculator.dart
+index f4471b0..441697c 100644
+--- a/lib/game/features/economy/income_calculator.dart
++++ b/lib/game/features/economy/income_calculator.dart
+@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
+ import 'package:global_domination/game/config/balance.dart';
+ import 'package:global_domination/game/content/achievement_def.dart';
+ import 'package:global_domination/game/content/content_registry.dart';
++import 'package:global_domination/game/content/country_def.dart';
+ import 'package:global_domination/game/features/countries/country_state.dart';
+ import 'package:global_domination/game/features/leaders/leader_tier.dart';
+ import 'package:global_domination/game/game_state.dart';
+@@ -40,7 +41,7 @@ abstract final class IncomeCalculator {
+         Decimal.one +
+         Decimal.fromInt(country.ipLevel) * BalanceConfig.ipMultPerLevel;
+     rate *= _leaderMultiplier(country.leaderTier);
+-    rate *= _continentCompletionBonus(country, state, content);
++    rate *= _continentCompletionBonus(def, state, content);
+     rate *= Decimal.one + _sumAchievementMultipliers(state, content);
+     rate *= _globalUpgradeAmplifier(state, content);
+     rate *= state.goldenOpportunityMultiplier;
+@@ -53,12 +54,10 @@ abstract final class IncomeCalculator {
+       BalanceConfig.leaderMultiplier(tier);
+ 
+   static Decimal _continentCompletionBonus(
+-    CountryState country,
++    CountryDef def,
+     GameState state,
+     ContentRegistry content,
+   ) {
+-    final def = content.countries[country.id];
+-    if (def == null) return Decimal.one;
+     final continentId = def.continent;
+     if (state.continentCompletions[continentId] != true) return Decimal.one;
+     final continentDef = content.continents[continentId];
+@@ -103,4 +102,35 @@ abstract final class IncomeCalculator {
+     }
+     return product;
+   }
++
++  /// Geometric cost for `bulk` consecutive IP levels starting at [currentLevel].
++  ///
++  /// `B = def.baseInfluence ├ù BalanceConfig.ipUpgradeBaseInfluenceScale`,
++  /// `r = BalanceConfig.ipUpgradeCostMultiplier`, per-level at level L is `B├ùr^L`
++  /// (sum matches `B ├ù r^L ├ù (r^k - 1) / (r - 1)`). Implemented as a [Decimal] sum
++  /// to avoid [Rational] from division.
++  static Influence upgradeCost(CountryDef def, int currentLevel, int bulk) {
++    assert(currentLevel >= 0, 'currentLevel must be non-negative');
++    assert(bulk >= 1, 'bulk must be at least 1');
++    final b = def.baseInfluence * BalanceConfig.ipUpgradeBaseInfluenceScale;
++    final r = BalanceConfig.ipUpgradeCostMultiplier;
++    var total = Decimal.zero;
++    for (var i = 0; i < bulk; i++) {
++      final level = currentLevel + i;
++      total += b * _powDecimal(r, level);
++    }
++    return Influence(total);
++  }
++
++  static Decimal _powDecimal(Decimal base, int exp) {
++    if (exp < 0) {
++      throw ArgumentError.value(exp, 'exp', 'must be non-negative');
++    }
++    if (exp == 0) return Decimal.one;
++    var out = Decimal.one;
++    for (var i = 0; i < exp; i++) {
++      out *= base;
++    }
++    return out;
++  }
+ }
+diff --git a/lib/game/features/upgrades/upgrades_reducer.dart b/lib/game/features/upgrades/upgrades_reducer.dart
+new file mode 100644
+index 0000000..28cd3c3
+--- /dev/null
++++ b/lib/game/features/upgrades/upgrades_reducer.dart
+@@ -0,0 +1,65 @@
++import 'package:global_domination/game/config/balance.dart';
++import 'package:global_domination/game/content/content_registry.dart';
++import 'package:global_domination/game/features/economy/income_calculator.dart';
++import 'package:global_domination/game/game_command.dart';
++import 'package:global_domination/game/game_error.dart';
++import 'package:global_domination/game/game_event.dart';
++import 'package:global_domination/game/game_state.dart';
++import 'package:global_domination/game/values/result.dart';
++
++Result<(GameState, GameEvent?), GameError> applyPurchaseUpgrade(
++  GameState state,
++  ContentRegistry content,
++  PurchaseUpgrade cmd, {
++  required DateTime now,
++}) {
++  if (cmd.bulk < 1) {
++    return Result.failure(
++      GameError.userInvalidTarget(detail: 'bulk must be at least 1'),
++    );
++  }
++
++  final country = state.countries[cmd.countryId];
++  if (country == null) {
++    return Result.failure(GameError.internalMissingCountry(id: cmd.countryId));
++  }
++  if (!country.unlocked) {
++    return Result.failure(
++      GameError.userLocked(reason: 'country ${cmd.countryId.value} is locked'),
++    );
++  }
++  if (country.ipLevel >= BalanceConfig.maxIpLevel) {
++    return const Result.failure(GameError.userLocked(reason: 'max_level'));
++  }
++
++  final def = content.countries[cmd.countryId];
++  if (def == null) {
++    return Result.failure(GameError.internalMissingCountry(id: cmd.countryId));
++  }
++
++  final room = BalanceConfig.maxIpLevel - country.ipLevel;
++  final buy = cmd.bulk < room ? cmd.bulk : room;
++  if (buy < 1) {
++    return const Result.failure(GameError.userLocked(reason: 'max_level'));
++  }
++
++  final cost = IncomeCalculator.upgradeCost(def, country.ipLevel, buy);
++  if (state.totalInfluence < cost) {
++    return Result.failure(GameError.userInsufficientFunds(required: cost));
++  }
++
++  final newIp = country.ipLevel + buy;
++  final newCountry = country.copyWith(ipLevel: newIp);
++  final newState = state.copyWith(
++    countries: {...state.countries, cmd.countryId: newCountry},
++    totalInfluence: state.totalInfluence - cost,
++  );
++  final event = UpgradePurchased(
++    now,
++    countryId: cmd.countryId,
++    levelsAdded: buy,
++    bulkRequested: cmd.bulk,
++    totalCost: cost,
++  );
++  return Result.success((newState, event));
++}
+diff --git a/lib/game/game_command.dart b/lib/game/game_command.dart
+index 9b6ed36..c5dfee2 100644
+--- a/lib/game/game_command.dart
++++ b/lib/game/game_command.dart
+@@ -33,3 +33,26 @@ final class TapCountry extends GameCommand {
+   @override
+   String toString() => 'TapCountry(${countryId.value})';
+ }
++
++final class PurchaseUpgrade extends GameCommand {
++  const PurchaseUpgrade({required this.countryId, this.bulk = 1})
++    : assert(bulk >= 1, 'bulk must be at least 1');
++
++  final CountryId countryId;
++
++  /// Number of levels to buy (1, 10, 25, ΓÇª); capped in reducer by [BalanceConfig.maxIpLevel].
++  final int bulk;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is PurchaseUpgrade &&
++          countryId == other.countryId &&
++          bulk == other.bulk);
++
++  @override
++  int get hashCode => Object.hash(countryId, bulk);
++
++  @override
++  String toString() => 'PurchaseUpgrade(${countryId.value}, bulk: $bulk)';
++}
+diff --git a/lib/game/game_event.dart b/lib/game/game_event.dart
+index 1e28a20..e99f57f 100644
+--- a/lib/game/game_event.dart
++++ b/lib/game/game_event.dart
+@@ -48,3 +48,37 @@ final class CountryTapped extends GameEvent {
+   String toString() =>
+       'CountryTapped(at: $at, countryId: $countryId, collected: $collected)';
+ }
++
++final class UpgradePurchased extends GameEvent {
++  final CountryId countryId;
++  final int levelsAdded;
++  final int bulkRequested;
++  final Influence totalCost;
++
++  UpgradePurchased(
++    super.at, {
++    required this.countryId,
++    required this.levelsAdded,
++    required this.bulkRequested,
++    required this.totalCost,
++  });
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is UpgradePurchased &&
++          at == other.at &&
++          countryId == other.countryId &&
++          levelsAdded == other.levelsAdded &&
++          bulkRequested == other.bulkRequested &&
++          totalCost == other.totalCost);
++
++  @override
++  int get hashCode =>
++      Object.hash(at, countryId, levelsAdded, bulkRequested, totalCost);
++
++  @override
++  String toString() =>
++      'UpgradePurchased(at: $at, countryId: $countryId, levelsAdded: $levelsAdded, '
++      'bulkRequested: $bulkRequested, totalCost: $totalCost)';
++}
+diff --git a/lib/game/game_world.dart b/lib/game/game_world.dart
+index ad1d97d..6192533 100644
+--- a/lib/game/game_world.dart
++++ b/lib/game/game_world.dart
+@@ -3,6 +3,7 @@ import 'dart:async';
+ import 'package:global_domination/game/content/content_registry.dart';
+ import 'package:global_domination/game/features/countries/countries_collect_reducer.dart';
+ import 'package:global_domination/game/features/countries/countries_reducer.dart';
++import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
+ import 'package:global_domination/game/game_command.dart';
+ import 'package:global_domination/game/game_error.dart';
+ import 'package:global_domination/game/game_event.dart';
+@@ -43,6 +44,7 @@ class GameWorld {
+     return switch (cmd) {
+       Noop() => const Result.success(null),
+       TapCountry() => _applyTapCountry(cmd),
++      PurchaseUpgrade() => _applyPurchaseUpgrade(cmd),
+     };
+   }
+ 
+@@ -55,6 +57,20 @@ class GameWorld {
+     });
+   }
+ 
++  Result<void, GameError> _applyPurchaseUpgrade(PurchaseUpgrade cmd) {
++    final result = applyPurchaseUpgrade(
++      _state,
++      _content,
++      cmd,
++      now: _clock.now(),
++    );
++    return result.map((tuple) {
++      final (newState, event) = tuple;
++      _state = newState;
++      if (event != null) _events.add(event);
++    });
++  }
++
+   void dispose() {
+     if (_events.isClosed) return;
+     _events.close();
+diff --git a/test/game/features/economy/income_calculator_test.dart b/test/game/features/economy/income_calculator_test.dart
+index fdd858a..c9744f9 100644
+--- a/test/game/features/economy/income_calculator_test.dart
++++ b/test/game/features/economy/income_calculator_test.dart
+@@ -3,7 +3,9 @@ import 'dart:convert';
+ import 'package:decimal/decimal.dart';
+ import 'package:test/test.dart';
+ 
++import 'package:global_domination/game/config/balance.dart';
+ import 'package:global_domination/game/content/content_registry.dart';
++import 'package:global_domination/game/content/country_def.dart';
+ import 'package:global_domination/game/features/countries/country_state.dart';
+ import 'package:global_domination/game/features/economy/income_calculator.dart';
+ import 'package:global_domination/game/features/leaders/leader_tier.dart';
+@@ -399,4 +401,40 @@ void main() {
+     expected *= Decimal.parse('2');
+     expect(out.value, equals(expected));
+   });
++
++  group('upgradeCost', () {
++    late CountryDef egyptDef;
++
++    setUp(() {
++      egyptDef = content.countries[const CountryId('egypt')]!;
++    });
++
++    test('single level at L: B ├ù 1.5^L (AC4)', () {
++      const l = 7;
++      final b =
++          egyptDef.baseInfluence * BalanceConfig.ipUpgradeBaseInfluenceScale;
++      final r = BalanceConfig.ipUpgradeCostMultiplier;
++      var expected = b;
++      for (var i = 0; i < l; i++) {
++        expected *= r;
++      }
++      expect(
++        IncomeCalculator.upgradeCost(egyptDef, l, 1).value,
++        equals(expected),
++      );
++    });
++
++    test('bulk 10 and 25 match successive single-level costs (AC8)', () {
++      for (final bulk in [10, 25]) {
++        for (final l in [0, 3, 12, 50]) {
++          if (l + bulk > 200) continue;
++          var sum = Influence.zero;
++          for (var i = 0; i < bulk; i++) {
++            sum = sum + IncomeCalculator.upgradeCost(egyptDef, l + i, 1);
++          }
++          expect(IncomeCalculator.upgradeCost(egyptDef, l, bulk), equals(sum));
++        }
++      }
++    });
++  });
+ }
+diff --git a/test/game/features/upgrades/upgrades_reducer_test.dart b/test/game/features/upgrades/upgrades_reducer_test.dart
+new file mode 100644
+index 0000000..c70f6b0
+--- /dev/null
++++ b/test/game/features/upgrades/upgrades_reducer_test.dart
+@@ -0,0 +1,195 @@
++import 'dart:convert';
++
++import 'package:decimal/decimal.dart';
++import 'package:test/test.dart';
++
++import 'package:global_domination/game/config/balance.dart';
++import 'package:global_domination/game/content/content_registry.dart';
++import 'package:global_domination/game/features/countries/country_state.dart';
++import 'package:global_domination/game/features/economy/income_calculator.dart';
++import 'package:global_domination/game/features/leaders/leader_tier.dart';
++import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
++import 'package:global_domination/game/game_command.dart';
++import 'package:global_domination/game/game_error.dart';
++import 'package:global_domination/game/game_event.dart';
++import 'package:global_domination/game/game_state.dart';
++import 'package:global_domination/game/values/country_id.dart';
++import 'package:global_domination/game/values/influence.dart';
++
++ContentRegistry _content() {
++  final continents = jsonEncode([
++    {
++      'id': 'africa',
++      'name': 'Africa',
++      'unlockThreshold': '0',
++      'completionBonus': '0.25',
++      'milestoneRewards': <dynamic>[],
++    },
++  ]);
++  final countries = jsonEncode([
++    {
++      'id': 'egypt',
++      'continent': 'africa',
++      'baseInfluence': '1',
++      'unlockCost': '0',
++      'tier': 1,
++      'generationSeconds': 1,
++    },
++  ]);
++  return ContentRegistry.fromJsonStrings(
++    countriesJson: countries,
++    continentsJson: continents,
++    leadersJson: '[]',
++    achievementsJson: '[]',
++    missionsJson: '[]',
++    globalUpgradesJson: '[]',
++  );
++}
++
++GameState _egyptState({
++  required int ipLevel,
++  required Influence total,
++  bool unlocked = true,
++}) {
++  return GameState(
++    countries: {
++      const CountryId('egypt'): CountryState(
++        id: const CountryId('egypt'),
++        unlocked: unlocked,
++        ipLevel: ipLevel,
++        leaderTier: LeaderTier.none,
++        bankedInfluence: Influence.zero,
++        lastCollectedAt: null,
++      ),
++    },
++    totalInfluence: total,
++  );
++}
++
++void main() {
++  final content = _content();
++  final def = content.countries[const CountryId('egypt')]!;
++  final now = DateTime.utc(2026, 4, 22);
++
++  group('applyPurchaseUpgrade', () {
++    test('1x: deducts cost, increments ipLevel, emits UpgradePurchased', () {
++      final startLevel = 1;
++      final cost = IncomeCalculator.upgradeCost(def, startLevel, 1);
++      final state = _egyptState(ipLevel: startLevel, total: cost);
++      final cmd = const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1);
++      final r = applyPurchaseUpgrade(state, content, cmd, now: now);
++      expect(r.isSuccess, isTrue);
++      final (next, ev) = r.valueOrNull!;
++      expect(next.countries[const CountryId('egypt')]!.ipLevel, equals(2));
++      expect(next.totalInfluence, equals(Influence.zero));
++      expect(ev, isA<UpgradePurchased>());
++      final u = ev! as UpgradePurchased;
++      expect(u.levelsAdded, equals(1));
++      expect(u.bulkRequested, equals(1));
++      expect(u.totalCost, equals(cost));
++    });
++
++    test('insufficient funds: no state change', () {
++      final state = _egyptState(
++        ipLevel: 1,
++        total: IncomeCalculator.upgradeCost(def, 1, 1) - Influence(Decimal.one),
++      );
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1),
++        now: now,
++      );
++      expect(r.isFailure, isTrue);
++      expect(r.errorOrNull, isA<InsufficientFunds>());
++      final err = r.errorOrNull! as InsufficientFunds;
++      expect(err.required, equals(IncomeCalculator.upgradeCost(def, 1, 1)));
++    });
++
++    test('max level: userLocked max_level', () {
++      final state = _egyptState(
++        ipLevel: BalanceConfig.maxIpLevel,
++        total: Influence(Decimal.parse('1000000000000000000000000000000')),
++      );
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1),
++        now: now,
++      );
++      expect(r.isFailure, isTrue);
++      expect(r.errorOrNull, isA<Locked>());
++      expect((r.errorOrNull! as Locked).reason, equals('max_level'));
++    });
++
++    test('10x: one event, ip +10, full cost', () {
++      const start = 5;
++      final fullCost = IncomeCalculator.upgradeCost(def, start, 10);
++      final state = _egyptState(ipLevel: start, total: fullCost);
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 10),
++        now: now,
++      );
++      expect(r.isSuccess, isTrue);
++      final (next, ev) = r.valueOrNull!;
++      expect(next.countries[const CountryId('egypt')]!.ipLevel, equals(15));
++      final u = ev! as UpgradePurchased;
++      expect(u.levelsAdded, equals(10));
++      expect(u.bulkRequested, equals(10));
++      expect(u.totalCost, equals(fullCost));
++    });
++
++    test('partial cap at 200: levelsAdded and cost match actual buy', () {
++      final start = 198;
++      final buy = 2;
++      final cost = IncomeCalculator.upgradeCost(def, start, buy);
++      final state = _egyptState(ipLevel: start, total: cost);
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 10),
++        now: now,
++      );
++      expect(r.isSuccess, isTrue);
++      final (next, ev) = r.valueOrNull!;
++      expect(next.countries[const CountryId('egypt')]!.ipLevel, equals(200));
++      final u = ev! as UpgradePurchased;
++      expect(u.levelsAdded, equals(2));
++      expect(u.bulkRequested, equals(10));
++      expect(u.totalCost, equals(cost));
++    });
++
++    test('cannot afford full (capped) stack: no partial buy', () {
++      final start = 198;
++      final fullCost = IncomeCalculator.upgradeCost(def, start, 2);
++      final state = _egyptState(
++        ipLevel: start,
++        total: fullCost - Influence(Decimal.one),
++      );
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 10),
++        now: now,
++      );
++      expect(r.isFailure, isTrue);
++      expect(r.errorOrNull, isA<InsufficientFunds>());
++      expect((r.errorOrNull! as InsufficientFunds).required, equals(fullCost));
++    });
++
++    test('locked country: userLocked', () {
++      final cost = IncomeCalculator.upgradeCost(def, 1, 1);
++      final state = _egyptState(ipLevel: 1, total: cost, unlocked: false);
++      final r = applyPurchaseUpgrade(
++        state,
++        content,
++        const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1),
++        now: now,
++      );
++      expect(r.isFailure, isTrue);
++      expect(r.errorOrNull, isA<Locked>());
++    });
++  });
++}
+diff --git a/test/game/game_command_test.dart b/test/game/game_command_test.dart
+index fc4f787..07508c7 100644
+--- a/test/game/game_command_test.dart
++++ b/test/game/game_command_test.dart
+@@ -32,6 +32,7 @@ void main() {
+       final result = switch (cmd) {
+         Noop() => 'noop',
+         TapCountry() => 'tap_country',
++        PurchaseUpgrade() => 'purchase',
+       };
+       expect(result, equals('noop'));
+     });
+@@ -75,8 +76,29 @@ void main() {
+       final result = switch (cmd) {
+         Noop() => 'noop',
+         TapCountry() => 'tap_country',
++        PurchaseUpgrade() => 'purchase',
+       };
+       expect(result, equals('tap_country'));
+     });
+   });
++
++  group('PurchaseUpgrade', () {
++    test('default bulk is 1', () {
++      const cmd = PurchaseUpgrade(countryId: CountryId('egypt'));
++      expect(cmd.bulk, equals(1));
++    });
++
++    test('exhaustive switch routes PurchaseUpgrade', () {
++      const GameCommand cmd = PurchaseUpgrade(
++        countryId: CountryId('egypt'),
++        bulk: 10,
++      );
++      final result = switch (cmd) {
++        Noop() => 'noop',
++        TapCountry() => 'tap_country',
++        PurchaseUpgrade() => 'purchase',
++      };
++      expect(result, equals('purchase'));
++    });
++  });
+ }
+diff --git a/test/game/game_event_test.dart b/test/game/game_event_test.dart
+index 9464236..ed9eff9 100644
+--- a/test/game/game_event_test.dart
++++ b/test/game/game_event_test.dart
+@@ -1,6 +1,9 @@
++import 'package:decimal/decimal.dart';
+ import 'package:test/test.dart';
+ 
+ import 'package:global_domination/game/game_event.dart';
++import 'package:global_domination/game/values/country_id.dart';
++import 'package:global_domination/game/values/influence.dart';
+ 
+ void main() {
+   group('Tick', () {
+@@ -41,8 +44,29 @@ void main() {
+       final result = switch (event) {
+         Tick() => 'tick',
+         CountryTapped() => 'country_tapped',
++        UpgradePurchased() => 'upgrade',
+       };
+       expect(result, equals('tick'));
+     });
+   });
++
++  group('UpgradePurchased', () {
++    final now = DateTime.utc(2026, 1, 1);
++
++    test('exhaustive switch routes UpgradePurchased', () {
++      final GameEvent event = UpgradePurchased(
++        now,
++        countryId: const CountryId('egypt'),
++        levelsAdded: 5,
++        bulkRequested: 10,
++        totalCost: Influence(Decimal.parse('100')),
++      );
++      final result = switch (event) {
++        Tick() => 'tick',
++        CountryTapped() => 'country_tapped',
++        UpgradePurchased() => 'upgrade',
++      };
++      expect(result, equals('upgrade'));
++    });
++  });
+ }
+diff --git a/test/game/game_world_test.dart b/test/game/game_world_test.dart
+index 64ffedb..22f1297 100644
+--- a/test/game/game_world_test.dart
++++ b/test/game/game_world_test.dart
+@@ -5,6 +5,7 @@ import 'package:test/test.dart';
+ 
+ import 'package:global_domination/game/content/content_registry.dart';
+ import 'package:global_domination/game/features/countries/country_state.dart';
++import 'package:global_domination/game/features/economy/income_calculator.dart';
+ import 'package:global_domination/game/features/leaders/leader_tier.dart';
+ import 'package:global_domination/game/game_command.dart';
+ import 'package:global_domination/game/game_error.dart';
+@@ -400,6 +401,41 @@ void main() {
+       await sub.cancel();
+       w.dispose();
+     });
++
++    test(
++      'applyCommand(PurchaseUpgrade) updates state and emits UpgradePurchased',
++      () async {
++        final egypt = CountryState(
++          id: CountryId('egypt'),
++          unlocked: true,
++          ipLevel: 1,
++          leaderTier: LeaderTier.none,
++          bankedInfluence: Influence.zero,
++          lastCollectedAt: null,
++        );
++        final def = content.countries[const CountryId('egypt')]!;
++        final cost = IncomeCalculator.upgradeCost(def, 1, 1);
++        final s = GameState(
++          countries: {CountryId('egypt'): egypt},
++          totalInfluence: cost,
++        );
++        final w = GameWorld(content: content, clock: clock, initialState: s);
++        final events = <GameEvent>[];
++        final sub = w.events.listen(events.add);
++        final r = w.applyCommand(
++          const PurchaseUpgrade(countryId: CountryId('egypt'), bulk: 1),
++        );
++        expect(r.isSuccess, isTrue);
++        expect(w.state.countries[CountryId('egypt')]!.ipLevel, equals(2));
++        expect(w.state.totalInfluence, equals(Influence.zero));
++        await Future<void>.delayed(Duration.zero);
++        expect(events, isA<List<GameEvent>>());
++        expect(events, hasLength(1));
++        expect(events.first, isA<UpgradePurchased>());
++        await sub.cancel();
++        w.dispose();
++      },
++    );
+   });
+ 
+   group('GameWorld.applyCommand TapCountry collect flow (Story 2.6)', () {

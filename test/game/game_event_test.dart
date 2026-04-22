@@ -1,6 +1,10 @@
+import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
 
+import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_event.dart';
+import 'package:global_domination/game/values/country_id.dart';
+import 'package:global_domination/game/values/influence.dart';
 
 void main() {
   group('Tick', () {
@@ -41,8 +45,67 @@ void main() {
       final result = switch (event) {
         Tick() => 'tick',
         CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
       };
       expect(result, equals('tick'));
+    });
+  });
+
+  group('UpgradePurchased', () {
+    final now = DateTime.utc(2026, 1, 1);
+
+    test('exhaustive switch routes UpgradePurchased', () {
+      final GameEvent event = UpgradePurchased(
+        now,
+        countryId: const CountryId('egypt'),
+        levelsAdded: 5,
+        bulkRequested: 10,
+        totalCost: Influence(Decimal.parse('100')),
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+      };
+      expect(result, equals('upgrade'));
+    });
+  });
+
+  group('LeaderHired / LeaderUpgraded', () {
+    final now = DateTime.utc(2026, 1, 1);
+
+    test('switch routes new events', () {
+      final hired = LeaderHired(
+        now,
+        countryId: const CountryId('egypt'),
+        cost: Influence(Decimal.parse('100')),
+      );
+      final upgraded = LeaderUpgraded(
+        now,
+        countryId: const CountryId('egypt'),
+        cost: Influence(Decimal.parse('200')),
+        newTier: LeaderTier.tier2,
+      );
+      final rh = switch (hired) {
+        LeaderHired() => 'h',
+        Tick() => 't',
+        CountryTapped() => 'c',
+        UpgradePurchased() => 'u',
+        LeaderUpgraded() => 'g',
+      };
+      final ru = switch (upgraded) {
+        LeaderUpgraded() => 'g',
+        Tick() => 't',
+        CountryTapped() => 'c',
+        UpgradePurchased() => 'u',
+        LeaderHired() => 'h',
+      };
+      expect(rh, equals('h'));
+      expect(ru, equals('g'));
     });
   });
 }

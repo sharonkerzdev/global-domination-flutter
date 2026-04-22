@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
+import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
@@ -28,10 +29,15 @@ Map<CountryId, CountryState> tickCountries(
     }
 
     final def = content.countries[entry.key];
-    if (def == null || def.generationSeconds <= 0) {
+    if (def == null) {
       updated[entry.key] = state;
       continue;
     }
+    if (def.generationSeconds <= 0) {
+      updated[entry.key] = state;
+      continue;
+    }
+    final hasLeader = state.leaderTier != LeaderTier.none;
 
     final ratePerSecond = IncomeCalculator.compute(state, gameState, content);
     if (ratePerSecond.isZero) {
@@ -40,7 +46,10 @@ Map<CountryId, CountryState> tickCountries(
     }
 
     final dtMicros = Decimal.fromInt(dt.inMicroseconds);
-    final genMicros = Decimal.fromInt(def.generationSeconds * 1000000);
+    // With a leader, accrue at true per-second rate (automation / continuous).
+    // Without, keep timer-gated pacing via [CountryDef.generationSeconds].
+    final periodSeconds = hasLeader ? 1 : def.generationSeconds;
+    final genMicros = Decimal.fromInt(periodSeconds * 1000000);
     final ratio = (dtMicros / genMicros).toDecimal(
       scaleOnInfinitePrecision: 18,
     );

@@ -32,6 +32,9 @@ void main() {
       final result = switch (cmd) {
         Noop() => 'noop',
         TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
       };
       expect(result, equals('noop'));
     });
@@ -75,8 +78,59 @@ void main() {
       final result = switch (cmd) {
         Noop() => 'noop',
         TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
       };
       expect(result, equals('tap_country'));
+    });
+  });
+
+  group('PurchaseUpgrade', () {
+    test('default bulk is 1', () {
+      const cmd = PurchaseUpgrade(countryId: CountryId('egypt'));
+      expect(cmd.bulk, equals(1));
+    });
+
+    test('exhaustive switch routes PurchaseUpgrade', () {
+      const GameCommand cmd = PurchaseUpgrade(
+        countryId: CountryId('egypt'),
+        bulk: 10,
+      );
+      final result = switch (cmd) {
+        Noop() => 'noop',
+        TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
+      };
+      expect(result, equals('purchase'));
+    });
+  });
+
+  group('HireLeader', () {
+    test('equality and toString', () {
+      const a = HireLeader(countryId: CountryId('egypt'));
+      const b = HireLeader(countryId: CountryId('egypt'));
+      expect(a, equals(b));
+      expect(
+        a.toString(),
+        equals('HireLeader(egypt)'),
+      );
+    });
+  });
+
+  group('UpgradeLeader', () {
+    test('switch routes UpgradeLeader', () {
+      const GameCommand cmd = UpgradeLeader(countryId: CountryId('egypt'));
+      final result = switch (cmd) {
+        Noop() => 'noop',
+        TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
+      };
+      expect(result, equals('upgrade_leader'));
     });
   });
 }

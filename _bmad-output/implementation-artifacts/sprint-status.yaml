@@ -1,5 +1,18 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-22
+# 2026-04-22: Story 4-5 created → ready-for-dev (Next-Unlock Teaser Data on State)
+# 2026-04-22: Story 4-4 created → ready-for-dev (Continent Completion Permanent Multiplier)
+# 2026-04-22: Story 4-3 created → ready-for-dev (Continent Milestone Rewards at 25/50/75/100 %)
+# 2026-04-22: Story 4-2 created → ready-for-dev (Unlock Continent at Influence Threshold)
+# 2026-04-22: Story 4-1 created → ready-for-dev (Unlock Next Country in Current Continent)
+# 2026-04-22: Epic 4 status backlog → in-progress (first story created)
+# 2026-04-22: Story 3-3 → review (Leader Hire and Tier System)
+# 2026-04-22: Story 3-3 → in-progress (Leader Hire and Tier System)
+# 2026-04-22: Story 3-3 created → ready-for-dev (Leader Hire and Tier System)
+# 2026-04-22: Story 3-2 code review passed → done (0 HIGH, 0 MEDIUM; patched invariant guards for negative ipLevel and non-positive baseInfluence, added defensive reducer tests)
+# 2026-04-22: Story 3-2 implemented → review (PurchaseUpgrade, UpgradePurchased, IncomeCalculator.upgradeCost, upgrades_reducer; tests)
+# 2026-04-22: Story 3-2 → in-progress (IP upgrade single and bulk purchase)
+# 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute pure function + BalanceConfig + GameState multiplier-field extension; tickCountries refactored through compute; grep-guard test)
 # 2026-04-22: Epic 3 status backlog → in-progress (first story created)
 # 2026-04-22: Story 2-7 code review passed → done (0 HIGH, 1 MEDIUM + 2 LOW fixed: gameWorldProvider empty-content assert landmine removed via initialState fallback, seed sets lastCollectedAt: null explicitly + tests assert it, de-duped test 4.6; 401 tests pass)
@@ -52,6 +65,12 @@
 
 generated: 2026-04-21
 last_updated: 2026-04-22
+# 2026-04-22: Story 4-5 created → ready-for-dev (Next-Unlock Teaser Data on State)
+# 2026-04-22: Story 4-4 created → ready-for-dev (Continent Completion Permanent Multiplier)
+# 2026-04-22: Story 4-3 created → ready-for-dev (Continent Milestone Rewards at 25/50/75/100 %)
+# 2026-04-22: Story 4-2 created → ready-for-dev (Unlock Continent at Influence Threshold)
+# 2026-04-22: Story 4-1 created → ready-for-dev (Unlock Next Country in Current Continent)
+# 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
 # 2026-04-22: Story 2-4 code-review → done
 # 2026-04-22: Story 2-2 code-review → done
@@ -110,18 +129,18 @@ development_status:
 
   # Epic 3: Power Up — Upgrades, Leaders, and Automation
   epic-3: in-progress
-  3-1-authoritative-incomecalculator-compute-function: review
-  3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: backlog
-  3-3-leader-hire-and-tier-system: backlog
+  3-1-authoritative-incomecalculator-compute-function: done
+  3-2-ip-upgrade-single-and-bulk-purchase-1x-10x-25x: done
+  3-3-leader-hire-and-tier-system: done
   epic-3-retrospective: optional
 
   # Epic 4: Expand — Unlocks, Continents, and Completion Bonuses
-  epic-4: backlog
-  4-1-unlock-next-country-in-current-continent: backlog
-  4-2-unlock-continent-at-influence-threshold: backlog
-  4-3-continent-milestone-rewards-at-25-50-75-100: backlog
-  4-4-continent-completion-permanent-multiplier: backlog
-  4-5-next-unlock-teaser-data-on-state: backlog
+  epic-4: in-progress
+  4-1-unlock-next-country-in-current-continent: ready-for-dev
+  4-2-unlock-continent-at-influence-threshold: ready-for-dev
+  4-3-continent-milestone-rewards-at-25-50-75-100: ready-for-dev
+  4-4-continent-completion-permanent-multiplier: ready-for-dev
+  4-5-next-unlock-teaser-data-on-state: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Active Play — Goldens, Boosts, Missions, Dailies, Achievements

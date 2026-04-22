@@ -5,6 +5,14 @@ import 'package:global_domination/game/features/leaders/leader_tier.dart';
 /// Balance constants. Values pinned here are placeholders until Epic 10 final
 /// tuning pass. Re-tuning changes happen ONLY in this file + content JSON.
 abstract final class BalanceConfig {
+  /// Per-level cost multiplier for IP upgrades (1.5^L curve); Epic 10 retune target.
+  static final Decimal ipUpgradeCostMultiplier = Decimal.parse('1.5');
+
+  /// B in `cost = B × 1.5^L` — `B = baseInfluence ×` this (Epic 10 may split `baseCost`).
+  static final Decimal ipUpgradeBaseInfluenceScale = Decimal.fromInt(10);
+
+  static const int maxIpLevel = 200;
+
   /// Placeholder — Epic 10 retunes; do not change here without Epic 10 coordination.
   static final Decimal ipMultPerLevel = Decimal.parse('0.1');
 
@@ -18,4 +26,20 @@ abstract final class BalanceConfig {
 
   static Decimal leaderMultiplier(LeaderTier tier) =>
       Decimal.parse(leaderMultipliers[tier]!);
+
+  /// Minimum IP level to hire a leader.
+  static const int leaderHireMinIpLevel = 10;
+
+  /// `hireCost = def.baseInfluence ×` this — Epic 10 may retune.
+  static final Decimal leaderHireBaseInfluenceScale = Decimal.fromInt(500);
+
+  /// Tier 1 → 2: `def.baseInfluence ×` this.
+  static final Decimal leaderUpgradeT1T2BaseInfluenceScale = Decimal.fromInt(
+    750,
+  );
+
+  /// Tier 2 → 3: `def.baseInfluence ×` this.
+  static final Decimal leaderUpgradeT2T3BaseInfluenceScale = Decimal.fromInt(
+    1000,
+  );
 }

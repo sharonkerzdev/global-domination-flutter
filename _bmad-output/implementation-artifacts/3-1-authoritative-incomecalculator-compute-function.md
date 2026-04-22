@@ -1,6 +1,6 @@
 # Story 3.1: Authoritative `IncomeCalculator.compute` Function
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -133,6 +133,15 @@ So that there is one source of truth for income rates and no duplicate math can 
   - [x] 8.2 `dart format --set-exit-if-changed .` — clean.
   - [x] 8.3 `flutter test` — all pass (existing + new).
   - [x] 8.4 Manually run the grep guard mentally: search `lib/` for `baseInfluence *` — only `income_calculator.dart` should match.
+
+### Review Findings
+
+- [x] [Review][Patch] `IncomeCalculator._continentCompletionBonus` performs redundant `CountryDef` lookup [lib/game/features/economy/income_calculator.dart]
+- [x] [Review][Defer] `IncomeCalculator` performs O(N) list lookups for achievements and upgrades [lib/game/features/economy/income_calculator.dart] — deferred, per spec instructions to profile later
+- [x] [Review][Defer] `IncomeCalculator.compute` recalculates global multipliers per country [lib/game/features/economy/income_calculator.dart] — deferred, architecture requires per-country stack
+- [x] [Review][Defer] `GameState.hashCode` iterates over entire collections [lib/game/game_state.dart] — deferred, pre-existing Dart equality pattern
+- [x] [Review][Defer] `GameState.initialSeed` hardcodes 'egypt' [lib/game/game_state.dart:197] — deferred, pre-existing
+- [x] [Review][Defer] `GameWorld.tick` lacks release-mode clamps for `dt` [lib/game/game_world.dart:374] — deferred, pre-existing
 
 ## Dev Notes
 

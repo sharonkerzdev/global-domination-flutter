@@ -246,5 +246,58 @@ void main() {
         throwsA(isA<AssertionError>()),
       );
     });
+
+    test(
+      'hired leader accrues at per-second rate (ignores long generation period)',
+      () {
+        final content = _makeRegistry(
+          baseInfluence: '1',
+          generationSeconds: 4,
+        );
+        final cs = CountryState(
+          id: const CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 0,
+          leaderTier: LeaderTier.tier1,
+          bankedInfluence: Influence.zero,
+        );
+        final gs = _game({CountryId('egypt'): cs});
+        final m = tickCountries(
+          gs,
+          const Duration(seconds: 4),
+          content,
+        );
+        // Without a leader, 1.0 * (1 + 0) * 1.5 = 1.5 per "period unit";
+        // time ratio is 4/1s → 1.5 × 4 = 6
+        expect(
+          m[CountryId('egypt')]!.bankedInfluence.value,
+          equals(Decimal.parse('6')),
+        );
+      },
+    );
+
+    test('non-positive generationSeconds never accrues, even with leader', () {
+      final content = _makeRegistry(
+        baseInfluence: '1',
+        generationSeconds: 0,
+      );
+      final cs = CountryState(
+        id: const CountryId('egypt'),
+        unlocked: true,
+        ipLevel: 0,
+        leaderTier: LeaderTier.tier2,
+        bankedInfluence: Influence.zero,
+      );
+      final gs = _game({CountryId('egypt'): cs});
+      final m = tickCountries(
+        gs,
+        const Duration(seconds: 2),
+        content,
+      );
+      expect(
+        m[CountryId('egypt')]!.bankedInfluence,
+        equals(Influence.zero),
+      );
+    });
   });
 }

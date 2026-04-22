@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
 
+import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/content/country_def.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
@@ -398,5 +400,85 @@ void main() {
     expected *= Decimal.parse('100');
     expected *= Decimal.parse('2');
     expect(out.value, equals(expected));
+  });
+
+  group('upgradeCost', () {
+    late CountryDef egyptDef;
+
+    setUp(() {
+      egyptDef = content.countries[const CountryId('egypt')]!;
+    });
+
+    test('single level at L: B × 1.5^L (AC4)', () {
+      const l = 7;
+      final b =
+          egyptDef.baseInfluence * BalanceConfig.ipUpgradeBaseInfluenceScale;
+      final r = BalanceConfig.ipUpgradeCostMultiplier;
+      var expected = b;
+      for (var i = 0; i < l; i++) {
+        expected *= r;
+      }
+      expect(
+        IncomeCalculator.upgradeCost(egyptDef, l, 1).value,
+        equals(expected),
+      );
+    });
+
+    test('bulk 10 and 25 match successive single-level costs (AC8)', () {
+      for (final bulk in [10, 25]) {
+        for (final l in [0, 3, 12, 50]) {
+          if (l + bulk > 200) continue;
+          var sum = Influence.zero;
+          for (var i = 0; i < bulk; i++) {
+            sum = sum + IncomeCalculator.upgradeCost(egyptDef, l + i, 1);
+          }
+          expect(IncomeCalculator.upgradeCost(egyptDef, l, bulk), equals(sum));
+        }
+      }
+    });
+  });
+
+  group('leader costs (Story 3.3)', () {
+    test('BalanceConfig leaderMultipliers are 1.0, 1.5, 2.0, 3.0', () {
+      expect(
+        BalanceConfig.leaderMultipliers[LeaderTier.none],
+        '1.0',
+      );
+      expect(
+        BalanceConfig.leaderMultipliers[LeaderTier.tier1],
+        '1.5',
+      );
+      expect(
+        BalanceConfig.leaderMultipliers[LeaderTier.tier2],
+        '2.0',
+      );
+      expect(
+        BalanceConfig.leaderMultipliers[LeaderTier.tier3],
+        '3.0',
+      );
+    });
+
+    test('leaderHireCost and leaderUpgradeCost', () {
+      final content = _fixtureRegistry();
+      final egypt = content.countries[const CountryId('egypt')]!;
+      expect(
+        IncomeCalculator.leaderHireCost(egypt).value,
+        equals(
+          egypt.baseInfluence * BalanceConfig.leaderHireBaseInfluenceScale,
+        ),
+      );
+      expect(
+        IncomeCalculator.leaderUpgradeCost(egypt, LeaderTier.tier1).value,
+        equals(
+          egypt.baseInfluence * BalanceConfig.leaderUpgradeT1T2BaseInfluenceScale,
+        ),
+      );
+      expect(
+        IncomeCalculator.leaderUpgradeCost(egypt, LeaderTier.tier2).value,
+        equals(
+          egypt.baseInfluence * BalanceConfig.leaderUpgradeT2T3BaseInfluenceScale,
+        ),
+      );
+    });
   });
 }

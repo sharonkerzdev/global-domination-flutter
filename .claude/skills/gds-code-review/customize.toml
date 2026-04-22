@@ -34,6 +34,15 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
+# When true, the workflow does not HALT for human checkpoints after activation:
+# auto-proceed from Step 1 summary, skip live resolution prompts in Step 4,
+# automatically apply all patch findings (same as "Apply every patch"), and
+# end without the Step 7 "what next" menu. decision_needed items are written
+# to the story file unchecked and must be resolved outside this run.
+# Override wins.
+
+continuous_to_completion = false
+
 # Scalar: executed when the workflow reaches Step 4 (Present and Act),
 # after the final outputs are produced. Override wins.
 # Leave empty for no custom post-completion behavior.

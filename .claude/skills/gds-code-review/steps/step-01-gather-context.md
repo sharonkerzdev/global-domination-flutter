@@ -35,12 +35,12 @@ story_key: '' # set at runtime when discovered from sprint status
 
    **Tier 3 — Sprint tracking.**
    Look for a sprint status file (`*sprint-status*`) in `{implementation_artifacts}` or `{planning_artifacts}`. If found, scan for stories with status `review`:
-   - **Exactly one `review` story:** Set `{story_key}` to the story's key (e.g., `1-2-user-auth`). Suggest it: "I found story <story-id> in `review` status. Would you like to review its changes? [Y] Yes / [N] No, let me choose". If confirmed, use the story context to determine the diff source (branch name derived from story slug, or uncommitted changes). If declined, clear `{story_key}` and fall through.
-   - **Multiple `review` stories:** Present them as numbered options alongside a manual choice option. Wait for user selection. If a story is selected, set `{story_key}` and use its context to determine the diff source. If manual choice is selected, clear `{story_key}` and fall through.
+   - **Exactly one `review` story:** Set `{story_key}` to the story's key (e.g., `1-2-user-auth`). If merged workflow customization has `continuous_to_completion` true: proceed with that story immediately — use the story context to determine the diff source (branch name derived from story slug, or uncommitted changes); state that continuous mode auto-selected this story. **Otherwise:** Suggest it: "I found story <story-id> in `review` status. Would you like to review its changes? [Y] Yes / [N] No, let me choose". If confirmed, use the story context to determine the diff source (branch name derived from story slug, or uncommitted changes). If declined, clear `{story_key}` and fall through.
+   - **Multiple `review` stories:** If `continuous_to_completion` is true: HALT — present options and wait (cannot guess). **Otherwise:** Present them as numbered options alongside a manual choice option. Wait for user selection. If a story is selected, set `{story_key}` and use its context to determine the diff source. If manual choice is selected, clear `{story_key}` and fall through.
    - **None:** Fall through.
 
    **Tier 4 — Current git state.**
-   If version control is unavailable, skip to Tier 5. Otherwise, check the current branch and HEAD. If the branch is not `main` (or the default branch), confirm: "I see HEAD is `<short-sha>` on `<branch>` — do you want to review this branch's changes?" If confirmed, treat as a branch diff against `main`. If declined, fall through.
+   If version control is unavailable, skip to Tier 5. Otherwise, check the current branch and HEAD. If the branch is not `main` (or the default branch): If `continuous_to_completion` is true: treat as a branch diff against `main` and state that continuous mode assumed this; **Otherwise:** confirm: "I see HEAD is `<short-sha>` on `<branch>` — do you want to review this branch's changes?" If confirmed, treat as a branch diff against `main`. If declined, fall through.
 
    **Tier 5 — Ask.**
    Fall through to instruction 2.
@@ -65,19 +65,24 @@ story_key: '' # set at runtime when discovered from sprint status
 
 4. **Set the spec context.**
    - If `{spec_file}` is already set (from Tier 1 or Tier 2): verify the file exists and is readable, then set `{review_mode}` = `"full"`.
-   - Otherwise, ask the user: **Is there a spec or story file that provides context for these changes?**
+   - Else if merged workflow customization has `continuous_to_completion` true: set `{review_mode}` = `"no-spec"` without asking (state this once).
+   - Else: ask the user: **Is there a spec or story file that provides context for these changes?**
      - If yes: set `{spec_file}` to the path provided, verify the file exists and is readable, then set `{review_mode}` = `"full"`.
      - If no: set `{review_mode}` = `"no-spec"`.
 
 5. If `{review_mode}` = `"full"` and the file at `{spec_file}` has a `context` field in its frontmatter listing additional docs, load each referenced document. Warn the user about any docs that cannot be found.
 
 6. Sanity check: if `{diff_output}` exceeds approximately 3000 lines, warn the user and offer to chunk the review by file group.
-   - If the user opts to chunk: agree on the first group, narrow `{diff_output}` accordingly, and list the remaining groups for the user to note for follow-up runs.
-   - If the user declines: proceed as-is with the full diff.
+   - **Continuous mode:** proceed as-is with the full diff (note once that chunking was skipped).
+   - **Otherwise:** If the user opts to chunk: agree on the first group, narrow `{diff_output}` accordingly, and list the remaining groups for the user to note for follow-up runs. If the user declines: proceed as-is with the full diff.
 
 ### CHECKPOINT
 
-Present a summary before proceeding: diff stats (files changed, lines added/removed), `{review_mode}`, and loaded spec/context docs (if any). HALT and wait for user confirmation to proceed.
+Present a summary before proceeding: diff stats (files changed, lines added/removed), `{review_mode}`, and loaded spec/context docs (if any).
+
+If `continuous_to_completion` is true: proceed immediately to NEXT — do not wait for confirmation.
+
+**Otherwise:** HALT and wait for user confirmation to proceed.
 
 
 ## NEXT

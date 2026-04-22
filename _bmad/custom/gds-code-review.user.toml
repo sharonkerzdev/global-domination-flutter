@@ -1,0 +1,5 @@
+# Personal overrides for gds-code-review (merged after customize.toml).
+
+[workflow]
+
+continuous_to_completion = true

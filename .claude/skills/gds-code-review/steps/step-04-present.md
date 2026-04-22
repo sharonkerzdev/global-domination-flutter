@@ -8,7 +8,8 @@ deferred_work_file: '{implementation_artifacts}/deferred-work.md'
 
 - YOU MUST ALWAYS SPEAK OUTPUT in your Agent communication style with the config `{communication_language}`, tailored to `{game_dev_experience}`
 - When `{spec_file}` is set, always write findings to the story file before offering action choices.
-- `decision_needed` findings must be resolved before handling `patch` findings.
+- **`continuous_to_completion` false:** `decision_needed` findings must be resolved before handling `patch` findings.
+- **`continuous_to_completion` true:** Section 4 does not halt — decision items stay unchecked in the story; still apply every `patch` finding in Section 5 (ambiguous decisions are not patched in this run).
 
 ## INSTRUCTIONS
 
@@ -42,15 +43,20 @@ Otherwise add: `Findings are listed above. No story file was provided, so nothin
 
 ### 4. Resolve decision_needed findings
 
-If `decision_needed` findings exist, present each one with its detail and the options available. The user must decide — the correct fix is ambiguous without their input. Walk through each finding (or batch related ones) and get the user's call. Once resolved, each becomes a `patch`, `defer`, or is dismissed.
+If **`decision_needed`** findings exist:
 
-If the user chooses to defer, ask: Quick one-line reason for deferring this item? (helps future reviews): — then append that reason to both the story file bullet and the `{deferred_work_file}` entry.
+- If **`continuous_to_completion`** is true: skip live resolution — findings are already written under Section 2; announce how many decision items remain open in the story for human follow-up. Proceed to Section 5.
 
-**HALT** — I am waiting for your numbered choice. Reply with only the number. Do not proceed until you select an option.
+- **Else:** Present each finding with its detail and the options available. The user must decide — the correct fix is ambiguous without their input. Walk through each finding (or batch related ones) and get the user's call. Once resolved, each becomes a `patch`, `defer`, or is dismissed. If the user chooses to defer, ask: Quick one-line reason for deferring this item? (helps future reviews): — then append that reason to both the story file bullet and the `{deferred_work_file}` entry. **HALT** until every `decision_needed` item is resolved, dismissed, or deferred — do not proceed to Section 5 before that.
 
 ### 5. Handle `patch` findings
 
-If `patch` findings exist (including any resolved from step 4), HALT. Ask the user:
+If **`continuous_to_completion`** is true:
+
+- If `patch` findings exist: execute **Apply every patch** immediately — apply every patch finding without per-finding confirmation; do not modify defer or unresolved `decision_needed` rows; after all patches, summarize changes; if `{spec_file}` is set, check off the patch bullets in the story file (leave defer and decision bullets as-is).
+- Proceed to Section 6.
+
+If **`continuous_to_completion`** is false and `patch` findings exist (including any resolved from step 4), HALT. Ask the user:
 
 If `{spec_file}` is set, present all three options:
 
@@ -116,7 +122,9 @@ If `{sprint_status}` file does not exist, note that story status was updated in 
 
 ### 7. Next steps
 
-Present the user with follow-up options:
+If **`continuous_to_completion`** is true: state **Continuous mode: review run finished** (optionally list open decision items if any). Do not present the menu or wait.
+
+**Otherwise**, present the user with follow-up options:
 
 > **What would you like to do next?**
 > 1. **Start the next story** — run `dev-story` to pick up the next `ready-for-dev` story
