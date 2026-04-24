@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
 
 import 'package:global_domination/game/game_state.dart';
+import 'package:global_domination/game/values/continent_id.dart';
 
 void main() {
   group('GameState', () {
@@ -29,7 +30,7 @@ void main() {
         GameState().toString(),
         equals(
           'GameState(countries: 0 entries, totalInfluence: Influence(0), '
-          'continentCompletions: 0, earnedAchievementIds: 0, '
+          'unlockedContinents: 0, continentCompletions: 0, earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
           'boostMultiplier: 1)',
         ),
@@ -40,6 +41,15 @@ void main() {
       final original = GameState();
       final copy = original.copyWith();
       expect(copy, equals(original));
+    });
+
+    test('equality includes unlockedContinents', () {
+      const id = ContinentId('africa');
+      final a = GameState(unlockedContinents: {id: true});
+      final b = GameState(unlockedContinents: {id: true});
+      final c = GameState(unlockedContinents: {id: false});
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
     });
   });
 }

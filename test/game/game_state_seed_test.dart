@@ -6,6 +6,7 @@ import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
+import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
@@ -51,6 +52,51 @@ ContentRegistry _buildContent({bool includeNonEgypt = true}) {
   ];
   final countries = jsonEncode(countriesList);
 
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: jsonEncode([]),
+    achievementsJson: jsonEncode([]),
+    missionsJson: jsonEncode([]),
+    globalUpgradesJson: jsonEncode([]),
+  );
+}
+
+ContentRegistry _buildAfricaAndEuropeContent() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '1000000000',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '100',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
   return ContentRegistry.fromJsonStrings(
     countriesJson: countries,
     continentsJson: continents,
@@ -127,6 +173,23 @@ void main() {
       final state = GameState.initialSeed(content);
       expect(state.totalInfluence, equals(Influence.zero));
     });
+
+    test(
+      '4.2: seed includes continents with unlockThreshold <= 0 in unlockedContinents',
+      () {
+        final single = _buildContent();
+        expect(
+          GameState.initialSeed(single).unlockedContinents,
+          equals({const ContinentId('africa'): true}),
+        );
+
+        final twoContinents = _buildAfricaAndEuropeContent();
+        expect(
+          GameState.initialSeed(twoContinents).unlockedContinents,
+          equals({const ContinentId('africa'): true}),
+        );
+      },
+    );
 
     test('4.6: passing initialState to GameWorld overrides the seed', () {
       final content = _buildContent();

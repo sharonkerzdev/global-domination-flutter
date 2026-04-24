@@ -90,3 +90,20 @@ final class UpgradeLeader extends GameCommand {
   @override
   String toString() => 'UpgradeLeader(${countryId.value})';
 }
+
+final class UnlockCountry extends GameCommand {
+  const UnlockCountry({required this.countryId});
+
+  final CountryId countryId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UnlockCountry && countryId == other.countryId);
+
+  @override
+  int get hashCode => countryId.hashCode;
+
+  @override
+  String toString() => 'UnlockCountry(${countryId.value})';
+}

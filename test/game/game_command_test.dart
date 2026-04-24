@@ -35,6 +35,7 @@ void main() {
         PurchaseUpgrade() => 'purchase',
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
       };
       expect(result, equals('noop'));
     });
@@ -81,6 +82,7 @@ void main() {
         PurchaseUpgrade() => 'purchase',
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
       };
       expect(result, equals('tap_country'));
     });
@@ -103,6 +105,7 @@ void main() {
         PurchaseUpgrade() => 'purchase',
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
       };
       expect(result, equals('purchase'));
     });
@@ -129,8 +132,31 @@ void main() {
         PurchaseUpgrade() => 'purchase',
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
       };
       expect(result, equals('upgrade_leader'));
+    });
+  });
+
+  group('UnlockCountry', () {
+    test('equality and toString', () {
+      const a = UnlockCountry(countryId: CountryId('nigeria'));
+      const b = UnlockCountry(countryId: CountryId('nigeria'));
+      expect(a, equals(b));
+      expect(a.toString(), equals('UnlockCountry(nigeria)'));
+    });
+
+    test('switch routes UnlockCountry', () {
+      const GameCommand cmd = UnlockCountry(countryId: CountryId('nigeria'));
+      final result = switch (cmd) {
+        Noop() => 'noop',
+        TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
+      };
+      expect(result, equals('unlock_country'));
     });
   });
 }

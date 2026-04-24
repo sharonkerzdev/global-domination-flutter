@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_event.dart';
+import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
@@ -48,6 +49,8 @@ void main() {
         UpgradePurchased() => 'upgrade',
         LeaderHired() => 'leader_hired',
         LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
       };
       expect(result, equals('tick'));
     });
@@ -70,6 +73,8 @@ void main() {
         UpgradePurchased() => 'upgrade',
         LeaderHired() => 'leader_hired',
         LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
       };
       expect(result, equals('upgrade'));
     });
@@ -79,33 +84,111 @@ void main() {
     final now = DateTime.utc(2026, 1, 1);
 
     test('switch routes new events', () {
-      final hired = LeaderHired(
+      final GameEvent hired = LeaderHired(
         now,
         countryId: const CountryId('egypt'),
         cost: Influence(Decimal.parse('100')),
       );
-      final upgraded = LeaderUpgraded(
+      final GameEvent upgraded = LeaderUpgraded(
         now,
         countryId: const CountryId('egypt'),
         cost: Influence(Decimal.parse('200')),
         newTier: LeaderTier.tier2,
       );
       final rh = switch (hired) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
         LeaderHired() => 'h',
-        Tick() => 't',
-        CountryTapped() => 'c',
-        UpgradePurchased() => 'u',
-        LeaderUpgraded() => 'g',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
       };
       final ru = switch (upgraded) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
         LeaderUpgraded() => 'g',
-        Tick() => 't',
-        CountryTapped() => 'c',
-        UpgradePurchased() => 'u',
-        LeaderHired() => 'h',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
+    });
+  });
+
+  group('CountryUnlocked', () {
+    final now = DateTime.utc(2026, 1, 1);
+
+    test('equality, fields, toString', () {
+      const id = CountryId('nigeria');
+      final a = CountryUnlocked(
+        now,
+        countryId: id,
+        continent: const ContinentId('africa'),
+        cost: Influence(Decimal.parse('5')),
+      );
+      final b = CountryUnlocked(
+        now,
+        countryId: id,
+        continent: const ContinentId('africa'),
+        cost: Influence(Decimal.parse('5')),
+      );
+      expect(a, equals(b));
+      expect(
+        a.toString(),
+        contains('CountryUnlocked'),
+      );
+    });
+
+    test('exhaustive switch routes CountryUnlocked', () {
+      const id = CountryId('nigeria');
+      final GameEvent event = CountryUnlocked(
+        now,
+        countryId: id,
+        continent: const ContinentId('africa'),
+        cost: Influence(Decimal.parse('5')),
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
+      };
+      expect(result, equals('country_unlocked'));
+    });
+  });
+
+  group('ContinentUnlocked', () {
+    final now = DateTime.utc(2026, 1, 1);
+
+    test('equality, fields, toString', () {
+      const id = ContinentId('europe');
+      final a = ContinentUnlocked(now, continentId: id);
+      final b = ContinentUnlocked(now, continentId: id);
+      expect(a, equals(b));
+      expect(a.toString(), contains('ContinentUnlocked'));
+    });
+
+    test('exhaustive switch routes ContinentUnlocked', () {
+      final GameEvent event = ContinentUnlocked(
+        DateTime.utc(2026, 1, 1),
+        continentId: const ContinentId('africa'),
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
+      };
+      expect(result, equals('continent_unlocked'));
     });
   });
 }

@@ -12,10 +12,12 @@ import 'package:global_domination/game/values/influence.dart';
 @immutable
 class GameState {
   static final _continentCompletionEq = MapEquality<ContinentId, bool>();
+  static final _unlockedContinentsEq = MapEquality<ContinentId, bool>();
   static final _stringSetEq = SetEquality<String>();
 
   final Map<CountryId, CountryState> countries;
   final Influence totalInfluence;
+  final Map<ContinentId, bool> unlockedContinents;
   final Map<ContinentId, bool> continentCompletions;
   final Set<String> earnedAchievementIds;
   final Set<String> activeGlobalUpgradeIds;
@@ -25,6 +27,7 @@ class GameState {
   GameState({
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
+    Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, bool>? continentCompletions,
     Set<String>? earnedAchievementIds,
     Set<String>? activeGlobalUpgradeIds,
@@ -32,6 +35,9 @@ class GameState {
     Decimal? boostMultiplier,
   }) : countries = countries ?? const {},
        totalInfluence = totalInfluence ?? Influence.zero,
+       unlockedContinents = Map.unmodifiable(
+         unlockedContinents ?? const <ContinentId, bool>{},
+       ),
        continentCompletions = Map.unmodifiable(
          continentCompletions ?? const <ContinentId, bool>{},
        ),
@@ -47,6 +53,7 @@ class GameState {
   GameState copyWith({
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
+    Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, bool>? continentCompletions,
     Set<String>? earnedAchievementIds,
     Set<String>? activeGlobalUpgradeIds,
@@ -56,6 +63,7 @@ class GameState {
     return GameState(
       countries: countries ?? this.countries,
       totalInfluence: totalInfluence ?? this.totalInfluence,
+      unlockedContinents: unlockedContinents ?? this.unlockedContinents,
       continentCompletions: continentCompletions ?? this.continentCompletions,
       earnedAchievementIds: earnedAchievementIds ?? this.earnedAchievementIds,
       activeGlobalUpgradeIds:
@@ -83,9 +91,14 @@ class GameState {
           lastCollectedAt: null,
         ),
     };
+    final unlockedContinents = <ContinentId, bool>{
+      for (final c in content.continents.values)
+        if (c.unlockThreshold <= Decimal.zero) c.id: true,
+    };
     return GameState(
       countries: Map.unmodifiable(countries),
       totalInfluence: Influence.zero,
+      unlockedContinents: Map.unmodifiable(unlockedContinents),
     );
   }
 
@@ -95,6 +108,10 @@ class GameState {
       (other is GameState &&
           _mapsEqual(countries, other.countries) &&
           totalInfluence == other.totalInfluence &&
+          _unlockedContinentsEq.equals(
+            unlockedContinents,
+            other.unlockedContinents,
+          ) &&
           _continentCompletionEq.equals(
             continentCompletions,
             other.continentCompletions,
@@ -114,6 +131,7 @@ class GameState {
   int get hashCode => Object.hash(
     _mapHash(countries),
     totalInfluence,
+    _unlockedContinentsEq.hash(unlockedContinents),
     _continentCompletionEq.hash(continentCompletions),
     _stringSetEq.hash(earnedAchievementIds),
     _stringSetEq.hash(activeGlobalUpgradeIds),
@@ -125,6 +143,7 @@ class GameState {
   String toString() =>
       'GameState(countries: ${countries.length} entries, '
       'totalInfluence: $totalInfluence, '
+      'unlockedContinents: ${unlockedContinents.length}, '
       'continentCompletions: ${continentCompletions.length}, '
       'earnedAchievementIds: ${earnedAchievementIds.length}, '
       'activeGlobalUpgradeIds: ${activeGlobalUpgradeIds.length}, '

@@ -6,6 +6,8 @@ import 'package:global_domination/game/values/influence.dart';
 
 @immutable
 class CountryState {
+  static const Object _lastCollectedAtUnchanged = Object();
+
   final CountryId id;
   final bool unlocked;
   final int ipLevel;
@@ -28,7 +30,7 @@ class CountryState {
     int? ipLevel,
     LeaderTier? leaderTier,
     Influence? bankedInfluence,
-    DateTime? lastCollectedAt,
+    Object? lastCollectedAt = _lastCollectedAtUnchanged,
   }) {
     return CountryState(
       id: id ?? this.id,
@@ -36,7 +38,9 @@ class CountryState {
       ipLevel: ipLevel ?? this.ipLevel,
       leaderTier: leaderTier ?? this.leaderTier,
       bankedInfluence: bankedInfluence ?? this.bankedInfluence,
-      lastCollectedAt: lastCollectedAt ?? this.lastCollectedAt,
+      lastCollectedAt: identical(lastCollectedAt, _lastCollectedAtUnchanged)
+          ? this.lastCollectedAt
+          : lastCollectedAt as DateTime?,
     );
   }
 

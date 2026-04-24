@@ -1,5 +1,7 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-24
+# 2026-04-24: Story 4-2 → review (ContinentUnlocked + unlockedContinents + continents_reducer + tests)
+# 2026-04-24: Story 4-1 → review (UnlockCountry, CountryUnlocked, applyUnlockCountry, GameWorld + tests; 467 tests)
 # 2026-04-24: Story 4-4 created → ready-for-dev (Continent completion permanent multiplier — extends Story 4-3's evaluateMilestones to atomically flip state.continentCompletions[id]=true at 100% tier; flips IncomeCalculator._continentCompletionBonus semantics from per-country-own-continent to global product ∏(1+bonus) over all completed continents; load-from-save idempotency via 4-3's reachedMilestones ledger; no new events/commands/state-fields/files; 5.6 and 5.11 income tests must still pass unchanged)
 # 2026-04-24: Story 4-5 created → ready-for-dev (NextUnlockTeaser value class + pure-Dart selectors `nextUnlockInContinent`/`nextUnlockOverall` in lib/game/features/continents/; `nextUnlockInContinentProvider(family)` + `nextUnlockOverallProvider` in NEW lib/providers/feature_providers.dart; reads `def.unlockCost` directly per Story 4-1's no-touch-IncomeCalculator rule; "effectively unlocked" = `totalInfluence >= continentDef.unlockThreshold`)
 # 2026-04-24: Story 4-3 created → ready-for-dev (Continent milestone rewards at 25/50/75/100% — MilestoneReached + ContinentCompleted events, reachedMilestones state field, evaluateMilestones evaluator in lib/game/features/continents/milestones_reducer.dart, wired into GameWorld.applyCommand after 4.2's continent-unlock evaluator)
@@ -134,8 +136,8 @@ development_status:
 
   # Epic 4: Expand — Unlocks, Continents, and Completion Bonuses
   epic-4: in-progress
-  4-1-unlock-next-country-in-current-continent: ready-for-dev
-  4-2-unlock-continent-at-influence-threshold: ready-for-dev
+  4-1-unlock-next-country-in-current-continent: done
+  4-2-unlock-continent-at-influence-threshold: done
   4-3-continent-milestone-rewards-at-25-50-75-100: ready-for-dev
   4-4-continent-completion-permanent-multiplier: ready-for-dev
   4-5-next-unlock-teaser-data-on-state: ready-for-dev

@@ -1,6 +1,6 @@
 # Story 4.2: Unlock Continent at Influence Threshold
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -46,49 +46,54 @@ so that new geography opens as my power grows without extra friction.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `unlockedContinents: Map<ContinentId, bool>` field to `GameState` (AC: 1, 4, 8)
-  - [ ] Subtask 1.1: Add field, constructor param (`Map.unmodifiable` wrap, default `const <ContinentId, bool>{}`), `copyWith` param.
-  - [ ] Subtask 1.2: Add `_unlockedContinentsEq = MapEquality<ContinentId, bool>()` static; include in `==`, `hashCode`, `toString`.
-  - [ ] Subtask 1.3: Update `GameState.initialSeed`: iterate `content.continents.values`, include any whose `unlockThreshold ≤ Decimal.zero` (use `<=` operator from `decimal: ^3.0.2`) into the seed map → `Map.unmodifiable`.
-- [ ] Task 2: Add `ContinentUnlocked` event in `lib/game/game_event.dart` (AC: 1, 2, 5)
-  - [ ] Subtask 2.1: `final class ContinentUnlocked extends GameEvent { final ContinentId continentId; const ContinentUnlocked(super.at, {required this.continentId}); }` with `==`, `hashCode`, `toString`.
-- [ ] Task 3: Create `lib/game/features/continents/continents_reducer.dart` with `evaluateContinentUnlocks` (AC: 1, 2, 3, 5)
-  - [ ] Subtask 3.1: Signature: `Result<(GameState, List<GameEvent>), GameError> evaluateContinentUnlocks(GameState state, ContentRegistry content, {required DateTime now})`.
-  - [ ] Subtask 3.2: Build candidate list: `content.continents.values.where((c) => c.unlockThreshold <= state.totalInfluence.value && state.unlockedContinents[c.id] != true).toList()`.
-  - [ ] Subtask 3.3: If candidates empty → `Result.success((state, const []))` (return same state instance, do NOT allocate a new map).
-  - [ ] Subtask 3.4: Sort candidates by `(c.unlockThreshold ASC, c.id.value ASC)` — comparator must handle Decimal ordering via `compareTo`.
-  - [ ] Subtask 3.5: Build new `unlockedContinents` map: `{...state.unlockedContinents, for (final c in sorted) c.id: true}`; wrap `Map.unmodifiable`.
-  - [ ] Subtask 3.6: Build events list: `sorted.map((c) => ContinentUnlocked(now, continentId: c.id)).toList(growable: false)`.
-  - [ ] Subtask 3.7: Return `Result.success((state.copyWith(unlockedContinents: newMap), events))`.
-  - [ ] Subtask 3.8: Defensive guard: if any `c.unlockThreshold` is negative, return `Result.failure(GameError.internalInvariantBroken(message: 'continent ${c.id.value} has negative unlockThreshold'))` BEFORE sorting.
-- [ ] Task 4: Wire `evaluateContinentUnlocks` into `GameWorld.tick` (AC: 1, 2, 3)
-  - [ ] Subtask 4.1: After `tickCountries` updates `_state.countries`, call `evaluateContinentUnlocks(_state, _content, now: _clock.now())`.
-  - [ ] Subtask 4.2: On `Result.success((newState, events))`: assign `_state = newState`, then `for (final e in events) _events.add(e);`. Order matters — events must be added in list order.
-  - [ ] Subtask 4.3: On `Result.failure(InvariantBroken)`: throw — invariants are programmer errors per architecture (`GameWorld throws only on programmer-error invariants`).
-  - [ ] Subtask 4.4: Continue to emit `Tick(now)` AFTER the continent events (so audio/persistence subscribers see continent-unlock side effects before the tick marker if they care about ordering).
-- [ ] Task 5: Wire `evaluateContinentUnlocks` into `GameWorld.applyCommand` post-success path (AC: 7)
-  - [ ] Subtask 5.1: After each successful command branch (`_applyTapCountry`, `_applyPurchaseUpgrade`, `_applyHireLeader`, `_applyUpgradeLeader`, and `_applyUnlockCountry` if Story 4.1 has merged) updates `_state` and emits its own event, run the continent evaluation against the just-updated `_state`.
-  - [ ] Subtask 5.2: Append any resulting `ContinentUnlocked` events to the stream AFTER the originating command's event (preserves causal order: `CountryTapped` → `ContinentUnlocked`).
-  - [ ] Subtask 5.3: Extract this into a private helper `void _evaluateContinentUnlocks(DateTime now)` to avoid duplication across the command paths. Call it once at the end of every successful `applyCommand` branch.
-  - [ ] Subtask 5.4: If Story 4.1's `_applyUnlockCountry` branch is not yet merged when this story is implemented, wire it into the four existing branches and document the pattern in a comment so 4.1's merge follows it. If 4.1 has already merged, ensure its `_applyUnlockCountry` also calls `_evaluateContinentUnlocks(now)` post-success.
-- [ ] Task 6: Update `test/game/game_state_seed_test.dart` (AC: 4)
-  - [ ] Subtask 6.1: Add test `seed includes continents with unlockThreshold <= 0 in unlockedContinents` covering single-continent (africa, threshold 0) and a two-continent fixture (africa threshold 0 + europe threshold 1e9 → only africa pre-populated).
-- [ ] Task 7: Add `test/game/features/continents/continents_reducer_test.dart` (AC: 1, 2, 3, 5, 8)
-  - [ ] Subtask 7.1: Single new unlock — totalInfluence at threshold returns new state + 1 event.
-  - [ ] Subtask 7.2: Below threshold returns same `GameState` instance (`identical(newState, state)` true) and empty events list.
-  - [ ] Subtask 7.3: Multiple thresholds crossed in one call → events emitted in `unlockThreshold` ASC order with correct continent IDs.
-  - [ ] Subtask 7.4: Already unlocked continent → no re-emit, state unchanged.
-  - [ ] Subtask 7.5: Tied thresholds (build content with two continents at threshold `0`) → secondary sort by `id.value` ASC.
-  - [ ] Subtask 7.6: Negative threshold in content → `Result.failure(InvariantBroken)`.
-  - [ ] Subtask 7.7: Returned `unlockedContinents` map is unmodifiable (`expect(() => map[X] = false, throwsUnsupportedError)`).
-- [ ] Task 8: Add integration tests in `test/game/game_world_test.dart` (AC: 1, 2, 3, 7)
-  - [ ] Subtask 8.1: Tick that crosses europe threshold via accrual emits `ContinentUnlocked(europe)` BEFORE the trailing `Tick` event (subscribe via `events.toList()` and assert order).
-  - [ ] Subtask 8.2: Construct a `GameWorld` with `initialState` whose `totalInfluence == Influence(Decimal.parse('1e15'))` and `unlockedContinents` empty; first tick emits `ContinentUnlocked(africa)`, `ContinentUnlocked(europe)`, ... in threshold order, then `Tick`.
-  - [ ] Subtask 8.3: `applyCommand(TapCountry)` that bumps `totalInfluence` past a threshold emits `CountryTapped` THEN `ContinentUnlocked(...)` on the same microtask (use `events.take(2).toList()`).
-  - [ ] Subtask 8.4: After unlocking africa via the seed pre-population, ticking with `totalInfluence == 0` emits zero `ContinentUnlocked` events (only `Tick` if countries changed, or no event if not).
-- [ ] Task 9: Update existing tests broken by new `GameState` field (AC: 8)
-  - [ ] Subtask 9.1: Run `flutter test`; fix any direct `GameState(...)` constructions in tests that now need `unlockedContinents` (most should be fine via default `const {}`).
-  - [ ] Subtask 9.2: Audit `test/game/game_state_test.dart` and add equality coverage for `unlockedContinents` (two states equal iff their maps are equal; differ when one has africa unlocked).
+- [x] Task 1: Add `unlockedContinents: Map<ContinentId, bool>` field to `GameState` (AC: 1, 4, 8)
+  - [x] Subtask 1.1: Add field, constructor param (`Map.unmodifiable` wrap, default `const <ContinentId, bool>{}`), `copyWith` param.
+  - [x] Subtask 1.2: Add `_unlockedContinentsEq = MapEquality<ContinentId, bool>()` static; include in `==`, `hashCode`, `toString`.
+  - [x] Subtask 1.3: Update `GameState.initialSeed`: iterate `content.continents.values`, include any whose `unlockThreshold ≤ Decimal.zero` (use `<=` operator from `decimal: ^3.0.2`) into the seed map → `Map.unmodifiable`.
+- [x] Task 2: Add `ContinentUnlocked` event in `lib/game/game_event.dart` (AC: 1, 2, 5)
+  - [x] Subtask 2.1: `final class ContinentUnlocked extends GameEvent { final ContinentId continentId; const ContinentUnlocked(super.at, {required this.continentId}); }` with `==`, `hashCode`, `toString`.
+- [x] Task 3: Create `lib/game/features/continents/continents_reducer.dart` with `evaluateContinentUnlocks` (AC: 1, 2, 3, 5)
+  - [x] Subtask 3.1: Signature: `Result<(GameState, List<GameEvent>), GameError> evaluateContinentUnlocks(GameState state, ContentRegistry content, {required DateTime now})`.
+  - [x] Subtask 3.2: Build candidate list: `content.continents.values.where((c) => c.unlockThreshold <= state.totalInfluence.value && state.unlockedContinents[c.id] != true).toList()`.
+  - [x] Subtask 3.3: If candidates empty → `Result.success((state, const []))` (return same state instance, do NOT allocate a new map).
+  - [x] Subtask 3.4: Sort candidates by `(c.unlockThreshold ASC, c.id.value ASC)` — comparator must handle Decimal ordering via `compareTo`.
+  - [x] Subtask 3.5: Build new `unlockedContinents` map: `{...state.unlockedContinents, for (final c in sorted) c.id: true}`; wrap `Map.unmodifiable`.
+  - [x] Subtask 3.6: Build events list: `sorted.map((c) => ContinentUnlocked(now, continentId: c.id)).toList(growable: false)`.
+  - [x] Subtask 3.7: Return `Result.success((state.copyWith(unlockedContinents: newMap), events))`.
+  - [x] Subtask 3.8: Defensive guard: if any `c.unlockThreshold` is negative, return `Result.failure(GameError.internalInvariantBroken(message: 'continent ${c.id.value} has negative unlockThreshold'))` BEFORE sorting.
+- [x] Task 4: Wire `evaluateContinentUnlocks` into `GameWorld.tick` (AC: 1, 2, 3)
+  - [x] Subtask 4.1: After `tickCountries` updates `_state.countries`, call `evaluateContinentUnlocks(_state, _content, now: _clock.now())`.
+  - [x] Subtask 4.2: On `Result.success((newState, events))`: assign `_state = newState`, then `for (final e in events) _events.add(e);`. Order matters — events must be added in list order.
+  - [x] Subtask 4.3: On `Result.failure(InvariantBroken)`: throw — invariants are programmer errors per architecture (`GameWorld throws only on programmer-error invariants`).
+  - [x] Subtask 4.4: Continue to emit `Tick(now)` AFTER the continent events (so audio/persistence subscribers see continent-unlock side effects before the tick marker if they care about ordering).
+- [x] Task 5: Wire `evaluateContinentUnlocks` into `GameWorld.applyCommand` post-success path (AC: 7)
+  - [x] Subtask 5.1: After each successful command branch (`_applyTapCountry`, `_applyPurchaseUpgrade`, `_applyHireLeader`, `_applyUpgradeLeader`, and `_applyUnlockCountry` if Story 4.1 has merged) updates `_state` and emits its own event, run the continent evaluation against the just-updated `_state`.
+  - [x] Subtask 5.2: Append any resulting `ContinentUnlocked` events to the stream AFTER the originating command's event (preserves causal order: `CountryTapped` → `ContinentUnlocked`).
+  - [x] Subtask 5.3: Extract this into a private helper `void _evaluateContinentUnlocks(DateTime now)` to avoid duplication across the command paths. Call it once at the end of every successful `applyCommand` branch.
+  - [x] Subtask 5.4: If Story 4.1's `_applyUnlockCountry` branch is not yet merged when this story is implemented, wire it into the four existing branches and document the pattern in a comment so 4.1's merge follows it. If 4.1 has already merged, ensure its `_applyUnlockCountry` also calls `_evaluateContinentUnlocks(now)` post-success.
+- [x] Task 6: Update `test/game/game_state_seed_test.dart` (AC: 4)
+  - [x] Subtask 6.1: Add test `seed includes continents with unlockThreshold <= 0 in unlockedContinents` covering single-continent (africa, threshold 0) and a two-continent fixture (africa threshold 0 + europe threshold 1e9 → only africa pre-populated).
+- [x] Task 7: Add `test/game/features/continents/continents_reducer_test.dart` (AC: 1, 2, 3, 5, 8)
+  - [x] Subtask 7.1: Single new unlock — totalInfluence at threshold returns new state + 1 event.
+  - [x] Subtask 7.2: Below threshold returns same `GameState` instance (`identical(newState, state)` true) and empty events list.
+  - [x] Subtask 7.3: Multiple thresholds crossed in one call → events emitted in `unlockThreshold` ASC order with correct continent IDs.
+  - [x] Subtask 7.4: Already unlocked continent → no re-emit, state unchanged.
+  - [x] Subtask 7.5: Tied thresholds (build content with two continents at threshold `0`) → secondary sort by `id.value` ASC.
+  - [x] Subtask 7.6: Negative threshold in content → `Result.failure(InvariantBroken)`.
+  - [x] Subtask 7.7: Returned `unlockedContinents` map is unmodifiable (`expect(() => map[X] = false, throwsUnsupportedError)`).
+- [x] Task 8: Add integration tests in `test/game/game_world_test.dart` (AC: 1, 2, 3, 7)
+  - [x] Subtask 8.1: Tick that crosses europe threshold via accrual emits `ContinentUnlocked(europe)` BEFORE the trailing `Tick` event (subscribe via `events.toList()` and assert order).
+  - [x] Subtask 8.2: Construct a `GameWorld` with `initialState` whose `totalInfluence == Influence(Decimal.parse('1e15'))` and `unlockedContinents` empty; first tick emits `ContinentUnlocked(africa)`, `ContinentUnlocked(europe)`, ... in threshold order, then `Tick`.
+  - [x] Subtask 8.3: `applyCommand(TapCountry)` that bumps `totalInfluence` past a threshold emits `CountryTapped` THEN `ContinentUnlocked(...)` on the same microtask (use `events.take(2).toList()`).
+  - [x] Subtask 8.4: After unlocking africa via the seed pre-population, ticking with `totalInfluence == 0` emits zero `ContinentUnlocked` events (only `Tick` if countries changed, or no event if not).
+- [x] Task 9: Update existing tests broken by new `GameState` field (AC: 8)
+  - [x] Subtask 9.1: Run `flutter test`; fix any direct `GameState(...)` constructions in tests that now need `unlockedContinents` (most should be fine via default `const {}`).
+  - [x] Subtask 9.2: Audit `test/game/game_state_test.dart` and add equality coverage for `unlockedContinents` (two states equal iff their maps are equal; differ when one has africa unlocked).
+
+### Review Findings
+
+- [x] [Review][Patch] UnlockCountry can unlock a country while continent remains locked when cost drops total below threshold [lib/game/game_world.dart]
+- [x] [Review][Patch] Noop now triggers continent unlock side effects on stale states [lib/game/game_world.dart]
 
 ## Dev Notes
 
@@ -175,10 +180,33 @@ so that new geography opens as my power grows without extra friction.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `unlockedContinents` on `GameState` with `MapEquality`, `initialSeed` pre-population for `unlockThreshold <= 0`, and `ContinentUnlocked` event.
+- Added pure `evaluateContinentUnlocks` in `continents_reducer.dart` (negative-threshold guard, sort by threshold then id, same-state short-circuit when no candidates).
+- `GameWorld.tick`: always runs continent evaluation after `tickCountries`; emits `ContinentUnlocked` events before `Tick` when either countries changed or continents unlocked; throws `AssertionError` on invariant failure.
+- `GameWorld.applyCommand`: uses `const Success<void, GameError>(null)` for `Noop`; after any successful command runs `_evaluateContinentUnlocks` so command events precede continent unlocks (AC 7).
+- Integration tests: Task 8.1 uses high `totalInfluence` plus bank accrual on tick (engine does not add to `totalInfluence` on tick alone); Task 8.2 uses three continents at thresholds 0/10/20 and `totalInfluence` 100 with empty `unlockedContinents` instead of literal `1e15` while preserving ordering AC.
+- Manual `GameState` fixtures with African content use `_seedAfricaUnlocked` so threshold-0 does not re-fire `ContinentUnlocked` during unrelated tests.
+- Full `flutter test` passes.
+
 ### File List
+
+- lib/game/game_state.dart
+- lib/game/game_event.dart
+- lib/game/features/continents/continents_reducer.dart
+- lib/game/game_world.dart
+- test/game/game_state_seed_test.dart
+- test/game/game_state_test.dart
+- test/game/game_event_test.dart
+- test/game/features/continents/continents_reducer_test.dart
+- test/game/game_world_test.dart
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+### Change Log
+
+- 2026-04-24: Story 4.2 implemented — continent unlock at influence threshold (`ContinentUnlocked`, `evaluateContinentUnlocks`, seed + tick + applyCommand wiring, tests).

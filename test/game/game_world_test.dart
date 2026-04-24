@@ -18,6 +18,12 @@ import 'package:global_domination/game/values/influence.dart';
 
 import '../helpers/fake_clock.dart';
 
+/// Manual [GameState] fixtures using African content must mirror
+/// [GameState.initialSeed]: threshold-0 continents belong in [unlockedContinents].
+final Map<ContinentId, bool> _seedAfricaUnlocked = {
+  const ContinentId('africa'): true,
+};
+
 ContentRegistry _buildSingleCountryContent() {
   final continents = jsonEncode([
     {
@@ -77,18 +83,153 @@ ContentRegistry _buildThreeCountryContent() {
     {
       'id': 'nigeria',
       'continent': 'africa',
-      'baseInfluence': '2',
-      'unlockCost': '100',
+      'baseInfluence': '5',
+      'unlockCost': '5',
       'tier': 1,
-      'generationSeconds': 2,
+      'generationSeconds': 1,
     },
     {
       'id': 'south_africa',
       'continent': 'africa',
-      'baseInfluence': '3',
-      'unlockCost': '200',
-      'tier': 2,
-      'generationSeconds': 3,
+      'baseInfluence': '15',
+      'unlockCost': '25',
+      'tier': 1,
+      'generationSeconds': 2,
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: jsonEncode([]),
+    achievementsJson: '[]',
+    missionsJson: '[]',
+    globalUpgradesJson: '[]',
+  );
+}
+
+ContentRegistry _buildAfricaEuropeStory42Content() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '100',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '10',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: jsonEncode([]),
+    achievementsJson: '[]',
+    missionsJson: '[]',
+    globalUpgradesJson: '[]',
+  );
+}
+
+ContentRegistry _buildThreeContinentStory42Content() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '10',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'asia',
+      'name': 'Asia',
+      'unlockThreshold': '20',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '10',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'china',
+      'continent': 'asia',
+      'baseInfluence': '1',
+      'unlockCost': '10',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: jsonEncode([]),
+    achievementsJson: '[]',
+    missionsJson: '[]',
+    globalUpgradesJson: '[]',
+  );
+}
+
+ContentRegistry _buildEuropeUnlockSpendEdgeContent() {
+  final continents = jsonEncode([
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '10',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '10',
+      'tier': 1,
+      'generationSeconds': 1,
     },
   ]);
   return ContentRegistry.fromJsonStrings(
@@ -127,6 +268,7 @@ void main() {
     return GameState(
       countries: {CountryId('egypt'): egypt},
       totalInfluence: Influence.zero,
+      unlockedContinents: _seedAfricaUnlocked,
     );
   }
 
@@ -183,6 +325,7 @@ void main() {
           ),
         },
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       allLockedWorld = GameWorld(
         content: content,
@@ -308,10 +451,12 @@ void main() {
       final s1 = GameState(
         countries: {CountryId('egypt'): cs},
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       final s2 = GameState(
         countries: {CountryId('egypt'): cs},
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       expect(s1, equals(s2));
     });
@@ -348,6 +493,22 @@ void main() {
       await sub.cancel();
     });
 
+    test('applyCommand(Noop()) does not backfill stale continent unlock state', () {
+      final c = _buildAfricaEuropeStory42Content();
+      final initial = GameState.initialSeed(c).copyWith(
+        totalInfluence: Influence(Decimal.fromInt(1000)),
+        unlockedContinents: const <ContinentId, bool>{},
+      );
+      final w = GameWorld(content: c, clock: clock, initialState: initial);
+      final before = w.state;
+
+      final result = w.applyCommand(const Noop());
+
+      expect(result.isSuccess, isTrue);
+      expect(w.state, equals(before));
+      w.dispose();
+    });
+
     test('applyCommand(TapCountry) on locked country returns failure', () {
       final allLocked = GameState(
         countries: {
@@ -360,6 +521,7 @@ void main() {
           ),
         },
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       final w = GameWorld(
         content: content,
@@ -387,6 +549,7 @@ void main() {
           ),
         },
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       final w = GameWorld(
         content: content,
@@ -418,6 +581,7 @@ void main() {
         final s = GameState(
           countries: {CountryId('egypt'): egypt},
           totalInfluence: cost,
+          unlockedContinents: _seedAfricaUnlocked,
         );
         final w = GameWorld(content: content, clock: clock, initialState: s);
         final events = <GameEvent>[];
@@ -453,6 +617,7 @@ void main() {
         final s = GameState(
           countries: {CountryId('egypt'): egypt},
           totalInfluence: hireCost,
+          unlockedContinents: _seedAfricaUnlocked,
         );
         final w = GameWorld(content: content, clock: clock, initialState: s);
         final events = <GameEvent>[];
@@ -495,6 +660,7 @@ void main() {
         final s = GameState(
           countries: {CountryId('egypt'): egypt},
           totalInfluence: upgradeCost,
+          unlockedContinents: _seedAfricaUnlocked,
         );
         final w = GameWorld(content: content, clock: clock, initialState: s);
         final events = <GameEvent>[];
@@ -518,6 +684,105 @@ void main() {
         w.dispose();
       },
     );
+
+    test(
+      'applyCommand(UnlockCountry) unlocks nigeria and emits CountryUnlocked',
+      () async {
+        final three = _buildThreeCountryContent();
+        final initial = GameState.initialSeed(three).copyWith(
+          totalInfluence: Influence(Decimal.fromInt(5)),
+        );
+        final w = GameWorld(
+          content: three,
+          clock: clock,
+          initialState: initial,
+        );
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        final r = w.applyCommand(
+          const UnlockCountry(countryId: CountryId('nigeria')),
+        );
+        expect(r.isSuccess, isTrue);
+        final n = w.state.countries[const CountryId('nigeria')]!;
+        expect(n.unlocked, isTrue);
+        expect(n.ipLevel, equals(1));
+        expect(n.bankedInfluence, equals(Influence.zero));
+        expect(w.state.totalInfluence, equals(Influence.zero));
+        await Future<void>.delayed(Duration.zero);
+        expect(events, hasLength(1));
+        expect(events.first, isA<CountryUnlocked>());
+        final cu = events.first as CountryUnlocked;
+        expect(cu.cost, equals(Influence(Decimal.fromInt(5))));
+        expect(cu.continent, const ContinentId('africa'));
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'applyCommand(UnlockCountry) then tick accrues bankedInfluence on nigeria (Story 4.1 AC #8)',
+      () {
+        final three = _buildThreeCountryContent();
+        final initial = GameState.initialSeed(three).copyWith(
+          totalInfluence: Influence(Decimal.fromInt(5)),
+        );
+        final w = GameWorld(
+          content: three,
+          clock: clock,
+          initialState: initial,
+        );
+        w.applyCommand(const UnlockCountry(countryId: CountryId('nigeria')));
+        for (var i = 0; i < 10; i++) {
+          w.tick(const Duration(milliseconds: 100));
+        }
+        final banked =
+            w.state.countries[const CountryId('nigeria')]!.bankedInfluence;
+        expect(banked > Influence.zero, isTrue);
+        w.dispose();
+      },
+    );
+
+    test(
+      'applyCommand(UnlockCountry) reconciles stale continent unlock before spending influence',
+      () async {
+        final c = _buildEuropeUnlockSpendEdgeContent();
+        final france = c.countries[const CountryId('france')]!;
+        final initial = GameState(
+          countries: {
+            const CountryId('france'): CountryState(
+              id: const CountryId('france'),
+              unlocked: false,
+              ipLevel: 0,
+              leaderTier: LeaderTier.none,
+              bankedInfluence: Influence.zero,
+            ),
+          },
+          totalInfluence: Influence(france.unlockCost),
+          unlockedContinents: const <ContinentId, bool>{},
+        );
+        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+
+        final result = w.applyCommand(
+          const UnlockCountry(countryId: CountryId('france')),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(result.isSuccess, isTrue);
+        expect(
+          w.state.unlockedContinents[const ContinentId('europe')],
+          isTrue,
+        );
+        expect(w.state.totalInfluence, equals(Influence.zero));
+        expect(events, hasLength(2));
+        expect(events[0], isA<ContinentUnlocked>());
+        expect(events[1], isA<CountryUnlocked>());
+
+        await sub.cancel();
+        w.dispose();
+      },
+    );
   });
 
   group('GameWorld.applyCommand TapCountry collect flow (Story 2.6)', () {
@@ -532,6 +797,7 @@ void main() {
       final state = GameState(
         countries: {CountryId('egypt'): egypt},
         totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
       );
       return GameWorld(content: content, clock: clock, initialState: state);
     }
@@ -678,6 +944,7 @@ void main() {
           initialState: GameState(
             countries: {const CountryId('egypt'): egypt},
             totalInfluence: Influence.zero,
+            unlockedContinents: _seedAfricaUnlocked,
           ),
         );
         for (var i = 0; i < 10; i++) {
@@ -707,6 +974,7 @@ void main() {
           initialState: GameState(
             countries: {const CountryId('egypt'): egypt},
             totalInfluence: Influence.zero,
+            unlockedContinents: _seedAfricaUnlocked,
             continentCompletions: {const ContinentId('africa'): true},
           ),
         );
@@ -744,6 +1012,125 @@ void main() {
         expect(w.state.countries[const CountryId('egypt')], isNotNull);
         expect(w.state.countries[const CountryId('nigeria')], isNotNull);
         expect(w.state.countries[const CountryId('south_africa')], isNotNull);
+        w.dispose();
+      },
+    );
+  });
+
+  group('Story 4.2: continent unlock at influence threshold', () {
+    test(
+      'tick with bank accrual emits ContinentUnlocked before Tick when '
+      'totalInfluence already meets a higher continent threshold',
+      () async {
+        final c = _buildAfricaEuropeStory42Content();
+        final initial = GameState.initialSeed(c).copyWith(
+          totalInfluence: Influence(Decimal.fromInt(1000)),
+          unlockedContinents: Map.unmodifiable({
+            const ContinentId('africa'): true,
+          }),
+        );
+        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        w.tick(const Duration(milliseconds: 100));
+        await Future<void>.delayed(Duration.zero);
+        expect(events, isNotEmpty);
+        final unlockIdx = events.indexWhere((e) => e is ContinentUnlocked);
+        final tickIdx = events.indexWhere((e) => e is Tick);
+        expect(unlockIdx, greaterThanOrEqualTo(0));
+        expect(tickIdx, greaterThanOrEqualTo(0));
+        expect(unlockIdx, lessThan(tickIdx));
+        expect(
+          (events[unlockIdx] as ContinentUnlocked).continentId,
+          const ContinentId('europe'),
+        );
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'first tick with total past all thresholds and empty unlockedContinents '
+      'emits continent unlocks in threshold order then Tick',
+      () async {
+        final c = _buildThreeContinentStory42Content();
+        final initial = GameState.initialSeed(c).copyWith(
+          totalInfluence: Influence(Decimal.fromInt(100)),
+          unlockedContinents: Map.unmodifiable(<ContinentId, bool>{}),
+        );
+        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        w.tick(const Duration(milliseconds: 1));
+        await Future<void>.delayed(Duration.zero);
+        expect(events.length, greaterThanOrEqualTo(4));
+        expect(events[0], isA<ContinentUnlocked>());
+        expect(
+          (events[0] as ContinentUnlocked).continentId,
+          const ContinentId('africa'),
+        );
+        expect(events[1], isA<ContinentUnlocked>());
+        expect(
+          (events[1] as ContinentUnlocked).continentId,
+          const ContinentId('europe'),
+        );
+        expect(events[2], isA<ContinentUnlocked>());
+        expect(
+          (events[2] as ContinentUnlocked).continentId,
+          const ContinentId('asia'),
+        );
+        expect(events[3], isA<Tick>());
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'applyCommand(TapCountry) emits CountryTapped then ContinentUnlocked '
+      'when collect crosses a continent threshold',
+      () async {
+        final c = _buildAfricaEuropeStory42Content();
+        final seed = GameState.initialSeed(c);
+        final egypt = seed.countries[const CountryId('egypt')]!;
+        final initial = seed.copyWith(
+          totalInfluence: Influence(Decimal.fromInt(99)),
+          unlockedContinents: Map.unmodifiable({
+            const ContinentId('africa'): true,
+          }),
+          countries: Map.unmodifiable({
+            ...seed.countries,
+            const CountryId('egypt'): egypt.copyWith(
+              bankedInfluence: Influence(Decimal.fromInt(10)),
+            ),
+          }),
+        );
+        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        w.applyCommand(const TapCountry(countryId: CountryId('egypt')));
+        await Future<void>.delayed(Duration.zero);
+        expect(events.take(2).toList(), hasLength(2));
+        expect(events[0], isA<CountryTapped>());
+        expect(events[1], isA<ContinentUnlocked>());
+        expect(
+          (events[1] as ContinentUnlocked).continentId,
+          const ContinentId('europe'),
+        );
+        await sub.cancel();
+        w.dispose();
+      },
+    );
+
+    test(
+      'seeded africa in unlockedContinents: tick emits no ContinentUnlocked',
+      () async {
+        final w = GameWorld(content: content, clock: clock);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        w.tick(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(events.whereType<ContinentUnlocked>(), isEmpty);
+        await sub.cancel();
         w.dispose();
       },
     );
