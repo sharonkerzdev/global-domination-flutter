@@ -1,11 +1,13 @@
 # generated: 2026-04-21
-# last_updated: 2026-04-22
-# 2026-04-22: Story 4-5 created → ready-for-dev (Next-Unlock Teaser Data on State)
-# 2026-04-22: Story 4-4 created → ready-for-dev (Continent Completion Permanent Multiplier)
-# 2026-04-22: Story 4-3 created → ready-for-dev (Continent Milestone Rewards at 25/50/75/100 %)
-# 2026-04-22: Story 4-2 created → ready-for-dev (Unlock Continent at Influence Threshold)
-# 2026-04-22: Story 4-1 created → ready-for-dev (Unlock Next Country in Current Continent)
-# 2026-04-22: Epic 4 status backlog → in-progress (first story created)
+# last_updated: 2026-04-24
+# 2026-04-24: Story 4-4 created → ready-for-dev (Continent completion permanent multiplier — extends Story 4-3's evaluateMilestones to atomically flip state.continentCompletions[id]=true at 100% tier; flips IncomeCalculator._continentCompletionBonus semantics from per-country-own-continent to global product ∏(1+bonus) over all completed continents; load-from-save idempotency via 4-3's reachedMilestones ledger; no new events/commands/state-fields/files; 5.6 and 5.11 income tests must still pass unchanged)
+# 2026-04-24: Story 4-5 created → ready-for-dev (NextUnlockTeaser value class + pure-Dart selectors `nextUnlockInContinent`/`nextUnlockOverall` in lib/game/features/continents/; `nextUnlockInContinentProvider(family)` + `nextUnlockOverallProvider` in NEW lib/providers/feature_providers.dart; reads `def.unlockCost` directly per Story 4-1's no-touch-IncomeCalculator rule; "effectively unlocked" = `totalInfluence >= continentDef.unlockThreshold`)
+# 2026-04-24: Story 4-3 created → ready-for-dev (Continent milestone rewards at 25/50/75/100% — MilestoneReached + ContinentCompleted events, reachedMilestones state field, evaluateMilestones evaluator in lib/game/features/continents/milestones_reducer.dart, wired into GameWorld.applyCommand after 4.2's continent-unlock evaluator)
+# 2026-04-24: Story 4-2 created → ready-for-dev (ContinentUnlocked event + unlockedContinents state field + content-driven threshold reducer wired into tick + applyCommand; seed pre-populates threshold-0 continents)
+# 2026-04-24: Story 4-1 created → ready-for-dev (UnlockCountry command + CountryUnlocked event + applyUnlockCountry reducer in lib/game/features/continents/; def.unlockCost from content, continent-gate via totalInfluence >= continentDef.unlockThreshold)
+# 2026-04-24: Epic 4 status backlog → in-progress (first story created)
+# 2026-04-24: Epic 4 stories 4-1 through 4-5 deleted — will be recreated with better model
+# 2026-04-24: Epic 4 status in-progress → backlog (stories reverted)
 # 2026-04-22: Story 3-3 → review (Leader Hire and Tier System)
 # 2026-04-22: Story 3-3 → in-progress (Leader Hire and Tier System)
 # 2026-04-22: Story 3-3 created → ready-for-dev (Leader Hire and Tier System)
@@ -64,12 +66,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-21
-last_updated: 2026-04-22
-# 2026-04-22: Story 4-5 created → ready-for-dev (Next-Unlock Teaser Data on State)
-# 2026-04-22: Story 4-4 created → ready-for-dev (Continent Completion Permanent Multiplier)
-# 2026-04-22: Story 4-3 created → ready-for-dev (Continent Milestone Rewards at 25/50/75/100 %)
-# 2026-04-22: Story 4-2 created → ready-for-dev (Unlock Continent at Influence Threshold)
-# 2026-04-22: Story 4-1 created → ready-for-dev (Unlock Next Country in Current Continent)
+last_updated: 2026-04-24
+# 2026-04-24: Story 4-1 created → ready-for-dev (UnlockCountry command + CountryUnlocked event + applyUnlockCountry reducer in lib/game/features/continents/; def.unlockCost from content, continent-gate via totalInfluence >= continentDef.unlockThreshold)
 # 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
 # 2026-04-22: Story 2-4 code-review → done
