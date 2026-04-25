@@ -107,3 +107,20 @@ final class UnlockCountry extends GameCommand {
   @override
   String toString() => 'UnlockCountry(${countryId.value})';
 }
+
+final class ClaimGolden extends GameCommand {
+  const ClaimGolden({required this.goldenId});
+
+  final String goldenId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClaimGolden && goldenId == other.goldenId);
+
+  @override
+  int get hashCode => goldenId.hashCode;
+
+  @override
+  String toString() => 'ClaimGolden($goldenId)';
+}

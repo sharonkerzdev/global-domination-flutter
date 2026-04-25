@@ -160,6 +160,20 @@ void main() {
     expect(r, equals(Influence(Decimal.one)));
   });
 
+  test('5-1 AC5: goldenOpportunityMultiplier 50 multiplies the stack', () {
+    final noGolden = IncomeCalculator.compute(
+      _egypt(ipLevel: 0),
+      _state(),
+      content,
+    ).value;
+    final withGolden = IncomeCalculator.compute(
+      _egypt(ipLevel: 0),
+      _state(goldenOpportunityMultiplier: Decimal.fromInt(50)),
+      content,
+    ).value;
+    expect(withGolden, equals(noGolden * Decimal.fromInt(50)));
+  });
+
   test('5.4 IP isolation', () {
     expect(
       IncomeCalculator.compute(_egypt(ipLevel: 0), _state(), content).value,

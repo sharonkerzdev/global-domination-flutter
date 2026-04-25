@@ -4,6 +4,8 @@ import 'package:meta/meta.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/goldens/active_golden.dart';
+import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
@@ -11,11 +13,14 @@ import 'package:global_domination/game/values/influence.dart';
 
 @immutable
 class GameState {
+  static const Object _activeGoldenEffectUnchanged = Object();
+
   static final _continentCompletionEq = MapEquality<ContinentId, bool>();
   static final _unlockedContinentsEq = MapEquality<ContinentId, bool>();
   static final _reachedMilestonesEq = MapEquality<ContinentId, Set<int>>(
     values: SetEquality<int>(),
   );
+  static final _activeGoldensEq = MapEquality<String, ActiveGolden>();
   static final _stringSetEq = SetEquality<String>();
 
   final Map<CountryId, CountryState> countries;
@@ -27,6 +32,8 @@ class GameState {
   final Set<String> activeGlobalUpgradeIds;
   final Decimal goldenOpportunityMultiplier;
   final Decimal boostMultiplier;
+  final Map<String, ActiveGolden> activeGoldens;
+  final ActiveGoldenEffect? activeGoldenEffect;
 
   GameState({
     Map<CountryId, CountryState>? countries,
@@ -38,6 +45,8 @@ class GameState {
     Set<String>? activeGlobalUpgradeIds,
     Decimal? goldenOpportunityMultiplier,
     Decimal? boostMultiplier,
+    Map<String, ActiveGolden>? activeGoldens,
+    this.activeGoldenEffect,
   }) : countries = countries ?? const {},
        totalInfluence = totalInfluence ?? Influence.zero,
        unlockedContinents = Map.unmodifiable(
@@ -58,7 +67,10 @@ class GameState {
          activeGlobalUpgradeIds ?? const <String>{},
        ),
        goldenOpportunityMultiplier = goldenOpportunityMultiplier ?? Decimal.one,
-       boostMultiplier = boostMultiplier ?? Decimal.one;
+       boostMultiplier = boostMultiplier ?? Decimal.one,
+       activeGoldens = Map.unmodifiable(
+         activeGoldens ?? const <String, ActiveGolden>{},
+       );
 
   GameState copyWith({
     Map<CountryId, CountryState>? countries,
@@ -70,6 +82,8 @@ class GameState {
     Set<String>? activeGlobalUpgradeIds,
     Decimal? goldenOpportunityMultiplier,
     Decimal? boostMultiplier,
+    Map<String, ActiveGolden>? activeGoldens,
+    Object? activeGoldenEffect = _activeGoldenEffectUnchanged,
   }) {
     return GameState(
       countries: countries ?? this.countries,
@@ -83,6 +97,11 @@ class GameState {
       goldenOpportunityMultiplier:
           goldenOpportunityMultiplier ?? this.goldenOpportunityMultiplier,
       boostMultiplier: boostMultiplier ?? this.boostMultiplier,
+      activeGoldens: activeGoldens ?? this.activeGoldens,
+      activeGoldenEffect:
+          identical(activeGoldenEffect, _activeGoldenEffectUnchanged)
+          ? this.activeGoldenEffect
+          : activeGoldenEffect as ActiveGoldenEffect?,
     );
   }
 
@@ -142,7 +161,9 @@ class GameState {
             other.activeGlobalUpgradeIds,
           ) &&
           goldenOpportunityMultiplier == other.goldenOpportunityMultiplier &&
-          boostMultiplier == other.boostMultiplier);
+          boostMultiplier == other.boostMultiplier &&
+          _activeGoldensEq.equals(activeGoldens, other.activeGoldens) &&
+          activeGoldenEffect == other.activeGoldenEffect);
 
   @override
   int get hashCode => Object.hash(
@@ -155,6 +176,8 @@ class GameState {
     _stringSetEq.hash(activeGlobalUpgradeIds),
     goldenOpportunityMultiplier,
     boostMultiplier,
+    _activeGoldensEq.hash(activeGoldens),
+    activeGoldenEffect,
   );
 
   @override
@@ -167,7 +190,9 @@ class GameState {
       'earnedAchievementIds: ${earnedAchievementIds.length}, '
       'activeGlobalUpgradeIds: ${activeGlobalUpgradeIds.length}, '
       'goldenOpportunityMultiplier: $goldenOpportunityMultiplier, '
-      'boostMultiplier: $boostMultiplier)';
+      'boostMultiplier: $boostMultiplier, '
+      'activeGoldens: ${activeGoldens.length}, '
+      'activeGoldenEffect: $activeGoldenEffect)';
 
   static bool _mapsEqual(
     Map<CountryId, CountryState> a,

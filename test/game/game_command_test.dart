@@ -36,6 +36,7 @@ void main() {
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
       };
       expect(result, equals('noop'));
     });
@@ -83,6 +84,7 @@ void main() {
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
       };
       expect(result, equals('tap_country'));
     });
@@ -106,6 +108,7 @@ void main() {
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
       };
       expect(result, equals('purchase'));
     });
@@ -130,6 +133,7 @@ void main() {
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
       };
       expect(result, equals('upgrade_leader'));
     });
@@ -152,8 +156,20 @@ void main() {
         HireLeader() => 'hire',
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
       };
       expect(result, equals('unlock_country'));
+    });
+  });
+
+  group('ClaimGolden', () {
+    test('equality and toString', () {
+      const a = ClaimGolden(goldenId: 'x@1');
+      const b = ClaimGolden(goldenId: 'x@1');
+      const c = ClaimGolden(goldenId: 'y@1');
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+      expect(a.toString(), equals('ClaimGolden(x@1)'));
     });
   });
 }

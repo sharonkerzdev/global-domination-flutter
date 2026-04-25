@@ -245,3 +245,97 @@ final class ContinentCompleted extends GameEvent {
   @override
   String toString() => 'ContinentCompleted(at: $at, continentId: $continentId)';
 }
+
+final class GoldenSpawned extends GameEvent {
+  const GoldenSpawned(
+    super.at, {
+    required this.goldenId,
+    required this.countryId,
+    required this.multiplier,
+    required this.expiresAt,
+  });
+
+  final String goldenId;
+  final CountryId countryId;
+  final int multiplier;
+  final DateTime expiresAt;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldenSpawned &&
+          at == other.at &&
+          goldenId == other.goldenId &&
+          countryId == other.countryId &&
+          multiplier == other.multiplier &&
+          expiresAt == other.expiresAt);
+
+  @override
+  int get hashCode =>
+      Object.hash(at, goldenId, countryId, multiplier, expiresAt);
+
+  @override
+  String toString() =>
+      'GoldenSpawned(at: $at, goldenId: $goldenId, countryId: $countryId, '
+      'multiplier: $multiplier, expiresAt: $expiresAt)';
+}
+
+final class GoldenClaimed extends GameEvent {
+  const GoldenClaimed(
+    super.at, {
+    required this.goldenId,
+    required this.countryId,
+    required this.multiplier,
+    required this.durationSeconds,
+  });
+
+  final String goldenId;
+  final CountryId countryId;
+  final int multiplier;
+  final int durationSeconds;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldenClaimed &&
+          at == other.at &&
+          goldenId == other.goldenId &&
+          countryId == other.countryId &&
+          multiplier == other.multiplier &&
+          durationSeconds == other.durationSeconds);
+
+  @override
+  int get hashCode =>
+      Object.hash(at, goldenId, countryId, multiplier, durationSeconds);
+
+  @override
+  String toString() =>
+      'GoldenClaimed(at: $at, goldenId: $goldenId, countryId: $countryId, '
+      'multiplier: $multiplier, durationSeconds: $durationSeconds)';
+}
+
+final class GoldenExpired extends GameEvent {
+  const GoldenExpired(
+    super.at, {
+    required this.goldenId,
+    required this.claimed,
+  });
+
+  final String goldenId;
+  final bool claimed;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldenExpired &&
+          at == other.at &&
+          goldenId == other.goldenId &&
+          claimed == other.claimed);
+
+  @override
+  int get hashCode => Object.hash(at, goldenId, claimed);
+
+  @override
+  String toString() =>
+      'GoldenExpired(at: $at, goldenId: $goldenId, claimed: $claimed)';
+}

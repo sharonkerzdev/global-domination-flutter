@@ -53,6 +53,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('tick'));
     });
@@ -79,6 +82,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('upgrade'));
     });
@@ -109,6 +115,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -120,6 +129,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -165,6 +177,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -196,6 +211,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('continent_unlocked'));
     });
@@ -245,6 +263,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('milestone_reached'));
     });
@@ -276,6 +297,9 @@ void main() {
         CountryUnlocked() => 'country_unlocked',
         MilestoneReached() => 'milestone_reached',
         ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
       };
       expect(result, equals('continent_completed'));
     });

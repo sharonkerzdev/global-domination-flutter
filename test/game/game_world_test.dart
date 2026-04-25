@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
 
+import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/goldens/active_golden.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_command.dart';
@@ -12,6 +14,7 @@ import 'package:global_domination/game/game_error.dart';
 import 'package:global_domination/game/game_event.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
+import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
@@ -324,7 +327,7 @@ void main() {
   setUp(() {
     clock = FakeClock(DateTime.utc(2026, 1, 1));
     content = _buildSingleCountryContent();
-    world = GameWorld(content: content, clock: clock);
+    world = GameWorld(content: content, clock: clock, rng: SeededRng(0));
   });
 
   tearDown(() {
@@ -377,7 +380,12 @@ void main() {
 
     test('accepts optional initialState overriding defaults', () {
       final seeded = stateWithUnlockedEgypt();
-      final w = GameWorld(content: content, clock: clock, initialState: seeded);
+      final w = GameWorld(
+        content: content,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: seeded,
+      );
       expect(w.state.countries[CountryId('egypt')]!.unlocked, isTrue);
       w.dispose();
     });
@@ -404,6 +412,7 @@ void main() {
       allLockedWorld = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: allLocked,
       );
     });
@@ -451,6 +460,7 @@ void main() {
       final w = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: stateWithUnlockedEgypt(),
       );
       // 10 × 100ms = 1 second (each tick within the 100ms clamp)
@@ -469,6 +479,7 @@ void main() {
       final w = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: stateWithUnlockedEgypt(),
       );
       final events = <Object>[];
@@ -486,6 +497,7 @@ void main() {
       final w = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: stateWithUnlockedEgypt(),
       );
       w.tick(const Duration(milliseconds: 100));
@@ -575,7 +587,12 @@ void main() {
           totalInfluence: Influence(Decimal.fromInt(1000)),
           unlockedContinents: const <ContinentId, bool>{},
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final before = w.state;
 
         final result = w.applyCommand(const Noop());
@@ -603,6 +620,7 @@ void main() {
       final w = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: allLocked,
       );
       final result = w.applyCommand(
@@ -631,6 +649,7 @@ void main() {
       final w = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: allLocked,
       );
       final events = <Object>[];
@@ -660,7 +679,12 @@ void main() {
           totalInfluence: cost,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: s,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         final r = w.applyCommand(
@@ -696,7 +720,12 @@ void main() {
           totalInfluence: hireCost,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: s,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         final r = w.applyCommand(
@@ -739,7 +768,12 @@ void main() {
           totalInfluence: upgradeCost,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: content, clock: clock, initialState: s);
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: s,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         final r = w.applyCommand(
@@ -772,6 +806,7 @@ void main() {
         final w = GameWorld(
           content: three,
           clock: clock,
+          rng: SeededRng(0),
           initialState: initial,
         );
         final events = <GameEvent>[];
@@ -806,6 +841,7 @@ void main() {
         final w = GameWorld(
           content: three,
           clock: clock,
+          rng: SeededRng(0),
           initialState: initial,
         );
         w.applyCommand(const UnlockCountry(countryId: CountryId('nigeria')));
@@ -837,7 +873,12 @@ void main() {
           totalInfluence: Influence(france.unlockCost),
           unlockedContinents: const <ContinentId, bool>{},
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
 
@@ -873,7 +914,12 @@ void main() {
         totalInfluence: Influence.zero,
         unlockedContinents: _seedAfricaUnlocked,
       );
-      return GameWorld(content: content, clock: clock, initialState: state);
+      return GameWorld(
+        content: content,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: state,
+      );
     }
 
     test(
@@ -935,6 +981,7 @@ void main() {
         final w = GameWorld(
           content: content,
           clock: clock,
+          rng: SeededRng(0),
           initialState: stateWithUnlockedEgypt(),
         );
 
@@ -981,7 +1028,11 @@ void main() {
     });
 
     test('5.1: fresh GameWorld has Egypt unlocked from seed', () {
-      final w = GameWorld(content: threeCountryContent, clock: clock);
+      final w = GameWorld(
+        content: threeCountryContent,
+        clock: clock,
+        rng: SeededRng(0),
+      );
       expect(w.state.countries[const CountryId('egypt')]!.unlocked, isTrue);
       w.dispose();
     });
@@ -989,7 +1040,11 @@ void main() {
     test(
       '5.2: tick for 1 second → Egypt bankedInfluence matches IP multiplier (seed ipLevel=1)',
       () {
-        final w = GameWorld(content: threeCountryContent, clock: clock);
+        final w = GameWorld(
+          content: threeCountryContent,
+          clock: clock,
+          rng: SeededRng(0),
+        );
         // 10 × 100ms = 1 second; base 1 × (1 + 1×0.1) = 1.1 / s
         for (var i = 0; i < 10; i++) {
           w.tick(const Duration(milliseconds: 100));
@@ -1015,6 +1070,7 @@ void main() {
         final w = GameWorld(
           content: content,
           clock: clock,
+          rng: SeededRng(0),
           initialState: GameState(
             countries: {const CountryId('egypt'): egypt},
             totalInfluence: Influence.zero,
@@ -1045,6 +1101,7 @@ void main() {
         final w = GameWorld(
           content: content,
           clock: clock,
+          rng: SeededRng(0),
           initialState: GameState(
             countries: {const CountryId('egypt'): egypt},
             totalInfluence: Influence.zero,
@@ -1066,7 +1123,11 @@ void main() {
     test(
       '5.3: tick for 1 second → Nigeria bankedInfluence == zero (Nigeria is locked)',
       () {
-        final w = GameWorld(content: threeCountryContent, clock: clock);
+        final w = GameWorld(
+          content: threeCountryContent,
+          clock: clock,
+          rng: SeededRng(0),
+        );
         for (var i = 0; i < 10; i++) {
           w.tick(const Duration(milliseconds: 100));
         }
@@ -1081,7 +1142,11 @@ void main() {
     test(
       '5.4: countries map has all 3 countries from three-country content',
       () {
-        final w = GameWorld(content: threeCountryContent, clock: clock);
+        final w = GameWorld(
+          content: threeCountryContent,
+          clock: clock,
+          rng: SeededRng(0),
+        );
         expect(w.state.countries, hasLength(3));
         expect(w.state.countries[const CountryId('egypt')], isNotNull);
         expect(w.state.countries[const CountryId('nigeria')], isNotNull);
@@ -1101,7 +1166,12 @@ void main() {
           const ContinentId('africa'): true,
         }),
       );
-      final w = GameWorld(content: c, clock: clock, initialState: initial);
+      final w = GameWorld(
+        content: c,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
       final events = <GameEvent>[];
       final sub = w.events.listen(events.add);
       w.tick(const Duration(milliseconds: 100));
@@ -1129,7 +1199,12 @@ void main() {
           totalInfluence: Influence(Decimal.fromInt(100)),
           unlockedContinents: Map.unmodifiable(<ContinentId, bool>{}),
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         w.tick(const Duration(milliseconds: 1));
@@ -1173,7 +1248,12 @@ void main() {
           ),
         }),
       );
-      final w = GameWorld(content: c, clock: clock, initialState: initial);
+      final w = GameWorld(
+        content: c,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
       final events = <GameEvent>[];
       final sub = w.events.listen(events.add);
       w.applyCommand(const TapCountry(countryId: CountryId('egypt')));
@@ -1192,7 +1272,7 @@ void main() {
     test(
       'seeded africa in unlockedContinents: tick emits no ContinentUnlocked',
       () async {
-        final w = GameWorld(content: content, clock: clock);
+        final w = GameWorld(content: content, clock: clock, rng: SeededRng(0));
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         w.tick(Duration.zero);
@@ -1226,7 +1306,12 @@ void main() {
           totalInfluence: Influence.zero,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         w.applyCommand(const TapCountry(countryId: CountryId('c0')));
@@ -1241,7 +1326,7 @@ void main() {
     );
 
     test('tick does not emit MilestoneReached', () async {
-      final w = GameWorld(content: content, clock: clock);
+      final w = GameWorld(content: content, clock: clock, rng: SeededRng(0));
       final events = <GameEvent>[];
       final sub = w.events.listen(events.add);
       w.tick(const Duration(milliseconds: 1));
@@ -1270,7 +1355,12 @@ void main() {
           totalInfluence: Influence.zero,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         final result = w.applyCommand(
@@ -1304,7 +1394,12 @@ void main() {
           totalInfluence: Influence.zero,
           unlockedContinents: _seedAfricaUnlocked,
         );
-        final w = GameWorld(content: c, clock: clock, initialState: initial);
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
         final events = <GameEvent>[];
         final sub = w.events.listen(events.add);
         final r = w.applyCommand(
@@ -1353,7 +1448,12 @@ void main() {
         },
         continentCompletions: {const ContinentId('africa'): true},
       );
-      final w = GameWorld(content: c, clock: clock, initialState: loaded);
+      final w = GameWorld(
+        content: c,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: loaded,
+      );
       final events = <GameEvent>[];
       final sub = w.events.listen(events.add);
       w.applyCommand(const TapCountry(countryId: CountryId('c0')));
@@ -1381,9 +1481,95 @@ void main() {
     });
   });
 
+  group('Story 5-1 goldens', () {
+    test('e2e spawn, claim, effect GoldenExpired(claimed: true)', () async {
+      final pTick =
+          BalanceConfig.goldenSpawnProbabilityPerSecond.toDouble() * 0.1;
+      int? spawnSeed;
+      for (var s = 0; s < 100000; s++) {
+        if (SeededRng(s).nextDouble() < pTick) {
+          spawnSeed = s;
+          break;
+        }
+      }
+      expect(spawnSeed, isNotNull);
+      final fc = FakeClock(DateTime.utc(2026, 1, 1, 12));
+      final c = _buildSingleCountryContent();
+      final w = GameWorld(content: c, clock: fc, rng: SeededRng(spawnSeed!));
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      w.tick(const Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration.zero);
+      expect(w.state.activeGoldens, hasLength(1));
+      expect(log.whereType<GoldenSpawned>(), hasLength(1));
+      final gid = w.state.activeGoldens.keys.first;
+      w.applyCommand(ClaimGolden(goldenId: gid));
+      await Future<void>.delayed(Duration.zero);
+      expect(w.state.activeGoldenEffect, isNotNull);
+      expect(w.state.goldenOpportunityMultiplier == Decimal.one, isFalse);
+      expect(log.whereType<GoldenClaimed>(), hasLength(1));
+      fc.advance(
+        const Duration(seconds: BalanceConfig.goldenEffectDurationSeconds + 1),
+      );
+      w.tick(const Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration.zero);
+      expect(w.state.activeGoldenEffect, isNull);
+      expect(w.state.goldenOpportunityMultiplier, equals(Decimal.one));
+      expect(
+        log.whereType<GoldenExpired>().where((e) => e.claimed),
+        hasLength(1),
+      );
+      await sub.cancel();
+    });
+
+    test('tick with only golden map-expiry still emits Tick', () async {
+      const gid = 'eg@100';
+      final tClock = DateTime.utc(2026, 1, 1, 12);
+      final started = tClock.subtract(const Duration(hours: 1));
+      final g = ActiveGolden(
+        id: gid,
+        countryId: const CountryId('egypt'),
+        multiplier: 20,
+        expiresAt: started,
+      );
+      final c = _buildSingleCountryContent();
+      final s0 = GameState.initialSeed(c);
+      final initial = s0.copyWith(activeGoldens: {gid: g});
+      final w = GameWorld(
+        content: c,
+        clock: FakeClock(tClock),
+        rng: SeededRng(0),
+        initialState: initial,
+      );
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      w.tick(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        log.whereType<GoldenExpired>().where((e) => e.claimed).isEmpty,
+        isTrue,
+      );
+      expect(
+        log.whereType<GoldenExpired>().where((e) => !e.claimed),
+        hasLength(1),
+      );
+      expect(log.whereType<Tick>(), hasLength(1));
+      expect(log.first, isA<GoldenExpired>());
+      expect(log.last, isA<Tick>());
+      expect(w.state.activeGoldens, isEmpty);
+      await sub.cancel();
+    });
+  });
+
   group('GameWorld.dispose', () {
     test('closes the stream', () async {
-      final world2 = GameWorld(content: content, clock: clock);
+      final world2 = GameWorld(
+        content: content,
+        clock: clock,
+        rng: SeededRng(0),
+      );
       var isDone = false;
       world2.events.listen((_) {}, onDone: () => isDone = true);
       world2.dispose();
@@ -1392,7 +1578,11 @@ void main() {
     });
 
     test('is idempotent — second dispose() does not throw', () {
-      final world2 = GameWorld(content: content, clock: clock);
+      final world2 = GameWorld(
+        content: content,
+        clock: clock,
+        rng: SeededRng(0),
+      );
       world2.dispose();
       expect(world2.dispose, returnsNormally);
     });

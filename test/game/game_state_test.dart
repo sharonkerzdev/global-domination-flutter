@@ -33,7 +33,7 @@ void main() {
           'unlockedContinents: 0, reachedMilestones: 0, continentCompletions: 0, '
           'earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
-          'boostMultiplier: 1)',
+          'boostMultiplier: 1, activeGoldens: 0, activeGoldenEffect: null)',
         ),
       );
     });

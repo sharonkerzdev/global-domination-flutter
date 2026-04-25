@@ -1,6 +1,6 @@
 # Story 5.1: Golden Opportunity — Spawn and Claim
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -55,13 +55,13 @@ so that active play feels explosive and rewarding.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Introduce seedable `Rng` infrastructure under `lib/game/support/` (AC: #3, #9)
-  - [ ] 1.1 Create `lib/game/support/rng.dart` defining `abstract class Rng { int nextInt(int max); double nextDouble(); }`. Pure Dart — NO Flutter imports, NO `dart:ui`.
-  - [ ] 1.2 In the same file (one-public-class-per-file rule does not apply because these are interface + impls of one concept), define `final class SeededRng implements Rng` wrapping `dart:math` `Random(seed)` and `final class SystemRng implements Rng` wrapping `Random()` (the only place `Random()` is allowed in `lib/game/`). Add manual `==`/`hashCode` only on `SeededRng` keyed by `seed` (used for golden-path test fixtures). `SystemRng` needs no equality.
-  - [ ] 1.3 Pure-Dart tests in `test/game/support/rng_test.dart` (NEW folder) using `package:test/test.dart`: SeededRng with same seed produces identical sequence; different seeds diverge; `nextInt(max)` always returns `[0, max)`; `nextDouble()` always returns `[0.0, 1.0)`.
+- [x] Task 1: Introduce seedable `Rng` infrastructure under `lib/game/support/` (AC: #3, #9)
+  - [x] 1.1 Create `lib/game/support/rng.dart` defining `abstract class Rng { int nextInt(int max); double nextDouble(); }`. Pure Dart — NO Flutter imports, NO `dart:ui`.
+  - [x] 1.2 In the same file (one-public-class-per-file rule does not apply because these are interface + impls of one concept), define `final class SeededRng implements Rng` wrapping `dart:math` `Random(seed)` and `final class SystemRng implements Rng` wrapping `Random()` (the only place `Random()` is allowed in `lib/game/`). Add manual `==`/`hashCode` only on `SeededRng` keyed by `seed` (used for golden-path test fixtures). `SystemRng` needs no equality.
+  - [x] 1.3 Pure-Dart tests in `test/game/support/rng_test.dart` (NEW folder) using `package:test/test.dart`: SeededRng with same seed produces identical sequence; different seeds diverge; `nextInt(max)` always returns `[0, max)`; `nextDouble()` always returns `[0.0, 1.0)`.
 
-- [ ] Task 2: Extend `BalanceConfig` with golden-tuning constants (AC: #1, #2, #4, #6)
-  - [ ] 2.1 Add to `lib/game/config/balance.dart` (placeholders — Epic 10 retunes):
+- [x] Task 2: Extend `BalanceConfig` with golden-tuning constants (AC: #1, #2, #4, #6)
+  - [x] 2.1 Add to `lib/game/config/balance.dart` (placeholders — Epic 10 retunes):
     ```dart
     /// Probability of attempting a Golden spawn per real wall-clock second of tick time.
     /// Per-tick draw: rng.nextDouble() < goldenSpawnProbabilityPerSecond × dtSeconds.
@@ -84,10 +84,10 @@ so that active play feels explosive and rewarding.
     /// Seconds the post-claim multiplier burst remains active.
     static const int goldenEffectDurationSeconds = 30;
     ```
-  - [ ] 2.2 Update `test/game/config/balance_test.dart` if it exists (check via `glob`); otherwise NO test file is added — `BalanceConfig` is exercised through reducer/scheduler tests. Add invariant assertions in the scheduler (e.g. `assert(goldenMinMultiplier <= goldenMaxMultiplier)`) only if you elect to defend the constants.
+  - [x] 2.2 Update `test/game/config/balance_test.dart` if it exists (check via `glob`); otherwise NO test file is added — `BalanceConfig` is exercised through reducer/scheduler tests. Add invariant assertions in the scheduler (e.g. `assert(goldenMinMultiplier <= goldenMaxMultiplier)`) only if you elect to defend the constants.
 
-- [ ] Task 3: Define `ActiveGolden` and `ActiveGoldenEffect` value classes (AC: #1, #4)
-  - [ ] 3.1 Create `lib/game/features/goldens/active_golden.dart`:
+- [x] Task 3: Define `ActiveGolden` and `ActiveGoldenEffect` value classes (AC: #1, #4)
+  - [x] 3.1 Create `lib/game/features/goldens/active_golden.dart`:
     ```dart
     @immutable
     class ActiveGolden {
@@ -100,7 +100,7 @@ so that active play feels explosive and rewarding.
       // manual ==, hashCode, toString covering all four fields
     }
     ```
-  - [ ] 3.2 Create `lib/game/features/goldens/active_golden_effect.dart`:
+  - [x] 3.2 Create `lib/game/features/goldens/active_golden_effect.dart`:
     ```dart
     @immutable
     class ActiveGoldenEffect {
@@ -112,20 +112,20 @@ so that active play feels explosive and rewarding.
       // manual ==, hashCode, toString
     }
     ```
-  - [ ] 3.3 Both files MUST be pure Dart — `package:meta/meta.dart` only, no Flutter imports.
-  - [ ] 3.4 Pure-Dart tests `test/game/features/goldens/active_golden_test.dart` and `active_golden_effect_test.dart`: equality, `hashCode` parity for equal instances, `toString` includes all fields. Pattern mirrors `test/game/features/continents/next_unlock_teaser_test.dart` (if present) or the value-class tests embedded in `next_unlock_selector_test.dart`.
+  - [x] 3.3 Both files MUST be pure Dart — `package:meta/meta.dart` only, no Flutter imports.
+  - [x] 3.4 Pure-Dart tests `test/game/features/goldens/active_golden_test.dart` and `active_golden_effect_test.dart`: equality, `hashCode` parity for equal instances, `toString` includes all fields. Pattern mirrors `test/game/features/continents/next_unlock_teaser_test.dart` (if present) or the value-class tests embedded in `next_unlock_selector_test.dart`.
 
-- [ ] Task 4: Extend `GameState` with golden fields (AC: #1, #4, #6)
-  - [ ] 4.1 Modify `lib/game/game_state.dart` to add two new fields after `boostMultiplier`:
+- [x] Task 4: Extend `GameState` with golden fields (AC: #1, #4, #6)
+  - [x] 4.1 Modify `lib/game/game_state.dart` to add two new fields after `boostMultiplier`:
     - `final Map<String, ActiveGolden> activeGoldens;` — keyed by `ActiveGolden.id`. Defaults to `const <String, ActiveGolden>{}`. Wrap with `Map.unmodifiable(...)` in the constructor body, same pattern as `unlockedContinents`.
     - `final ActiveGoldenEffect? activeGoldenEffect;` — nullable.
-  - [ ] 4.2 Add a `MapEquality<String, ActiveGolden>` static (`_activeGoldensEq`) to `GameState` for equality (mirror `_unlockedContinentsEq`).
-  - [ ] 4.3 Extend `copyWith` to accept both new fields. For `activeGoldenEffect`, use the same explicit-null sentinel pattern as `CountryState.lastCollectedAt` (lines 9, 33–43 of `country_state.dart`) so the reducer can clear the effect to `null`. Search the file for `_lastCollectedAtUnchanged` and replicate exactly.
-  - [ ] 4.4 Extend `==`, `hashCode`, `toString` to include both new fields. Note: `goldenOpportunityMultiplier` is ALREADY a field on `GameState` (do not re-add); the scheduler keeps it in sync with `activeGoldenEffect`.
-  - [ ] 4.5 No changes needed to `initialSeed(...)` — defaults of empty map / null effect / `Decimal.one` multiplier are already correct.
+  - [x] 4.2 Add a `MapEquality<String, ActiveGolden>` static (`_activeGoldensEq`) to `GameState` for equality (mirror `_unlockedContinentsEq`).
+  - [x] 4.3 Extend `copyWith` to accept both new fields. For `activeGoldenEffect`, use the same explicit-null sentinel pattern as `CountryState.lastCollectedAt` (lines 9, 33–43 of `country_state.dart`) so the reducer can clear the effect to `null`. Search the file for `_lastCollectedAtUnchanged` and replicate exactly.
+  - [x] 4.4 Extend `==`, `hashCode`, `toString` to include both new fields. Note: `goldenOpportunityMultiplier` is ALREADY a field on `GameState` (do not re-add); the scheduler keeps it in sync with `activeGoldenEffect`.
+  - [x] 4.5 No changes needed to `initialSeed(...)` — defaults of empty map / null effect / `Decimal.one` multiplier are already correct.
 
-- [ ] Task 5: Add `ClaimGolden` command (AC: #4, #7)
-  - [ ] 5.1 Add to `lib/game/game_command.dart` after `UnlockCountry`:
+- [x] Task 5: Add `ClaimGolden` command (AC: #4, #7)
+  - [x] 5.1 Add to `lib/game/game_command.dart` after `UnlockCountry`:
     ```dart
     final class ClaimGolden extends GameCommand {
       const ClaimGolden({required this.goldenId});
@@ -133,10 +133,10 @@ so that active play feels explosive and rewarding.
       // manual ==, hashCode keyed by goldenId, toString
     }
     ```
-  - [ ] 5.2 Update `test/game/game_command_test.dart` with equality + `toString` coverage for `ClaimGolden`.
+  - [x] 5.2 Update `test/game/game_command_test.dart` with equality + `toString` coverage for `ClaimGolden`.
 
-- [ ] Task 6: Add `GoldenSpawned`, `GoldenClaimed`, `GoldenExpired` events (AC: #1, #2, #4, #6)
-  - [ ] 6.1 Add three sealed variants to `lib/game/game_event.dart` after `ContinentCompleted`:
+- [x] Task 6: Add `GoldenSpawned`, `GoldenClaimed`, `GoldenExpired` events (AC: #1, #2, #4, #6)
+  - [x] 6.1 Add three sealed variants to `lib/game/game_event.dart` after `ContinentCompleted`:
     ```dart
     final class GoldenSpawned extends GameEvent {
       final String goldenId;
@@ -165,10 +165,10 @@ so that active play feels explosive and rewarding.
       const GoldenExpired(super.at, {required this.goldenId, required this.claimed});
     }
     ```
-  - [ ] 6.2 Update `test/game/game_event_test.dart` with equality + `toString` coverage for all three new events.
+  - [x] 6.2 Update `test/game/game_event_test.dart` with equality + `toString` coverage for all three new events.
 
-- [ ] Task 7: Implement the per-tick scheduler `evaluateGoldens` (AC: #1, #2, #3, #6, #10)
-  - [ ] 7.1 Create `lib/game/features/goldens/goldens_scheduler.dart` exposing one top-level pure function:
+- [x] Task 7: Implement the per-tick scheduler `evaluateGoldens` (AC: #1, #2, #3, #6, #10)
+  - [x] 7.1 Create `lib/game/features/goldens/goldens_scheduler.dart` exposing one top-level pure function:
     ```dart
     (GameState, List<GameEvent>) evaluateGoldens(
       GameState state,
@@ -178,7 +178,7 @@ so that active play feels explosive and rewarding.
       required Rng rng,
     });
     ```
-  - [ ] 7.2 Behavior, in this exact order (tests pin the order):
+  - [x] 7.2 Behavior, in this exact order (tests pin the order):
     1. **Effect expiry first** (AC #6): if `state.activeGoldenEffect != null && state.activeGoldenEffect!.expiresAt.compareTo(now) <= 0`, prepare a `GoldenExpired(now, goldenId: effect.goldenId, claimed: true)` event, set `nextEffect = null`, and reset `nextMultiplier = Decimal.one`. Otherwise carry both forward unchanged.
     2. **Map-spawn expiry** (AC #2): scan `state.activeGoldens.values`; for each entry where `expiresAt.compareTo(now) <= 0`, remove it from the working map and emit `GoldenExpired(now, goldenId: entry.id, claimed: false)`. Iterate in `id` ASC order for deterministic event ordering.
     3. **Spawn roll** (AC #1, #10): if `dt > Duration.zero` and the working `activeGoldens.length < BalanceConfig.goldenMaxConcurrent`:
@@ -196,10 +196,10 @@ so that active play feels explosive and rewarding.
        - `goldenOpportunityMultiplier` (replace with `nextMultiplier` if effect expired).
        - All other fields untouched.
        Return `(state, [])` (the original instance, no copy) when nothing changed — this keeps `tick`'s `identical(_state, ...)` short-circuits efficient.
-  - [ ] 7.3 Reducer purity: NO `DateTime.now()`, NO `Random()`, NO I/O. The function MUST be exhaustively unit-testable with `(state, content, dt, now, rng)` inputs only.
+  - [x] 7.3 Reducer purity: NO `DateTime.now()`, NO `Random()`, NO I/O. The function MUST be exhaustively unit-testable with `(state, content, dt, now, rng)` inputs only.
 
-- [ ] Task 8: Implement the `ClaimGolden` reducer (AC: #4, #7)
-  - [ ] 8.1 Create `lib/game/features/goldens/goldens_reducer.dart`:
+- [x] Task 8: Implement the `ClaimGolden` reducer (AC: #4, #7)
+  - [x] 8.1 Create `lib/game/features/goldens/goldens_reducer.dart`:
     ```dart
     Result<(GameState, GameEvent?), GameError> applyClaimGolden(
       GameState state,
@@ -207,89 +207,98 @@ so that active play feels explosive and rewarding.
       required DateTime now,
     });
     ```
-  - [ ] 8.2 Validations (in order, each with no state mutation on failure):
+  - [x] 8.2 Validations (in order, each with no state mutation on failure):
     1. `state.activeGoldens[cmd.goldenId] == null` → `Result.failure(GameError.userInvalidTarget(detail: 'golden_not_found'))` (AC #7a).
     2. `targetGolden.expiresAt.compareTo(now) <= 0` → `Result.failure(GameError.userLocked(reason: 'golden_expired'))` (AC #7b — leave entry; scheduler will remove it on next tick).
     3. `state.countries[targetGolden.countryId]?.unlocked != true` → `Result.failure(GameError.userLocked(reason: 'country_locked'))` (AC #7c — defensive).
-  - [ ] 8.3 On success, build:
+  - [x] 8.3 On success, build:
     - `nextActiveGoldens = {...state.activeGoldens}..remove(cmd.goldenId)` (then `Map.unmodifiable`).
     - `nextEffect = ActiveGoldenEffect(goldenId: cmd.goldenId, multiplier: targetGolden.multiplier, expiresAt: now.add(Duration(seconds: BalanceConfig.goldenEffectDurationSeconds)))`.
     - `nextMultiplier = Decimal.fromInt(targetGolden.multiplier)`.
     - Emit `GoldenClaimed(now, goldenId: cmd.goldenId, countryId: targetGolden.countryId, multiplier: targetGolden.multiplier, durationSeconds: BalanceConfig.goldenEffectDurationSeconds)`.
-  - [ ] 8.4 Replace-semantics for stacked claims: if `state.activeGoldenEffect != null` when a claim succeeds, **the new effect replaces the old**. The expiring old effect does NOT emit a separate `GoldenExpired` event — the new claim's effect supersedes it cleanly. Test this explicitly (claim twice in succession; only one effect remains; only the new `GoldenClaimed` event fires). (Mirrors Story 5-2's "boosts do not stack" decision-point but resolves differently: goldens replace.)
-  - [ ] 8.5 NO interactions with `IncomeCalculator`, NO interactions with `state.countries` mutation. Only golden state changes.
+  - [x] 8.4 Replace-semantics for stacked claims: if `state.activeGoldenEffect != null` when a claim succeeds, **the new effect replaces the old**. The expiring old effect does NOT emit a separate `GoldenExpired` event — the new claim's effect supersedes it cleanly. Test this explicitly (claim twice in succession; only one effect remains; only the new `GoldenClaimed` event fires). (Mirrors Story 5-2's "boosts do not stack" decision-point but resolves differently: goldens replace.)
+  - [x] 8.5 NO interactions with `IncomeCalculator`, NO interactions with `state.countries` mutation. Only golden state changes.
 
-- [ ] Task 9: Wire scheduler + reducer into `GameWorld` (AC: #1, #2, #4, #6, #7, #9)
-  - [ ] 9.1 Modify `lib/game/game_world.dart`:
+- [x] Task 9: Wire scheduler + reducer into `GameWorld` (AC: #1, #2, #4, #6, #7, #9)
+  - [x] 9.1 Modify `lib/game/game_world.dart`:
     - Add `final Rng _rng;` field. Add `required Rng rng` to the constructor parameter list and assign.
     - Update `tick(Duration dt)` after the existing `evaluateContinentUnlocks` block: call `evaluateGoldens(_state, _content, dt, now: _clock.now(), rng: _rng)`. If returned events are non-empty, replace `_state` and emit each event; combine the change-detection into the existing `if (countriesChanged || continentEvents.isNotEmpty || ...)` Tick-event-emission predicate so a tick that ONLY had a golden change still emits a `Tick(now)` event.
     - Extend the `applyCommand` switch (AC #4): add a `ClaimGolden()` branch that calls a new `_applyClaimGolden(cmd)` private method. Mirror the `_applyTapCountry` template (`result.map((tuple) { ... })`).
     - Implement `_applyClaimGolden(ClaimGolden cmd)` calling `applyClaimGolden(_state, cmd, now: _clock.now())`. **After a successful claim, do NOT call the continent-unlock or milestone evaluators** — claiming a golden does not change `totalInfluence`, country-unlocked flags, or continent state.
-  - [ ] 9.2 Update the existing `applyCommand` switch's `Noop()`/`UnlockCountry()` cases — do NOT add a `ClaimGolden() => const Success(...)` no-op branch in the second switch (lines 86–93 currently). Instead, hoist the early-return for `ClaimGolden` to the top of `applyCommand` like the existing `UnlockCountry` early-return (lines 72–83 pattern). That avoids the post-command continent/milestone re-evaluation entirely.
-  - [ ] 9.3 Update `test/game/game_world_test.dart` constructors that build `GameWorld(...)` to pass `rng: SeededRng(0)` (or similar). This is a constructor signature change — every `GameWorld` instantiation breaks until updated. Audit with grep: `rg "GameWorld\(" lib test`. Apply across all callers (production: `lib/providers/game_providers.dart`; tests: every `test/game/**` file that builds a `GameWorld`).
+  - [x] 9.2 Update the existing `applyCommand` switch's `Noop()`/`UnlockCountry()` cases — do NOT add a `ClaimGolden() => const Success(...)` no-op branch in the second switch (lines 86–93 currently). Instead, hoist the early-return for `ClaimGolden` to the top of `applyCommand` like the existing `UnlockCountry` early-return (lines 72–83 pattern). That avoids the post-command continent/milestone re-evaluation entirely.
+  - [x] 9.3 Update `test/game/game_world_test.dart` constructors that build `GameWorld(...)` to pass `rng: SeededRng(0)` (or similar). This is a constructor signature change — every `GameWorld` instantiation breaks until updated. Audit with grep: `rg "GameWorld\(" lib test`. Apply across all callers (production: `lib/providers/game_providers.dart`; tests: every `test/game/**` file that builds a `GameWorld`).
 
-- [ ] Task 10: Add `rngProvider` and wire `GameWorld` (AC: #9)
-  - [ ] 10.1 Modify `lib/providers/game_providers.dart`:
+- [x] Task 10: Add `rngProvider` and wire `GameWorld` (AC: #9)
+  - [x] 10.1 Modify `lib/providers/game_providers.dart`:
     - Import `package:global_domination/game/support/rng.dart`.
     - Add `final rngProvider = Provider<Rng>((_) => SystemRng());` near `clockProvider`.
     - In the `gameWorldProvider` body, `final rng = ref.watch(rngProvider);` and pass `rng: rng` to BOTH `GameWorld(...)` constructions (the empty-content fallback AND the real-content path).
-  - [ ] 10.2 No new file under `lib/providers/`; this stays in `game_providers.dart` (composition root for game-loop dependencies).
+  - [x] 10.2 No new file under `lib/providers/`; this stays in `game_providers.dart` (composition root for game-loop dependencies).
 
-- [ ] Task 11: Add UI tap routing for golden claim (AC: #8)
-  - [ ] 11.1 Modify `lib/ui/features/map/map_screen.dart`'s `_onTapUp`:
+- [x] Task 11: Add UI tap routing for golden claim (AC: #8)
+  - [x] 11.1 Modify `lib/ui/features/map/map_screen.dart`'s `_onTapUp`:
     - After computing `countryId` from `_hitTester.hitTest(...)`, BEFORE the existing `TapCountry` dispatch:
       - Read `final state = ref.read(gameWorldProvider);` (state-notifier already exposes `GameState`).
       - Compute `final candidates = state.activeGoldens.values.where((g) => g.countryId == countryId).toList()..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));` (earliest-expiry-first per AC #8).
       - If `candidates.isNotEmpty`, dispatch `ClaimGolden(goldenId: candidates.first.id)` and `return;`.
       - Otherwise fall through to the existing `TapCountry(countryId: countryId)` dispatch.
-  - [ ] 11.2 Use `ref.read` (NOT `ref.watch`) because `_onTapUp` is a one-shot callback, not a build-time dependency. Avoid rebuild churn.
-  - [ ] 11.3 No visual overlay rendering — explicitly out of scope (deferred to Epic 8 — Game Feel / Juice). Add a `// TODO(epic-8): render golden_opportunity_overlay on country with active golden` comment ONLY if helpful to the next dev; do not over-comment.
-  - [ ] 11.4 Widget test: `test/ui/features/map/map_screen_golden_tap_test.dart` (NEW). Strategy:
+  - [x] 11.2 Use `ref.read` (NOT `ref.watch`) because `_onTapUp` is a one-shot callback, not a build-time dependency. Avoid rebuild churn.
+  - [x] 11.3 No visual overlay rendering — explicitly out of scope (deferred to Epic 8 — Game Feel / Juice). Add a `// TODO(epic-8): render golden_opportunity_overlay on country with active golden` comment ONLY if helpful to the next dev; do not over-comment.
+  - [x] 11.4 Widget test: `test/ui/features/map/map_screen_golden_tap_test.dart` (NEW). Strategy:
     - Override `gameWorldProvider` with a hand-built notifier exposing a `GameState` containing one `ActiveGolden(countryId: egypt, ...)`.
     - Pump `MapScreen` with a stubbed `geoProvider` (use existing `country_path_builder.dart` helper if available — see `test/helpers/country_path_builder.dart`).
     - Simulate a tap on the egypt polygon area; assert the test notifier received `ClaimGolden(...)` (NOT `TapCountry(...)`).
     - Reverse case: same setup with empty `activeGoldens`; assert the dispatch is `TapCountry(...)`.
 
-- [ ] Task 12: Pure-Dart scheduler tests in `test/game/features/goldens/goldens_scheduler_test.dart` (AC: #1, #2, #3, #6, #10)
-  - [ ] 12.1 Use `package:test/test.dart` (NOT `flutter_test`).
-  - [ ] 12.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings(...)` mirroring `test/game/features/economy/income_calculator_test.dart` lines 17–67 — single continent (africa @0), 2–3 countries (egypt unlocked, nigeria unlocked, kenya locked).
-  - [ ] 12.3 Test "deterministic spawn under fixed seed" (AC #3): `evaluateGoldens(state, content, Duration(seconds: 1), now: clock, rng: SeededRng(42))` ran twice from the same input produces the same `(state, events)` tuple — including the chosen country, multiplier, and id.
-  - [ ] 12.4 Test "no spawn when probability roll fails" (AC #1): seed an RNG whose first `nextDouble()` returns ≥ `pTick`. Strategy: use a tiny `dt = Duration(microseconds: 1)` so `pTick ≈ 0` for any reasonable `goldenSpawnProbabilityPerSecond`, OR override `goldenSpawnProbabilityPerSecond` indirectly by choosing a seed/dt combination known to skip. Confirm `state.activeGoldens.isEmpty` and no `GoldenSpawned` emitted.
-  - [ ] 12.5 Test "spawn appends ActiveGolden and emits GoldenSpawned" (AC #1): with a seed that hits, assert exactly one `ActiveGolden` added, multiplier ∈ `[10, 100]`, expiresAt = `now + 10s`, event payload matches.
-  - [ ] 12.6 Test "expired map-spawn is removed and emits GoldenExpired(claimed: false)" (AC #2): pre-populate `state.activeGoldens` with one entry whose `expiresAt < now`; pass `dt = Duration.zero` and a seed that wouldn't spawn. Assert removal + event with `claimed: false`. Also verify multiple expired entries emit events in `id` ASC order.
-  - [ ] 12.7 Test "active-golden-effect expires and resets multiplier to one" (AC #6): pre-populate `state.activeGoldenEffect = ActiveGoldenEffect(goldenId: 'g1', multiplier: 50, expiresAt: now - 1s)` and `state.goldenOpportunityMultiplier = Decimal.fromInt(50)`. After `evaluateGoldens`, assert `activeGoldenEffect == null`, `goldenOpportunityMultiplier == Decimal.one`, and a single `GoldenExpired(goldenId: 'g1', claimed: true)` event.
-  - [ ] 12.8 Test "no spawn when activeGoldens at goldenMaxConcurrent" (AC #1): pre-populate map up to cap with non-expired entries; even with a "would-spawn" seed, no new entry appears, no event.
-  - [ ] 12.9 Test "empty-unlocked guard" (AC #10): build a state where every country is locked; even with a "would-spawn" seed, no new entry, no `GoldenSpawned` event. (Use the standard fixture but flip every CountryState.unlocked to false in the test setup.)
-  - [ ] 12.10 Test "tick with dt = Duration.zero is a no-op for spawning" (defensive): same input as 12.5 but `dt = Duration.zero` → no spawn even with a hit-seed (because `pTick = 0`).
-  - [ ] 12.11 Test "country chosen deterministically from sorted-by-id list": with two unlocked countries (egypt, nigeria) and a seed where `nextInt(2) == 1`, verify the chosen country is `nigeria` (sorted second). Flip the seed to confirm the other branch.
+- [x] Task 12: Pure-Dart scheduler tests in `test/game/features/goldens/goldens_scheduler_test.dart` (AC: #1, #2, #3, #6, #10)
+  - [x] 12.1 Use `package:test/test.dart` (NOT `flutter_test`).
+  - [x] 12.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings(...)` mirroring `test/game/features/economy/income_calculator_test.dart` lines 17–67 — single continent (africa @0), 2–3 countries (egypt unlocked, nigeria unlocked, kenya locked).
+  - [x] 12.3 Test "deterministic spawn under fixed seed" (AC #3): `evaluateGoldens(state, content, Duration(seconds: 1), now: clock, rng: SeededRng(42))` ran twice from the same input produces the same `(state, events)` tuple — including the chosen country, multiplier, and id.
+  - [x] 12.4 Test "no spawn when probability roll fails" (AC #1): seed an RNG whose first `nextDouble()` returns ≥ `pTick`. Strategy: use a tiny `dt = Duration(microseconds: 1)` so `pTick ≈ 0` for any reasonable `goldenSpawnProbabilityPerSecond`, OR override `goldenSpawnProbabilityPerSecond` indirectly by choosing a seed/dt combination known to skip. Confirm `state.activeGoldens.isEmpty` and no `GoldenSpawned` emitted.
+  - [x] 12.5 Test "spawn appends ActiveGolden and emits GoldenSpawned" (AC #1): with a seed that hits, assert exactly one `ActiveGolden` added, multiplier ∈ `[10, 100]`, expiresAt = `now + 10s`, event payload matches.
+  - [x] 12.6 Test "expired map-spawn is removed and emits GoldenExpired(claimed: false)" (AC #2): pre-populate `state.activeGoldens` with one entry whose `expiresAt < now`; pass `dt = Duration.zero` and a seed that wouldn't spawn. Assert removal + event with `claimed: false`. Also verify multiple expired entries emit events in `id` ASC order.
+  - [x] 12.7 Test "active-golden-effect expires and resets multiplier to one" (AC #6): pre-populate `state.activeGoldenEffect = ActiveGoldenEffect(goldenId: 'g1', multiplier: 50, expiresAt: now - 1s)` and `state.goldenOpportunityMultiplier = Decimal.fromInt(50)`. After `evaluateGoldens`, assert `activeGoldenEffect == null`, `goldenOpportunityMultiplier == Decimal.one`, and a single `GoldenExpired(goldenId: 'g1', claimed: true)` event.
+  - [x] 12.8 Test "no spawn when activeGoldens at goldenMaxConcurrent" (AC #1): pre-populate map up to cap with non-expired entries; even with a "would-spawn" seed, no new entry appears, no event.
+  - [x] 12.9 Test "empty-unlocked guard" (AC #10): build a state where every country is locked; even with a "would-spawn" seed, no new entry, no `GoldenSpawned` event. (Use the standard fixture but flip every CountryState.unlocked to false in the test setup.)
+  - [x] 12.10 Test "tick with dt = Duration.zero is a no-op for spawning" (defensive): same input as 12.5 but `dt = Duration.zero` → no spawn even with a hit-seed (because `pTick = 0`).
+  - [x] 12.11 Test "country chosen deterministically from sorted-by-id list": with two unlocked countries (egypt, nigeria) and a seed where `nextInt(2) == 1`, verify the chosen country is `nigeria` (sorted second). Flip the seed to confirm the other branch.
 
-- [ ] Task 13: Pure-Dart reducer tests in `test/game/features/goldens/goldens_reducer_test.dart` (AC: #4, #7)
-  - [ ] 13.1 Happy path (AC #4): pre-populate one `ActiveGolden`; dispatch `ClaimGolden(goldenId)`. Assert removal from map, `activeGoldenEffect` set with correct multiplier and `expiresAt = now + 30s`, `goldenOpportunityMultiplier == Decimal.fromInt(claimedMultiplier)`, and `GoldenClaimed` event payload.
-  - [ ] 13.2 AC #7a: claim a non-existent goldenId → `Result.failure(GameError.userInvalidTarget(detail: 'golden_not_found'))`, state unchanged (use `expect(result.errorOrNull, isA<InvalidTarget>())` then check the detail).
-  - [ ] 13.3 AC #7b: claim an entry whose `expiresAt <= now` → `Result.failure(GameError.userLocked(reason: 'golden_expired'))`, state unchanged INCLUDING the entry remaining in the map.
-  - [ ] 13.4 AC #7c: pre-populate an `ActiveGolden(countryId: kenya)` where `state.countries[kenya].unlocked == false` → `Result.failure(GameError.userLocked(reason: 'country_locked'))`.
-  - [ ] 13.5 Replace semantics (Task 8.4): pre-populate an existing `activeGoldenEffect` with multiplier 25 and `expiresAt = now + 15s`. Pre-populate a new `ActiveGolden` with multiplier 75. Dispatch `ClaimGolden`. Assert the resulting `activeGoldenEffect.multiplier == 75`, `expiresAt == now + 30s`, ONLY ONE `GoldenClaimed` event, NO extra `GoldenExpired` for the displaced effect.
+- [x] Task 13: Pure-Dart reducer tests in `test/game/features/goldens/goldens_reducer_test.dart` (AC: #4, #7)
+  - [x] 13.1 Happy path (AC #4): pre-populate one `ActiveGolden`; dispatch `ClaimGolden(goldenId)`. Assert removal from map, `activeGoldenEffect` set with correct multiplier and `expiresAt = now + 30s`, `goldenOpportunityMultiplier == Decimal.fromInt(claimedMultiplier)`, and `GoldenClaimed` event payload.
+  - [x] 13.2 AC #7a: claim a non-existent goldenId → `Result.failure(GameError.userInvalidTarget(detail: 'golden_not_found'))`, state unchanged (use `expect(result.errorOrNull, isA<InvalidTarget>())` then check the detail).
+  - [x] 13.3 AC #7b: claim an entry whose `expiresAt <= now` → `Result.failure(GameError.userLocked(reason: 'golden_expired'))`, state unchanged INCLUDING the entry remaining in the map.
+  - [x] 13.4 AC #7c: pre-populate an `ActiveGolden(countryId: kenya)` where `state.countries[kenya].unlocked == false` → `Result.failure(GameError.userLocked(reason: 'country_locked'))`.
+  - [x] 13.5 Replace semantics (Task 8.4): pre-populate an existing `activeGoldenEffect` with multiplier 25 and `expiresAt = now + 15s`. Pre-populate a new `ActiveGolden` with multiplier 75. Dispatch `ClaimGolden`. Assert the resulting `activeGoldenEffect.multiplier == 75`, `expiresAt == now + 30s`, ONLY ONE `GoldenClaimed` event, NO extra `GoldenExpired` for the displaced effect.
 
-- [ ] Task 14: Integration tests in `test/game/game_world_test.dart` (AC: #1, #2, #4, #6, #9)
-  - [ ] 14.1 End-to-end spawn → claim → effect-expire flow:
+- [x] Task 14: Integration tests in `test/game/game_world_test.dart` (AC: #1, #2, #4, #6, #9)
+  - [x] 14.1 End-to-end spawn → claim → effect-expire flow:
     - Build `GameWorld(content: fixture, clock: FakeClock(t0), rng: SeededRng(seedThatSpawnsImmediately))`.
     - Subscribe to `world.events`.
     - `world.tick(Duration(seconds: 1))` → expect `GoldenSpawned` event observed; `world.state.activeGoldens.length == 1`.
     - Read the spawned `goldenId`; `world.applyCommand(ClaimGolden(goldenId))` → expect `Result.success(...)`, `GoldenClaimed` event observed, `world.state.activeGoldenEffect != null`, `world.state.goldenOpportunityMultiplier > Decimal.one`.
     - Advance fake clock by `goldenEffectDurationSeconds + 1s`; `world.tick(Duration(seconds: 1))` → expect `GoldenExpired(claimed: true)` event, `world.state.activeGoldenEffect == null`, `world.state.goldenOpportunityMultiplier == Decimal.one`.
-  - [ ] 14.2 Income reflects active golden effect (AC #5): build a state with the effect set + `goldenOpportunityMultiplier == Decimal.fromInt(50)`; call `IncomeCalculator.compute(...)` and assert the rate is exactly `50×` the no-effect rate (composed with the rest of the stack at default values).
-  - [ ] 14.3 Tick emits a `Tick(now)` event when only a golden change occurred: build a state with one expired map-spawn, no other state change; call `world.tick(Duration.zero)`; assert events stream emits `GoldenExpired` followed by `Tick(now)` (single Tick, after all golden events).
+  - [x] 14.2 Income reflects active golden effect (AC #5): build a state with the effect set + `goldenOpportunityMultiplier == Decimal.fromInt(50)`; call `IncomeCalculator.compute(...)` and assert the rate is exactly `50×` the no-effect rate (composed with the rest of the stack at default values).
+  - [x] 14.3 Tick emits a `Tick(now)` event when only a golden change occurred: build a state with one expired map-spawn, no other state change; call `world.tick(Duration.zero)`; assert events stream emits `GoldenExpired` followed by `Tick(now)` (single Tick, after all golden events).
 
-- [ ] Task 15: Architecture compliance checks (AC: #9, all)
-  - [ ] 15.1 Run `flutter test test/architecture/game_boundary_test.dart` — new files under `lib/game/features/goldens/`, `lib/game/support/rng.dart`, and modified `lib/game/game_state.dart` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports. (`dart:math` is fine.)
-  - [ ] 15.2 Run `flutter test test/architecture/no_duplicate_income_math_test.dart` — the goldens scheduler reads NO `def.baseInfluence *` patterns; this test should pass without modification.
-  - [ ] 15.3 `lib/ui/features/map/map_screen.dart` is allowed to import `package:flutter/...` (it always has) — the boundary test only restricts `lib/game/`.
+- [x] Task 15: Architecture compliance checks (AC: #9, all)
+  - [x] 15.1 Run `flutter test test/architecture/game_boundary_test.dart` — new files under `lib/game/features/goldens/`, `lib/game/support/rng.dart`, and modified `lib/game/game_state.dart` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports. (`dart:math` is fine.)
+  - [x] 15.2 Run `flutter test test/architecture/no_duplicate_income_math_test.dart` — the goldens scheduler reads NO `def.baseInfluence *` patterns; this test should pass without modification.
+  - [x] 15.3 `lib/ui/features/map/map_screen.dart` is allowed to import `package:flutter/...` (it always has) — the boundary test only restricts `lib/game/`.
 
-- [ ] Task 16: Full validation (AC: all)
-  - [ ] 16.1 `flutter analyze` — 0 warnings.
-  - [ ] 16.2 `dart format --set-exit-if-changed .`.
-  - [ ] 16.3 `flutter test` — full suite green (existing 519 + new ~25–30).
-  - [ ] 16.4 Update `Status` to `review` and append entries to the Completion Notes / File List.
+- [x] Task 16: Full validation (AC: all)
+  - [x] 16.1 `flutter analyze` — 0 warnings.
+  - [x] 16.2 `dart format --set-exit-if-changed .`.
+  - [x] 16.3 `flutter test` — full suite green (existing 519 + new ~25–30).
+  - [x] 16.4 Update `Status` to `review` and append entries to the Completion Notes / File List.
+
+### Review Findings
+
+- [x] [Review][Patch] Expired golden can hijack map tap routing [lib/ui/features/map/map_screen.dart:119]
+- [x] [Review][Patch] `ClaimGolden` remains in unreachable fallback switch arm [lib/game/game_world.dart:119]
+- [x] [Review][Patch] Deterministic tie-break missing when two goldens share the same expiry [lib/ui/features/map/map_screen.dart:123]
+- [x] [Review][Patch] Clamp per-tick spawn probability and enforce runtime dt bounds in scheduler to avoid guaranteed spawns under oversized deltas [lib/game/features/goldens/goldens_scheduler.dart:60]
+- [x] [Review][Patch] Remove wall-clock filtering from map tap routing so claim eligibility is decided only by simulation clock in reducer [lib/ui/features/map/map_screen.dart:119]
+- [x] [Review][Patch] Restore exhaustive command handling in `GameWorld.applyCommand` by removing catch-all fallback arm [lib/game/game_world.dart:119]
 
 ## Dev Notes
 
@@ -474,10 +483,47 @@ This story adds new fields to `GameState`. Until Epic 6 lands persistence, the o
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented seedable `Rng` (`SeededRng` / `SystemRng`), `evaluateGoldens` scheduler (effect expiry → map expiry → spawn), `applyClaimGolden` reducer, `GameState.activeGoldens` + `activeGoldenEffect` with copyWith null-sentinel, `GameWorld` `rng` + tick/apply wiring, `rngProvider`, and `MapScreen` tap routing (earliest-expiry golden wins). Income path: existing `goldenOpportunityMultiplier` + new `income_calculator_test` 50× check; `IncomeCalculator` source unchanged.
+- E2E uses 100ms ticks (GameWorld `dt` clamp) and `FakeClock.advance` for effect expiry; spawn seed search uses `pTick` for 100ms first tick.
+- `flutter analyze` clean, `dart format` applied, full `flutter test` green (≈551 tests).
+
 ### File List
+
+- `lib/game/support/rng.dart` (new)
+- `lib/game/features/goldens/active_golden.dart` (new)
+- `lib/game/features/goldens/active_golden_effect.dart` (new)
+- `lib/game/features/goldens/goldens_scheduler.dart` (new)
+- `lib/game/features/goldens/goldens_reducer.dart` (new)
+- `lib/game/config/balance.dart`
+- `lib/game/game_state.dart`
+- `lib/game/game_command.dart`
+- `lib/game/game_event.dart`
+- `lib/game/game_world.dart`
+- `lib/providers/game_providers.dart`
+- `lib/ui/features/map/map_screen.dart`
+- `test/game/support/rng_test.dart` (new)
+- `test/game/features/goldens/active_golden_test.dart` (new)
+- `test/game/features/goldens/active_golden_effect_test.dart` (new)
+- `test/game/features/goldens/goldens_scheduler_test.dart` (new)
+- `test/game/features/goldens/goldens_reducer_test.dart` (new)
+- `test/ui/features/map/map_screen_golden_tap_test.dart` (new)
+- `test/game/game_command_test.dart`
+- `test/game/game_event_test.dart`
+- `test/game/game_state_test.dart`
+- `test/game/game_world_test.dart`
+- `test/game/features/economy/income_calculator_test.dart`
+- `test/providers/feature_providers_test.dart`
+- `test/ui/features/map/map_screen_tap_test.dart`
+- `test/ui/features/map/game_loop_test.dart`
+- `test/game/game_state_seed_test.dart`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Change Log
+
+- 2026-04-25: Story 5-1 implementation complete — goldens spawn/claim/expire pipeline, Rng DI, Map tap routing, tests; status → review.

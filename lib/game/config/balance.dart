@@ -42,4 +42,27 @@ abstract final class BalanceConfig {
   static final Decimal leaderUpgradeT2T3BaseInfluenceScale = Decimal.fromInt(
     1000,
   );
+
+  /// Probability of attempting a Golden spawn per real wall-clock second of tick time.
+  /// Per-tick draw: rng.nextDouble() < goldenSpawnProbabilityPerSecond × dtSeconds.
+  /// Placeholder — Epic 10 retunes (target ~1 spawn per 30s of active play).
+  static final Decimal goldenSpawnProbabilityPerSecond = Decimal.parse(
+    '0.0333',
+  );
+
+  /// Inclusive lower bound for the random multiplier on a spawned Golden.
+  static const int goldenMinMultiplier = 10;
+
+  /// Inclusive upper bound for the random multiplier on a spawned Golden.
+  static const int goldenMaxMultiplier = 100;
+
+  /// Hard cap on simultaneous active Goldens on the map. Prevents pathological
+  /// spawn streaks from cluttering the map; Epic 10 may retune.
+  static const int goldenMaxConcurrent = 3;
+
+  /// Seconds an unclaimed Golden remains on the map before despawning.
+  static const int goldenSpawnExpirySeconds = 10;
+
+  /// Seconds the post-claim multiplier burst remains active.
+  static const int goldenEffectDurationSeconds = 30;
 }

@@ -7,17 +7,21 @@ import 'package:global_domination/game/features/continents/unlocks_reducer.dart'
 import 'package:global_domination/game/features/countries/countries_collect_reducer.dart';
 import 'package:global_domination/game/features/countries/countries_reducer.dart';
 import 'package:global_domination/game/features/leaders/leaders_reducer.dart';
+import 'package:global_domination/game/features/goldens/goldens_reducer.dart';
+import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
 import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
 import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_error.dart';
 import 'package:global_domination/game/game_event.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/support/clock.dart';
+import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/result.dart';
 
 class GameWorld {
   final Clock _clock;
   final ContentRegistry _content;
+  final Rng _rng;
   GameState _state;
   final StreamController<GameEvent> _events =
       StreamController<GameEvent>.broadcast(sync: true);
@@ -25,9 +29,11 @@ class GameWorld {
   GameWorld({
     required ContentRegistry content,
     required Clock clock,
+    required Rng rng,
     GameState? initialState,
   }) : _clock = clock,
        _content = content,
+       _rng = rng,
        _state = initialState ?? GameState.initialSeed(content);
 
   GameState get state => _state;
@@ -59,7 +65,23 @@ class GameWorld {
       }
     }
 
-    if (countriesChanged || continentEvents.isNotEmpty) {
+    final (goldensState, goldenEvents) = evaluateGoldens(
+      _state,
+      _content,
+      dt,
+      now: _clock.now(),
+      rng: _rng,
+    );
+    if (goldenEvents.isNotEmpty) {
+      _state = goldensState;
+      for (final e in goldenEvents) {
+        _events.add(e);
+      }
+    }
+
+    if (countriesChanged ||
+        continentEvents.isNotEmpty ||
+        goldenEvents.isNotEmpty) {
       _events.add(Tick(_clock.now()));
     }
   }
@@ -82,6 +104,10 @@ class GameWorld {
       return unlockResult;
     }
 
+    if (cmd is ClaimGolden) {
+      return _applyClaimGolden(cmd);
+    }
+
     final stateBeforeCommand = _state;
     final result = switch (cmd) {
       TapCountry() => _applyTapCountry(cmd),
@@ -90,6 +116,7 @@ class GameWorld {
       UpgradeLeader() => _applyUpgradeLeader(cmd),
       Noop() => const Success<void, GameError>(null),
       UnlockCountry() => const Success<void, GameError>(null),
+      ClaimGolden() => throw AssertionError('unreachable ClaimGolden: $cmd'),
     };
     if (result.isSuccess && _state != stateBeforeCommand) {
       _evaluateContinentUnlocks(_clock.now());
@@ -163,6 +190,15 @@ class GameWorld {
 
   Result<void, GameError> _applyUnlockCountry(UnlockCountry cmd) {
     final result = applyUnlockCountry(_state, _content, cmd, now: _clock.now());
+    return result.map((tuple) {
+      final (newState, event) = tuple;
+      _state = newState;
+      if (event != null) _events.add(event);
+    });
+  }
+
+  Result<void, GameError> _applyClaimGolden(ClaimGolden cmd) {
+    final result = applyClaimGolden(_state, cmd, now: _clock.now());
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;

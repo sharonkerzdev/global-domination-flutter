@@ -6,6 +6,7 @@ import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
+import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
@@ -214,6 +215,7 @@ void main() {
       final world = GameWorld(
         content: content,
         clock: clock,
+        rng: SeededRng(0),
         initialState: customState,
       );
 

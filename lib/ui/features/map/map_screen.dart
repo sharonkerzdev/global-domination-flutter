@@ -115,6 +115,22 @@ class _MapViewState extends ConsumerState<_MapView> {
     final normalized = Offset(v.x / canvasSize.width, v.y / canvasSize.height);
     final countryId = _hitTester.hitTest(normalized);
     if (countryId != null) {
+      final state = ref.read(gameWorldProvider);
+      final candidates =
+          state.activeGoldens.values
+              .where((g) => g.countryId == countryId)
+              .toList()
+            ..sort((a, b) {
+              final byExpiry = a.expiresAt.compareTo(b.expiresAt);
+              if (byExpiry != 0) return byExpiry;
+              return a.id.compareTo(b.id);
+            });
+      if (candidates.isNotEmpty) {
+        ref
+            .read(gameWorldProvider.notifier)
+            .apply(ClaimGolden(goldenId: candidates.first.id));
+        return;
+      }
       ref
           .read(gameWorldProvider.notifier)
           .apply(TapCountry(countryId: countryId));

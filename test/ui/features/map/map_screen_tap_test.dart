@@ -7,6 +7,7 @@ import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
 import 'package:global_domination/game/support/clock.dart';
+import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/game_providers.dart';
@@ -34,6 +35,7 @@ class _SpyGameWorldNotifier extends GameWorldNotifier {
         GameWorld(
           content: _emptyContent,
           clock: const SystemClock(),
+          rng: SeededRng(0),
           initialState: GameState(),
         ),
       );
