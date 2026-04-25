@@ -1,5 +1,7 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-25
+# 2026-04-25: Story 6-1 created → ready-for-dev (Drift schema v2→v3 — adds normalized tables for current GameState scope: meta singleton, countries, continents+continent_milestones, earned_achievements, active_global_upgrades, active_goldens, active_golden_effect singleton; pure-Dart GameStateMapper.toCompanions/fromRows in NEW lib/data/mappers/ as the SOLE bridge between lib/data/database/ and lib/game/; AppDatabase.loadAll() typed transaction batching; GameStateRows + GameStateCompanions immutable bundles; meta + active_golden_effect use singleton-row CHECK constraint pattern reusable for 5-2/5-4/9-1 future singletons; deferred to feature stories: boosts/missions/daily_rewards/settings/tutorial_state tables — each ships with own vN→vN+1 migration when state shape lands per project no-backwards-compat rule; new test/architecture/data_boundary_test.dart enforces tables/converters cannot import lib/game/ AND mapper is the only dual-import file; introduces test/helpers/game_state_builder.dart per project-context.md line 289)
+# 2026-04-25: Epic 6 status backlog → in-progress (first story created)
 # 2026-04-25: Story 5-1 code review patch pass → done (fixed expired-golden tap fallback, removed fallback ClaimGolden switch arm, deterministic tie-break for equal-expiry goldens; added targeted UI and GameWorld assertion hardening tests)
 # 2026-04-25: Story 5-1 → review (Golden Opportunity: Rng, evaluateGoldens, ClaimGolden, MapScreen tap; full test suite + analyze + format)
 # 2026-04-25: Story 5-2 created → ready-for-dev (Activate Boost 2×/30s using Intel — ActivateBoost command, BoostActivated/BoostExpired events, BoostState value class in NEW lib/game/features/boosts/, applyActivateBoost + evaluateBoostExpiry pure reducers, GameState.totalIntel + activeBoost replacing legacy boostMultiplier:Decimal field, GameError.userInsufficientIntel variant sibling to InsufficientFunds, BalanceConfig boostCost/boostMultiplier/boostDurationSeconds constants, IncomeCalculator slot 8 source change from state.boostMultiplier to state.activeBoost?.multiplier ?? Decimal.one — slot order frozen, GameWorld.tick reordered to expire boost BEFORE tickCountries so post-expiry tick uses 1.0× multiplier, owns canonical totalIntel field for sibling stories 5.3/5.4/5.5)
@@ -167,8 +169,8 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Never Lose Progress — Persistence and Offline Earnings
-  epic-6: backlog
-  6-1-drift-schema-and-gamestatemapper: backlog
+  epic-6: in-progress
+  6-1-drift-schema-and-gamestatemapper: ready-for-dev
   6-2-persistence-write-strategy-event-driven-and-debounced-snapshot: backlog
   6-3-typed-migrations-and-schema-backup-v-n-sqlite: backlog
   6-4-offline-earnings-calculation-on-resume: backlog
