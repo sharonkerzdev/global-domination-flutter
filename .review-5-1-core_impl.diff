@@ -1,0 +1,737 @@
+﻿diff --git a/lib/game/config/balance.dart b/lib/game/config/balance.dart
+index 394aca8..f45cbc1 100644
+--- a/lib/game/config/balance.dart
++++ b/lib/game/config/balance.dart
+@@ -42,4 +42,27 @@ abstract final class BalanceConfig {
+   static final Decimal leaderUpgradeT2T3BaseInfluenceScale = Decimal.fromInt(
+     1000,
+   );
++
++  /// Probability of attempting a Golden spawn per real wall-clock second of tick time.
++  /// Per-tick draw: rng.nextDouble() < goldenSpawnProbabilityPerSecond ├ù dtSeconds.
++  /// Placeholder ΓÇö Epic 10 retunes (target ~1 spawn per 30s of active play).
++  static final Decimal goldenSpawnProbabilityPerSecond = Decimal.parse(
++    '0.0333',
++  );
++
++  /// Inclusive lower bound for the random multiplier on a spawned Golden.
++  static const int goldenMinMultiplier = 10;
++
++  /// Inclusive upper bound for the random multiplier on a spawned Golden.
++  static const int goldenMaxMultiplier = 100;
++
++  /// Hard cap on simultaneous active Goldens on the map. Prevents pathological
++  /// spawn streaks from cluttering the map; Epic 10 may retune.
++  static const int goldenMaxConcurrent = 3;
++
++  /// Seconds an unclaimed Golden remains on the map before despawning.
++  static const int goldenSpawnExpirySeconds = 10;
++
++  /// Seconds the post-claim multiplier burst remains active.
++  static const int goldenEffectDurationSeconds = 30;
+ }
+diff --git a/lib/game/game_command.dart b/lib/game/game_command.dart
+index 8e141be..b5e1f0f 100644
+--- a/lib/game/game_command.dart
++++ b/lib/game/game_command.dart
+@@ -107,3 +107,20 @@ final class UnlockCountry extends GameCommand {
+   @override
+   String toString() => 'UnlockCountry(${countryId.value})';
+ }
++
++final class ClaimGolden extends GameCommand {
++  const ClaimGolden({required this.goldenId});
++
++  final String goldenId;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is ClaimGolden && goldenId == other.goldenId);
++
++  @override
++  int get hashCode => goldenId.hashCode;
++
++  @override
++  String toString() => 'ClaimGolden($goldenId)';
++}
+diff --git a/lib/game/game_event.dart b/lib/game/game_event.dart
+index d3dd5e3..1460507 100644
+--- a/lib/game/game_event.dart
++++ b/lib/game/game_event.dart
+@@ -245,3 +245,97 @@ final class ContinentCompleted extends GameEvent {
+   @override
+   String toString() => 'ContinentCompleted(at: $at, continentId: $continentId)';
+ }
++
++final class GoldenSpawned extends GameEvent {
++  const GoldenSpawned(
++    super.at, {
++    required this.goldenId,
++    required this.countryId,
++    required this.multiplier,
++    required this.expiresAt,
++  });
++
++  final String goldenId;
++  final CountryId countryId;
++  final int multiplier;
++  final DateTime expiresAt;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is GoldenSpawned &&
++          at == other.at &&
++          goldenId == other.goldenId &&
++          countryId == other.countryId &&
++          multiplier == other.multiplier &&
++          expiresAt == other.expiresAt);
++
++  @override
++  int get hashCode =>
++      Object.hash(at, goldenId, countryId, multiplier, expiresAt);
++
++  @override
++  String toString() =>
++      'GoldenSpawned(at: $at, goldenId: $goldenId, countryId: $countryId, '
++      'multiplier: $multiplier, expiresAt: $expiresAt)';
++}
++
++final class GoldenClaimed extends GameEvent {
++  const GoldenClaimed(
++    super.at, {
++    required this.goldenId,
++    required this.countryId,
++    required this.multiplier,
++    required this.durationSeconds,
++  });
++
++  final String goldenId;
++  final CountryId countryId;
++  final int multiplier;
++  final int durationSeconds;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is GoldenClaimed &&
++          at == other.at &&
++          goldenId == other.goldenId &&
++          countryId == other.countryId &&
++          multiplier == other.multiplier &&
++          durationSeconds == other.durationSeconds);
++
++  @override
++  int get hashCode =>
++      Object.hash(at, goldenId, countryId, multiplier, durationSeconds);
++
++  @override
++  String toString() =>
++      'GoldenClaimed(at: $at, goldenId: $goldenId, countryId: $countryId, '
++      'multiplier: $multiplier, durationSeconds: $durationSeconds)';
++}
++
++final class GoldenExpired extends GameEvent {
++  const GoldenExpired(
++    super.at, {
++    required this.goldenId,
++    required this.claimed,
++  });
++
++  final String goldenId;
++  final bool claimed;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is GoldenExpired &&
++          at == other.at &&
++          goldenId == other.goldenId &&
++          claimed == other.claimed);
++
++  @override
++  int get hashCode => Object.hash(at, goldenId, claimed);
++
++  @override
++  String toString() =>
++      'GoldenExpired(at: $at, goldenId: $goldenId, claimed: $claimed)';
++}
+diff --git a/lib/game/game_state.dart b/lib/game/game_state.dart
+index 51bff6e..fe97347 100644
+--- a/lib/game/game_state.dart
++++ b/lib/game/game_state.dart
+@@ -4,6 +4,8 @@ import 'package:meta/meta.dart';
+ 
+ import 'package:global_domination/game/content/content_registry.dart';
+ import 'package:global_domination/game/features/countries/country_state.dart';
++import 'package:global_domination/game/features/goldens/active_golden.dart';
++import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
+ import 'package:global_domination/game/features/leaders/leader_tier.dart';
+ import 'package:global_domination/game/values/continent_id.dart';
+ import 'package:global_domination/game/values/country_id.dart';
+@@ -11,11 +13,14 @@ import 'package:global_domination/game/values/influence.dart';
+ 
+ @immutable
+ class GameState {
++  static const Object _activeGoldenEffectUnchanged = Object();
++
+   static final _continentCompletionEq = MapEquality<ContinentId, bool>();
+   static final _unlockedContinentsEq = MapEquality<ContinentId, bool>();
+   static final _reachedMilestonesEq = MapEquality<ContinentId, Set<int>>(
+     values: SetEquality<int>(),
+   );
++  static final _activeGoldensEq = MapEquality<String, ActiveGolden>();
+   static final _stringSetEq = SetEquality<String>();
+ 
+   final Map<CountryId, CountryState> countries;
+@@ -27,6 +32,8 @@ class GameState {
+   final Set<String> activeGlobalUpgradeIds;
+   final Decimal goldenOpportunityMultiplier;
+   final Decimal boostMultiplier;
++  final Map<String, ActiveGolden> activeGoldens;
++  final ActiveGoldenEffect? activeGoldenEffect;
+ 
+   GameState({
+     Map<CountryId, CountryState>? countries,
+@@ -38,6 +45,8 @@ class GameState {
+     Set<String>? activeGlobalUpgradeIds,
+     Decimal? goldenOpportunityMultiplier,
+     Decimal? boostMultiplier,
++    Map<String, ActiveGolden>? activeGoldens,
++    this.activeGoldenEffect,
+   }) : countries = countries ?? const {},
+        totalInfluence = totalInfluence ?? Influence.zero,
+        unlockedContinents = Map.unmodifiable(
+@@ -58,7 +67,10 @@ class GameState {
+          activeGlobalUpgradeIds ?? const <String>{},
+        ),
+        goldenOpportunityMultiplier = goldenOpportunityMultiplier ?? Decimal.one,
+-       boostMultiplier = boostMultiplier ?? Decimal.one;
++       boostMultiplier = boostMultiplier ?? Decimal.one,
++       activeGoldens = Map.unmodifiable(
++         activeGoldens ?? const <String, ActiveGolden>{},
++       );
+ 
+   GameState copyWith({
+     Map<CountryId, CountryState>? countries,
+@@ -70,6 +82,8 @@ class GameState {
+     Set<String>? activeGlobalUpgradeIds,
+     Decimal? goldenOpportunityMultiplier,
+     Decimal? boostMultiplier,
++    Map<String, ActiveGolden>? activeGoldens,
++    Object? activeGoldenEffect = _activeGoldenEffectUnchanged,
+   }) {
+     return GameState(
+       countries: countries ?? this.countries,
+@@ -83,6 +97,11 @@ class GameState {
+       goldenOpportunityMultiplier:
+           goldenOpportunityMultiplier ?? this.goldenOpportunityMultiplier,
+       boostMultiplier: boostMultiplier ?? this.boostMultiplier,
++      activeGoldens: activeGoldens ?? this.activeGoldens,
++      activeGoldenEffect:
++          identical(activeGoldenEffect, _activeGoldenEffectUnchanged)
++          ? this.activeGoldenEffect
++          : activeGoldenEffect as ActiveGoldenEffect?,
+     );
+   }
+ 
+@@ -142,7 +161,9 @@ class GameState {
+             other.activeGlobalUpgradeIds,
+           ) &&
+           goldenOpportunityMultiplier == other.goldenOpportunityMultiplier &&
+-          boostMultiplier == other.boostMultiplier);
++          boostMultiplier == other.boostMultiplier &&
++          _activeGoldensEq.equals(activeGoldens, other.activeGoldens) &&
++          activeGoldenEffect == other.activeGoldenEffect);
+ 
+   @override
+   int get hashCode => Object.hash(
+@@ -155,6 +176,8 @@ class GameState {
+     _stringSetEq.hash(activeGlobalUpgradeIds),
+     goldenOpportunityMultiplier,
+     boostMultiplier,
++    _activeGoldensEq.hash(activeGoldens),
++    activeGoldenEffect,
+   );
+ 
+   @override
+@@ -167,7 +190,9 @@ class GameState {
+       'earnedAchievementIds: ${earnedAchievementIds.length}, '
+       'activeGlobalUpgradeIds: ${activeGlobalUpgradeIds.length}, '
+       'goldenOpportunityMultiplier: $goldenOpportunityMultiplier, '
+-      'boostMultiplier: $boostMultiplier)';
++      'boostMultiplier: $boostMultiplier, '
++      'activeGoldens: ${activeGoldens.length}, '
++      'activeGoldenEffect: $activeGoldenEffect)';
+ 
+   static bool _mapsEqual(
+     Map<CountryId, CountryState> a,
+diff --git a/lib/game/game_world.dart b/lib/game/game_world.dart
+index edfe1ab..8dab7bd 100644
+--- a/lib/game/game_world.dart
++++ b/lib/game/game_world.dart
+@@ -7,17 +7,21 @@ import 'package:global_domination/game/features/continents/unlocks_reducer.dart'
+ import 'package:global_domination/game/features/countries/countries_collect_reducer.dart';
+ import 'package:global_domination/game/features/countries/countries_reducer.dart';
+ import 'package:global_domination/game/features/leaders/leaders_reducer.dart';
++import 'package:global_domination/game/features/goldens/goldens_reducer.dart';
++import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
+ import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
+ import 'package:global_domination/game/game_command.dart';
+ import 'package:global_domination/game/game_error.dart';
+ import 'package:global_domination/game/game_event.dart';
+ import 'package:global_domination/game/game_state.dart';
+ import 'package:global_domination/game/support/clock.dart';
++import 'package:global_domination/game/support/rng.dart';
+ import 'package:global_domination/game/values/result.dart';
+ 
+ class GameWorld {
+   final Clock _clock;
+   final ContentRegistry _content;
++  final Rng _rng;
+   GameState _state;
+   final StreamController<GameEvent> _events =
+       StreamController<GameEvent>.broadcast(sync: true);
+@@ -25,9 +29,11 @@ class GameWorld {
+   GameWorld({
+     required ContentRegistry content,
+     required Clock clock,
++    required Rng rng,
+     GameState? initialState,
+   }) : _clock = clock,
+        _content = content,
++       _rng = rng,
+        _state = initialState ?? GameState.initialSeed(content);
+ 
+   GameState get state => _state;
+@@ -59,7 +65,23 @@ class GameWorld {
+       }
+     }
+ 
+-    if (countriesChanged || continentEvents.isNotEmpty) {
++    final (goldensState, goldenEvents) = evaluateGoldens(
++      _state,
++      _content,
++      dt,
++      now: _clock.now(),
++      rng: _rng,
++    );
++    if (goldenEvents.isNotEmpty) {
++      _state = goldensState;
++      for (final e in goldenEvents) {
++        _events.add(e);
++      }
++    }
++
++    if (countriesChanged ||
++        continentEvents.isNotEmpty ||
++        goldenEvents.isNotEmpty) {
+       _events.add(Tick(_clock.now()));
+     }
+   }
+@@ -82,6 +104,10 @@ class GameWorld {
+       return unlockResult;
+     }
+ 
++    if (cmd is ClaimGolden) {
++      return _applyClaimGolden(cmd);
++    }
++
+     final stateBeforeCommand = _state;
+     final result = switch (cmd) {
+       TapCountry() => _applyTapCountry(cmd),
+@@ -90,6 +116,7 @@ class GameWorld {
+       UpgradeLeader() => _applyUpgradeLeader(cmd),
+       Noop() => const Success<void, GameError>(null),
+       UnlockCountry() => const Success<void, GameError>(null),
++      _ => throw AssertionError('Unhandled command in fallback switch: $cmd'),
+     };
+     if (result.isSuccess && _state != stateBeforeCommand) {
+       _evaluateContinentUnlocks(_clock.now());
+@@ -170,6 +197,15 @@ class GameWorld {
+     });
+   }
+ 
++  Result<void, GameError> _applyClaimGolden(ClaimGolden cmd) {
++    final result = applyClaimGolden(_state, cmd, now: _clock.now());
++    return result.map((tuple) {
++      final (newState, event) = tuple;
++      _state = newState;
++      if (event != null) _events.add(event);
++    });
++  }
++
+   void dispose() {
+     if (_events.isClosed) return;
+     _events.close();
+diff --git a/lib/providers/game_providers.dart b/lib/providers/game_providers.dart
+index 8e745c7..2790c75 100644
+--- a/lib/providers/game_providers.dart
++++ b/lib/providers/game_providers.dart
+@@ -8,10 +8,13 @@ import 'package:global_domination/game/game_event.dart';
+ import 'package:global_domination/game/game_state.dart';
+ import 'package:global_domination/game/game_world.dart';
+ import 'package:global_domination/game/support/clock.dart';
++import 'package:global_domination/game/support/rng.dart';
+ import 'package:global_domination/providers/app_providers.dart';
+ 
+ final clockProvider = Provider<Clock>((_) => const SystemClock());
+ 
++final rngProvider = Provider<Rng>((_) => SystemRng());
++
+ class GameWorldNotifier extends StateNotifier<GameState> {
+   GameWorldNotifier(GameWorld world) : _world = world, super(world.state) {
+     _subscription = world.events.listen((_) {
+@@ -44,6 +47,7 @@ final gameWorldProvider = StateNotifierProvider<GameWorldNotifier, GameState>((
+ ) {
+   final content = ref.watch(contentRegistryProvider).value;
+   final clock = ref.watch(clockProvider);
++  final rng = ref.watch(rngProvider);
+   final world = content == null
+       ? GameWorld(
+           content: const ContentRegistry(
+@@ -55,8 +59,9 @@ final gameWorldProvider = StateNotifierProvider<GameWorldNotifier, GameState>((
+             globalUpgrades: [],
+           ),
+           clock: clock,
++          rng: rng,
+           initialState: GameState(),
+         )
+-      : GameWorld(content: content, clock: clock);
++      : GameWorld(content: content, clock: clock, rng: rng);
+   return GameWorldNotifier(world);
+ });
+diff --git a/lib/ui/features/map/map_screen.dart b/lib/ui/features/map/map_screen.dart
+index f91b3da..4032ff3 100644
+--- a/lib/ui/features/map/map_screen.dart
++++ b/lib/ui/features/map/map_screen.dart
+@@ -115,6 +115,25 @@ class _MapViewState extends ConsumerState<_MapView> {
+     final normalized = Offset(v.x / canvasSize.width, v.y / canvasSize.height);
+     final countryId = _hitTester.hitTest(normalized);
+     if (countryId != null) {
++      final state = ref.read(gameWorldProvider);
++      final now = DateTime.now();
++      final candidates =
++          state.activeGoldens.values
++              .where(
++                (g) => g.countryId == countryId && g.expiresAt.isAfter(now),
++              )
++              .toList()
++            ..sort((a, b) {
++              final byExpiry = a.expiresAt.compareTo(b.expiresAt);
++              if (byExpiry != 0) return byExpiry;
++              return a.id.compareTo(b.id);
++            });
++      if (candidates.isNotEmpty) {
++        ref
++            .read(gameWorldProvider.notifier)
++            .apply(ClaimGolden(goldenId: candidates.first.id));
++        return;
++      }
+       ref
+           .read(gameWorldProvider.notifier)
+           .apply(TapCountry(countryId: countryId));
+diff --git a/lib/game/features/goldens/active_golden.dart b/lib/game/features/goldens/active_golden.dart
+new file mode 100644
+index 0000000..2ba4f81
+--- /dev/null
++++ b/lib/game/features/goldens/active_golden.dart
+@@ -0,0 +1,35 @@
++import 'package:meta/meta.dart';
++
++import 'package:global_domination/game/values/country_id.dart';
++
++@immutable
++class ActiveGolden {
++  const ActiveGolden({
++    required this.id,
++    required this.countryId,
++    required this.multiplier,
++    required this.expiresAt,
++  });
++
++  final String id;
++  final CountryId countryId;
++  final int multiplier;
++  final DateTime expiresAt;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is ActiveGolden &&
++          id == other.id &&
++          countryId == other.countryId &&
++          multiplier == other.multiplier &&
++          expiresAt == other.expiresAt);
++
++  @override
++  int get hashCode => Object.hash(id, countryId, multiplier, expiresAt);
++
++  @override
++  String toString() =>
++      'ActiveGolden(id: $id, countryId: ${countryId.value}, '
++      'multiplier: $multiplier, expiresAt: $expiresAt)';
++}
+diff --git a/lib/game/features/goldens/active_golden_effect.dart b/lib/game/features/goldens/active_golden_effect.dart
+new file mode 100644
+index 0000000..05645d1
+--- /dev/null
++++ b/lib/game/features/goldens/active_golden_effect.dart
+@@ -0,0 +1,30 @@
++import 'package:meta/meta.dart';
++
++@immutable
++class ActiveGoldenEffect {
++  const ActiveGoldenEffect({
++    required this.goldenId,
++    required this.multiplier,
++    required this.expiresAt,
++  });
++
++  final String goldenId;
++  final int multiplier;
++  final DateTime expiresAt;
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) ||
++      (other is ActiveGoldenEffect &&
++          goldenId == other.goldenId &&
++          multiplier == other.multiplier &&
++          expiresAt == other.expiresAt);
++
++  @override
++  int get hashCode => Object.hash(goldenId, multiplier, expiresAt);
++
++  @override
++  String toString() =>
++      'ActiveGoldenEffect(goldenId: $goldenId, multiplier: $multiplier, '
++      'expiresAt: $expiresAt)';
++}
+diff --git a/lib/game/features/goldens/goldens_reducer.dart b/lib/game/features/goldens/goldens_reducer.dart
+new file mode 100644
+index 0000000..cdb9aba
+--- /dev/null
++++ b/lib/game/features/goldens/goldens_reducer.dart
+@@ -0,0 +1,53 @@
++import 'package:decimal/decimal.dart';
++
++import 'package:global_domination/game/config/balance.dart';
++import 'package:global_domination/game/features/goldens/active_golden.dart';
++import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
++import 'package:global_domination/game/game_command.dart';
++import 'package:global_domination/game/game_error.dart';
++import 'package:global_domination/game/game_event.dart';
++import 'package:global_domination/game/game_state.dart';
++import 'package:global_domination/game/values/result.dart';
++
++Result<(GameState, GameEvent?), GameError> applyClaimGolden(
++  GameState state,
++  ClaimGolden cmd, {
++  required DateTime now,
++}) {
++  final target = state.activeGoldens[cmd.goldenId];
++  if (target == null) {
++    return Result.failure(
++      const GameError.userInvalidTarget(detail: 'golden_not_found'),
++    );
++  }
++  if (target.expiresAt.compareTo(now) <= 0) {
++    return const Result.failure(GameError.userLocked(reason: 'golden_expired'));
++  }
++  if (state.countries[target.countryId]?.unlocked != true) {
++    return const Result.failure(GameError.userLocked(reason: 'country_locked'));
++  }
++
++  final nextMap = Map<String, ActiveGolden>.from(state.activeGoldens)
++    ..remove(cmd.goldenId);
++  final nextEffect = ActiveGoldenEffect(
++    goldenId: cmd.goldenId,
++    multiplier: target.multiplier,
++    expiresAt: now.add(
++      const Duration(seconds: BalanceConfig.goldenEffectDurationSeconds),
++    ),
++  );
++  final nextMultiplier = Decimal.fromInt(target.multiplier);
++  final newState = state.copyWith(
++    activeGoldens: nextMap,
++    activeGoldenEffect: nextEffect,
++    goldenOpportunityMultiplier: nextMultiplier,
++  );
++  final event = GoldenClaimed(
++    now,
++    goldenId: cmd.goldenId,
++    countryId: target.countryId,
++    multiplier: target.multiplier,
++    durationSeconds: BalanceConfig.goldenEffectDurationSeconds,
++  );
++  return Result.success((newState, event));
++}
+diff --git a/lib/game/features/goldens/goldens_scheduler.dart b/lib/game/features/goldens/goldens_scheduler.dart
+new file mode 100644
+index 0000000..1e566d8
+--- /dev/null
++++ b/lib/game/features/goldens/goldens_scheduler.dart
+@@ -0,0 +1,112 @@
++import 'package:decimal/decimal.dart';
++
++import 'package:global_domination/game/config/balance.dart';
++import 'package:global_domination/game/content/content_registry.dart';
++import 'package:global_domination/game/features/goldens/active_golden.dart';
++import 'package:global_domination/game/game_event.dart';
++import 'package:global_domination/game/game_state.dart';
++import 'package:global_domination/game/support/rng.dart';
++import 'package:global_domination/game/values/country_id.dart';
++
++/// Per-tick goldens: effect expiry, map-spawn expiry, then optional spawn.
++///
++/// [content] is reserved for future tuning (Epic 10); spawn rules are currently
++/// pure [BalanceConfig] constants. Kept in the signature for scheduler parity
++/// with other `evaluateX(state, content, ...)` project patterns.
++///
++/// When a spawn **probability** roll passes but there are no unlocked
++/// countries, the roll's [Rng.nextDouble] is still consumed, but we do **not**
++/// call [Rng.nextInt] for country or multiplier, so test seeds stay stable
++/// if country unlock flags are toggled in a fixture.
++(GameState, List<GameEvent>) evaluateGoldens(
++  GameState state,
++  ContentRegistry content,
++  Duration dt, {
++  required DateTime now,
++  required Rng rng,
++}) {
++  assert(!dt.isNegative, 'evaluateGoldens dt must be non-negative, got $dt');
++  assert(
++    BalanceConfig.goldenMinMultiplier <= BalanceConfig.goldenMaxMultiplier,
++  );
++  assert(content == content);
++
++  final events = <GameEvent>[];
++  var nextEffect = state.activeGoldenEffect;
++  var nextMult = state.goldenOpportunityMultiplier;
++  final working = Map<String, ActiveGolden>.from(state.activeGoldens);
++
++  if (nextEffect != null && nextEffect.expiresAt.compareTo(now) <= 0) {
++    events.add(
++      GoldenExpired(now, goldenId: nextEffect.goldenId, claimed: true),
++    );
++    nextEffect = null;
++    nextMult = Decimal.one;
++  }
++
++  final expiredKeys =
++      working.keys
++          .where((id) => working[id]!.expiresAt.compareTo(now) <= 0)
++          .toList()
++        ..sort();
++  for (final id in expiredKeys) {
++    final entry = working.remove(id)!;
++    events.add(GoldenExpired(now, goldenId: entry.id, claimed: false));
++  }
++
++  if (dt > Duration.zero &&
++      working.length < BalanceConfig.goldenMaxConcurrent) {
++    final dtSeconds = dt.inMicroseconds / 1000000.0;
++    final pTick =
++        BalanceConfig.goldenSpawnProbabilityPerSecond.toDouble() * dtSeconds;
++    final roll = rng.nextDouble();
++    if (roll < pTick) {
++      final unlocked = <CountryId>[];
++      for (final c in state.countries.values) {
++        if (c.unlocked) unlocked.add(c.id);
++      }
++      unlocked.sort((a, b) => a.value.compareTo(b.value));
++      if (unlocked.isNotEmpty) {
++        final countryIdx = rng.nextInt(unlocked.length);
++        final countryId = unlocked[countryIdx];
++        final range =
++            BalanceConfig.goldenMaxMultiplier -
++            BalanceConfig.goldenMinMultiplier +
++            1;
++        final m = BalanceConfig.goldenMinMultiplier + rng.nextInt(range);
++        final id = '${countryId.value}@${now.microsecondsSinceEpoch}';
++        final golden = ActiveGolden(
++          id: id,
++          countryId: countryId,
++          multiplier: m,
++          expiresAt: now.add(
++            const Duration(seconds: BalanceConfig.goldenSpawnExpirySeconds),
++          ),
++        );
++        working[id] = golden;
++        events.add(
++          GoldenSpawned(
++            now,
++            goldenId: id,
++            countryId: countryId,
++            multiplier: m,
++            expiresAt: golden.expiresAt,
++          ),
++        );
++      }
++    }
++  }
++
++  if (events.isEmpty) {
++    return (state, const <GameEvent>[]);
++  }
++
++  return (
++    state.copyWith(
++      activeGoldens: working,
++      activeGoldenEffect: nextEffect,
++      goldenOpportunityMultiplier: nextMult,
++    ),
++    events,
++  );
++}
+diff --git a/lib/game/support/rng.dart b/lib/game/support/rng.dart
+new file mode 100644
+index 0000000..3dbe486
+--- /dev/null
++++ b/lib/game/support/rng.dart
+@@ -0,0 +1,43 @@
++import 'dart:math' as math;
++
++/// Injectable random number generation for the simulation. Schedulers and
++/// reducers take [Rng] as a parameter; they never call [math.Random] directly.
++abstract class Rng {
++  int nextInt(int max);
++  double nextDouble();
++}
++
++/// Deterministic [Rng] for tests and replays. Same [seed] yields the same stream.
++final class SeededRng implements Rng {
++  SeededRng(this.seed) : _random = math.Random(seed);
++
++  final int seed;
++  final math.Random _random;
++
++  @override
++  int nextInt(int max) => _random.nextInt(max);
++
++  @override
++  double nextDouble() => _random.nextDouble();
++
++  @override
++  bool operator ==(Object other) =>
++      identical(this, other) || (other is SeededRng && other.seed == seed);
++
++  @override
++  int get hashCode => seed.hashCode;
++}
++
++/// Production [Rng] backed by a non-deterministic [math.Random]. This is the
++/// only place in [lib/game/] where [math.Random] with no seed may be used.
++final class SystemRng implements Rng {
++  SystemRng() : _random = math.Random();
++
++  final math.Random _random;
++
++  @override
++  int nextInt(int max) => _random.nextInt(max);
++
++  @override
++  double nextDouble() => _random.nextDouble();
++}
