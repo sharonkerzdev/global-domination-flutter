@@ -85,7 +85,10 @@ void main() {
       final r = applyHireLeader(s, content, cmdHire, now: now);
       expect(r.isSuccess, isTrue);
       final (next, ev) = r.valueOrNull!;
-      expect(next.countries[const CountryId('egypt')]!.leaderTier, LeaderTier.tier1);
+      expect(
+        next.countries[const CountryId('egypt')]!.leaderTier,
+        LeaderTier.tier1,
+      );
       expect(next.totalInfluence, Influence.zero);
       expect(ev, isA<LeaderHired>());
       final h = ev! as LeaderHired;
@@ -135,11 +138,7 @@ void main() {
   group('applyUpgradeLeader', () {
     test('tier1 to tier2', () {
       final c = IncomeCalculator.leaderUpgradeCost(egyptDef, LeaderTier.tier1);
-      final s = _egypt(
-        ipLevel: 20,
-        leader: LeaderTier.tier1,
-        total: c,
-      );
+      final s = _egypt(ipLevel: 20, leader: LeaderTier.tier1, total: c);
       final r = applyUpgradeLeader(s, content, cmdUp, now: now);
       expect(r.isSuccess, isTrue);
       final (next, ev) = r.valueOrNull!;
@@ -155,11 +154,7 @@ void main() {
 
     test('tier2 to tier3', () {
       final c = IncomeCalculator.leaderUpgradeCost(egyptDef, LeaderTier.tier2);
-      final s = _egypt(
-        ipLevel: 20,
-        leader: LeaderTier.tier2,
-        total: c,
-      );
+      final s = _egypt(ipLevel: 20, leader: LeaderTier.tier2, total: c);
       final r = applyUpgradeLeader(s, content, cmdUp, now: now);
       expect(r.isSuccess, isTrue);
       final (next, ev) = r.valueOrNull!;
@@ -196,7 +191,10 @@ void main() {
     });
 
     test('insufficient funds → userInsufficientFunds', () {
-      final cost = IncomeCalculator.leaderUpgradeCost(egyptDef, LeaderTier.tier1);
+      final cost = IncomeCalculator.leaderUpgradeCost(
+        egyptDef,
+        LeaderTier.tier1,
+      );
       final s = _egypt(
         ipLevel: 20,
         leader: LeaderTier.tier1,

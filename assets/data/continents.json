@@ -4,48 +4,195 @@
     "name": "Africa",
     "unlockThreshold": "0",
     "completionBonus": "0.25",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000"
+      }
+    ]
   },
   {
     "id": "europe",
     "name": "Europe",
     "unlockThreshold": "1000000000",
     "completionBonus": "0.50",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000000"
+      }
+    ]
   },
   {
     "id": "middle_east",
     "name": "Middle East",
     "unlockThreshold": "1000000000000",
     "completionBonus": "0.60",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000000000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000000000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000000000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000"
+      }
+    ]
   },
   {
     "id": "asia",
     "name": "Asia",
     "unlockThreshold": "100000000000000",
     "completionBonus": "0.75",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000000000000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000000000000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000000"
+      }
+    ]
   },
   {
     "id": "north_america",
     "name": "North America",
     "unlockThreshold": "100000000000000000000",
     "completionBonus": "1.00",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000000000000000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000000000000000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000000000"
+      }
+    ]
   },
   {
     "id": "south_america",
     "name": "South America",
     "unlockThreshold": "100000000000000000000000000",
     "completionBonus": "1.25",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000000000"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "10000000000000000000"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "100000000000000000000"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1000000000000000000000"
+      }
+    ]
   },
   {
     "id": "oceania",
     "name": "Oceania",
     "unlockThreshold": "1e38",
     "completionBonus": "1.75",
-    "milestoneRewards": []
+    "milestoneRewards": [
+      {
+        "percent": 25,
+        "rewardType": "influence",
+        "rewardValue": "1e33"
+      },
+      {
+        "percent": 50,
+        "rewardType": "influence",
+        "rewardValue": "1e34"
+      },
+      {
+        "percent": 75,
+        "rewardType": "influence",
+        "rewardValue": "1e35"
+      },
+      {
+        "percent": 100,
+        "rewardType": "influence",
+        "rewardValue": "1e36"
+      }
+    ]
   }
 ]

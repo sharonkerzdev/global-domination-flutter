@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/continents/continents_reducer.dart';
+import 'package:global_domination/game/features/continents/milestones_reducer.dart';
 import 'package:global_domination/game/features/continents/unlocks_reducer.dart';
 import 'package:global_domination/game/features/countries/countries_collect_reducer.dart';
 import 'package:global_domination/game/features/countries/countries_reducer.dart';
@@ -72,9 +73,16 @@ class GameWorld {
       // Reconcile continent unlock state before spending influence so a command
       // cannot unlock a country inside a stale "locked" continent snapshot.
       _evaluateContinentUnlocks(_clock.now());
-      return _applyUnlockCountry(cmd);
+      final stateBeforeCommand = _state;
+      final unlockResult = _applyUnlockCountry(cmd);
+      if (unlockResult.isSuccess && _state != stateBeforeCommand) {
+        _evaluateContinentUnlocks(_clock.now());
+        _evaluateMilestones(_clock.now());
+      }
+      return unlockResult;
     }
 
+    final stateBeforeCommand = _state;
     final result = switch (cmd) {
       TapCountry() => _applyTapCountry(cmd),
       PurchaseUpgrade() => _applyPurchaseUpgrade(cmd),
@@ -83,8 +91,9 @@ class GameWorld {
       Noop() => const Success<void, GameError>(null),
       UnlockCountry() => const Success<void, GameError>(null),
     };
-    if (result.isSuccess) {
+    if (result.isSuccess && _state != stateBeforeCommand) {
       _evaluateContinentUnlocks(_clock.now());
+      _evaluateMilestones(_clock.now());
     }
     return result;
   }
@@ -98,6 +107,15 @@ class GameWorld {
     if (continentEvents.isEmpty) return;
     _state = unlockState;
     for (final e in continentEvents) {
+      _events.add(e);
+    }
+  }
+
+  void _evaluateMilestones(DateTime now) {
+    final (next, events) = evaluateMilestones(_state, _content, now);
+    if (events.isEmpty) return;
+    _state = next;
+    for (final e in events) {
       _events.add(e);
     }
   }
@@ -126,12 +144,7 @@ class GameWorld {
   }
 
   Result<void, GameError> _applyHireLeader(HireLeader cmd) {
-    final result = applyHireLeader(
-      _state,
-      _content,
-      cmd,
-      now: _clock.now(),
-    );
+    final result = applyHireLeader(_state, _content, cmd, now: _clock.now());
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;
@@ -140,12 +153,7 @@ class GameWorld {
   }
 
   Result<void, GameError> _applyUpgradeLeader(UpgradeLeader cmd) {
-    final result = applyUpgradeLeader(
-      _state,
-      _content,
-      cmd,
-      now: _clock.now(),
-    );
+    final result = applyUpgradeLeader(_state, _content, cmd, now: _clock.now());
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;
@@ -154,12 +162,7 @@ class GameWorld {
   }
 
   Result<void, GameError> _applyUnlockCountry(UnlockCountry cmd) {
-    final result = applyUnlockCountry(
-      _state,
-      _content,
-      cmd,
-      now: _clock.now(),
-    );
+    final result = applyUnlockCountry(_state, _content, cmd, now: _clock.now());
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;

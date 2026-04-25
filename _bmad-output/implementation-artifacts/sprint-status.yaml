@@ -1,5 +1,12 @@
 # generated: 2026-04-21
-# last_updated: 2026-04-24
+# last_updated: 2026-04-25
+# 2026-04-25: Story 4-5 code review patch pass → done (added selector/provider edge-case tests for missing state branch, declaration-order-vs-cost, threshold gating, and overall-provider reactivity)
+# 2026-04-25: Story 4-5 → review (NextUnlockTeaser, next_unlock_selector, feature_providers, tests)
+# 2026-04-25: Story 4-5 → in-progress (next-unlock teaser selectors + feature_providers)
+# 2026-04-25: Story 4-4 → review (continentCompletions at 100% + global income product; 512 tests)
+# 2026-04-25: Story 4-4 → in-progress (continent completion multiplier)
+# 2026-04-25: Story 4-3 code review passed → done (2 MEDIUM fixed: milestone evaluation gated to actual state mutation; milestone threshold math aligned with floor formula for small-N continents; targeted tests passing)
+# 2026-04-24: Story 4-3 → review (MilestoneReached, ContinentCompleted, reachedMilestones, milestones_reducer, continents.json placeholders, tests; full suite + analyze + format)
 # 2026-04-24: Story 4-2 → review (ContinentUnlocked + unlockedContinents + continents_reducer + tests)
 # 2026-04-24: Story 4-1 → review (UnlockCountry, CountryUnlocked, applyUnlockCountry, GameWorld + tests; 467 tests)
 # 2026-04-24: Story 4-4 created → ready-for-dev (Continent completion permanent multiplier — extends Story 4-3's evaluateMilestones to atomically flip state.continentCompletions[id]=true at 100% tier; flips IncomeCalculator._continentCompletionBonus semantics from per-country-own-continent to global product ∏(1+bonus) over all completed continents; load-from-save idempotency via 4-3's reachedMilestones ledger; no new events/commands/state-fields/files; 5.6 and 5.11 income tests must still pass unchanged)
@@ -68,7 +75,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-21
-last_updated: 2026-04-24
+last_updated: 2026-04-25
 # 2026-04-24: Story 4-1 created → ready-for-dev (UnlockCountry command + CountryUnlocked event + applyUnlockCountry reducer in lib/game/features/continents/; def.unlockCost from content, continent-gate via totalInfluence >= continentDef.unlockThreshold)
 # 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
@@ -138,9 +145,9 @@ development_status:
   epic-4: in-progress
   4-1-unlock-next-country-in-current-continent: done
   4-2-unlock-continent-at-influence-threshold: done
-  4-3-continent-milestone-rewards-at-25-50-75-100: ready-for-dev
-  4-4-continent-completion-permanent-multiplier: ready-for-dev
-  4-5-next-unlock-teaser-data-on-state: ready-for-dev
+  4-3-continent-milestone-rewards-at-25-50-75-100: done
+  4-4-continent-completion-permanent-multiplier: done
+  4-5-next-unlock-teaser-data-on-state: done
   epic-4-retrospective: optional
 
   # Epic 5: Active Play — Goldens, Boosts, Missions, Dailies, Achievements

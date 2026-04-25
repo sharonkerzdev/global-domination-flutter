@@ -33,9 +33,7 @@ Result<(GameState, GameEvent?), GameError> applyHireLeader(
     );
   }
   if (country.ipLevel < BalanceConfig.leaderHireMinIpLevel) {
-    return const Result.failure(
-      GameError.userLocked(reason: 'ip_below_10'),
-    );
+    return const Result.failure(GameError.userLocked(reason: 'ip_below_10'));
   }
   if (country.leaderTier != LeaderTier.none) {
     return const Result.failure(
@@ -50,7 +48,8 @@ Result<(GameState, GameEvent?), GameError> applyHireLeader(
   if (def.baseInfluence <= Decimal.zero) {
     return Result.failure(
       GameError.internalInvariantBroken(
-        message: 'country ${cmd.countryId.value} has non-positive baseInfluence',
+        message:
+            'country ${cmd.countryId.value} has non-positive baseInfluence',
       ),
     );
   }
@@ -104,7 +103,8 @@ Result<(GameState, GameEvent?), GameError> applyUpgradeLeader(
   if (def.baseInfluence <= Decimal.zero) {
     return Result.failure(
       GameError.internalInvariantBroken(
-        message: 'country ${cmd.countryId.value} has non-positive baseInfluence',
+        message:
+            'country ${cmd.countryId.value} has non-positive baseInfluence',
       ),
     );
   }
@@ -121,7 +121,9 @@ Result<(GameState, GameEvent?), GameError> applyUpgradeLeader(
   }
 
   final from = country.leaderTier;
-  final newTier = from == LeaderTier.tier1 ? LeaderTier.tier2 : LeaderTier.tier3;
+  final newTier = from == LeaderTier.tier1
+      ? LeaderTier.tier2
+      : LeaderTier.tier3;
   final cost = IncomeCalculator.leaderUpgradeCost(def, from);
   if (state.totalInfluence < cost) {
     return Result.failure(GameError.userInsufficientFunds(required: cost));

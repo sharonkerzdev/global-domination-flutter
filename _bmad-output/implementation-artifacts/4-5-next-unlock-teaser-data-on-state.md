@@ -1,6 +1,6 @@
 # Story 4.5: Next-Unlock Teaser Data on State
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -41,71 +41,78 @@ _(UI rendering of this teaser lands in Epic 7 — this story provides the derive
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the `NextUnlockTeaser` value class (AC: 1, 2)
-  - [ ] 1.1 Create `lib/game/features/continents/next_unlock_teaser.dart`
-  - [ ] 1.2 Define `@immutable class NextUnlockTeaser` with three final fields: `final CountryId countryId; final Influence unlockCost; final ContinentId continent;` and a `const` constructor that takes named required parameters
-  - [ ] 1.3 Implement `==`, `hashCode`, `toString` manually (no `freezed`) — follow the pattern in `lib/game/features/countries/country_state.dart` and `lib/game/values/influence.dart`
+- [x] Task 1: Create the `NextUnlockTeaser` value class (AC: 1, 2)
+  - [x] 1.1 Create `lib/game/features/continents/next_unlock_teaser.dart`
+  - [x] 1.2 Define `@immutable class NextUnlockTeaser` with three final fields: `final CountryId countryId; final Influence unlockCost; final ContinentId continent;` and a `const` constructor that takes named required parameters
+  - [x] 1.3 Implement `==`, `hashCode`, `toString` manually (no `freezed`) — follow the pattern in `lib/game/features/countries/country_state.dart` and `lib/game/values/influence.dart`
 
-- [ ] Task 2: Implement pure-Dart selector functions (AC: 1, 2, 3, 4, 5, 6, 8)
-  - [ ] 2.1 Create `lib/game/features/continents/next_unlock_selector.dart` (NEW file in the SAME folder as Story 4.1's `unlocks_reducer.dart` and Story 4.2's `continents_reducer.dart`)
-  - [ ] 2.2 Implement top-level function `NextUnlockTeaser? nextUnlockInContinent(GameState state, ContentRegistry content, ContinentId continentId)`:
+- [x] Task 2: Implement pure-Dart selector functions (AC: 1, 2, 3, 4, 5, 6, 8)
+  - [x] 2.1 Create `lib/game/features/continents/next_unlock_selector.dart` (NEW file in the SAME folder as Story 4.1's `unlocks_reducer.dart` and Story 4.2's `continents_reducer.dart`)
+  - [x] 2.2 Implement top-level function `NextUnlockTeaser? nextUnlockInContinent(GameState state, ContentRegistry content, ContinentId continentId)`:
         - Iterate `content.countries.values` in declaration order, skip those whose `continent != continentId`
         - For each remaining `def`, look up `state.countries[def.id]`; if missing or `!unlocked`, return `NextUnlockTeaser(countryId: def.id, unlockCost: Influence(def.unlockCost), continent: continentId)`
         - Otherwise continue; return `null` if every country in C is unlocked or C has no countries
-  - [ ] 2.3 Implement top-level function `NextUnlockTeaser? nextUnlockOverall(GameState state, ContentRegistry content)`:
+  - [x] 2.3 Implement top-level function `NextUnlockTeaser? nextUnlockOverall(GameState state, ContentRegistry content)`:
         - Build the list of `ContinentDef`s where `c.unlockThreshold <= state.totalInfluence.value` ("effectively unlocked")
         - Sort that list ascending by `unlockThreshold` (use `Decimal.compareTo`); tie-break by `id.value` ASC for determinism (matches Story 4.2's tie-break rule)
         - For each continent in that order, call `nextUnlockInContinent(state, content, c.id)` and return the first non-null result
         - Return `null` if no continent qualifies or every effectively-unlocked continent's `nextUnlockInContinent` returned `null`
-  - [ ] 2.4 Both functions MUST be pure: no `DateTime.now()`, no `Random()`, no async, no I/O. The selector accesses `state` and `content` only.
-  - [ ] 2.5 Read `def.unlockCost` directly. Do NOT call `IncomeCalculator.*` for cost. Do NOT add a new helper to `IncomeCalculator` (Story 4.1 explicitly forbids this).
+  - [x] 2.4 Both functions MUST be pure: no `DateTime.now()`, no `Random()`, no async, no I/O. The selector accesses `state` and `content` only.
+  - [x] 2.5 Read `def.unlockCost` directly. Do NOT call `IncomeCalculator.*` for cost. Do NOT add a new helper to `IncomeCalculator` (Story 4.1 explicitly forbids this).
 
-- [ ] Task 3: Wire Riverpod providers in `lib/providers/feature_providers.dart` (AC: 1, 2, 7)
-  - [ ] 3.1 Create `lib/providers/feature_providers.dart` (NEW file — first feature-derived provider file; matches the architecture's documented provider layout: `app_providers.dart game_providers.dart data_providers.dart service_providers.dart feature_providers.dart`)
-  - [ ] 3.2 Use `import 'package:flutter_riverpod/flutter_riverpod.dart';` (matches `game_providers.dart`); do NOT use `riverpod_generator` / `@riverpod` (forbidden in v1)
-  - [ ] 3.3 Add `final nextUnlockInContinentProvider = Provider.family<NextUnlockTeaser?, ContinentId>((ref, continentId) { ... })`:
+- [x] Task 3: Wire Riverpod providers in `lib/providers/feature_providers.dart` (AC: 1, 2, 7)
+  - [x] 3.1 Create `lib/providers/feature_providers.dart` (NEW file — first feature-derived provider file; matches the architecture's documented provider layout: `app_providers.dart game_providers.dart data_providers.dart service_providers.dart feature_providers.dart`)
+  - [x] 3.2 Use `import 'package:flutter_riverpod/flutter_riverpod.dart';` (matches `game_providers.dart`); do NOT use `riverpod_generator` / `@riverpod` (forbidden in v1)
+  - [x] 3.3 Add `final nextUnlockInContinentProvider = Provider.family<NextUnlockTeaser?, ContinentId>((ref, continentId) { ... })`:
         - Read `final state = ref.watch(gameWorldProvider);` (returns `GameState`)
         - Read `final content = ref.watch(contentRegistryProvider).valueOrNull;` (it's a `FutureProvider<ContentRegistry>` — see `lib/providers/app_providers.dart`)
         - If `content == null` (still loading) return `null`
         - Otherwise return `nextUnlockInContinent(state, content, continentId)`
-  - [ ] 3.4 Add `final nextUnlockOverallProvider = Provider<NextUnlockTeaser?>((ref) { ... })` with the same dependency pattern, returning `nextUnlockOverall(state, content)` or `null` while content is loading
-  - [ ] 3.5 Use `ref.watch` (NOT `ref.read`) so the providers re-evaluate on state changes
-  - [ ] 3.6 Do NOT use `.select(...)` here — country `unlocked` flags AND `totalInfluence` are both inputs to the result, and `state` is a single immutable object so a full watch is correct
+  - [x] 3.4 Add `final nextUnlockOverallProvider = Provider<NextUnlockTeaser?>((ref) { ... })` with the same dependency pattern, returning `nextUnlockOverall(state, content)` or `null` while content is loading
+  - [x] 3.5 Use `ref.watch` (NOT `ref.read`) so the providers re-evaluate on state changes
+  - [x] 3.6 Do NOT use `.select(...)` here — country `unlocked` flags AND `totalInfluence` are both inputs to the result, and `state` is a single immutable object so a full watch is correct
 
-- [ ] Task 4: Pure-Dart unit tests for the selectors (AC: 1, 2, 3, 4, 5, 6, 8)
-  - [ ] 4.1 Create `test/game/features/continents/next_unlock_selector_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart tests under `test/game/**` are an architectural invariant per `test/architecture/game_boundary_test.dart`)
-  - [ ] 4.2 Build a multi-continent fixture `ContentRegistry` with at least 3 continents at distinct `unlockThreshold`s (e.g. africa=0, europe=1e9, asia=1e14) and 2–3 countries per continent; use the `_fixtureRegistry()` pattern from `test/game/features/economy/income_calculator_test.dart`
-  - [ ] 4.3 Test `nextUnlockInContinent`: africa with all locked → returns first declared country (egypt) with `Influence(def.unlockCost)`
-  - [ ] 4.4 Test `nextUnlockInContinent`: africa with egypt unlocked, nigeria locked → returns nigeria with its `def.unlockCost`
-  - [ ] 4.5 Test `nextUnlockInContinent`: africa with every country unlocked → returns `null`
-  - [ ] 4.6 Test `nextUnlockInContinent`: query an unknown continent id (e.g. `ContinentId('antarctica')`) not present in fixture → returns `null` (AC #3)
-  - [ ] 4.7 Test `nextUnlockOverall`: only africa effectively unlocked (`totalInfluence < 1e9`) and africa still has locked countries → returns africa's next
-  - [ ] 4.8 Test `nextUnlockOverall`: africa fully unlocked + `totalInfluence >= 1e9` so europe is also effectively unlocked → returns europe's next (AC #4)
-  - [ ] 4.9 Test `nextUnlockOverall`: every country unlocked across all unlocked continents → returns `null`
-  - [ ] 4.10 Test `nextUnlockOverall`: `totalInfluence < every continent's threshold` → returns `null` (AC #5) — note: with current content africa.unlockThreshold=0, this requires a special fixture where the lowest threshold > 0
-  - [ ] 4.11 Test `nextUnlockOverall`: ties — two continents share `unlockThreshold` and both have locked countries → secondary sort picks the one with lexicographically smaller `id.value`
-  - [ ] 4.12 Test cost source (AC #6): the returned `unlockCost` field equals `Influence(def.unlockCost)` for the corresponding `CountryDef` — assert via `expect(teaser.unlockCost, equals(Influence(def.unlockCost)))`
-  - [ ] 4.13 Test `NextUnlockTeaser` value semantics: two equal-field instances compare equal and share `hashCode`; `toString` includes all three fields
+- [x] Task 4: Pure-Dart unit tests for the selectors (AC: 1, 2, 3, 4, 5, 6, 8)
+  - [x] 4.1 Create `test/game/features/continents/next_unlock_selector_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart tests under `test/game/**` are an architectural invariant per `test/architecture/game_boundary_test.dart`)
+  - [x] 4.2 Build a multi-continent fixture `ContentRegistry` with at least 3 continents at distinct `unlockThreshold`s (e.g. africa=0, europe=1e9, asia=1e14) and 2–3 countries per continent; use the `_fixtureRegistry()` pattern from `test/game/features/economy/income_calculator_test.dart`
+  - [x] 4.3 Test `nextUnlockInContinent`: africa with all locked → returns first declared country (egypt) with `Influence(def.unlockCost)`
+  - [x] 4.4 Test `nextUnlockInContinent`: africa with egypt unlocked, nigeria locked → returns nigeria with its `def.unlockCost`
+  - [x] 4.5 Test `nextUnlockInContinent`: africa with every country unlocked → returns `null`
+  - [x] 4.6 Test `nextUnlockInContinent`: query an unknown continent id (e.g. `ContinentId('antarctica')`) not present in fixture → returns `null` (AC #3)
+  - [x] 4.7 Test `nextUnlockOverall`: only africa effectively unlocked (`totalInfluence < 1e9`) and africa still has locked countries → returns africa's next
+  - [x] 4.8 Test `nextUnlockOverall`: africa fully unlocked + `totalInfluence >= 1e9` so europe is also effectively unlocked → returns europe's next (AC #4)
+  - [x] 4.9 Test `nextUnlockOverall`: every country unlocked across all unlocked continents → returns `null`
+  - [x] 4.10 Test `nextUnlockOverall`: `totalInfluence < every continent's threshold` → returns `null` (AC #5) — note: with current content africa.unlockThreshold=0, this requires a special fixture where the lowest threshold > 0
+  - [x] 4.11 Test `nextUnlockOverall`: ties — two continents share `unlockThreshold` and both have locked countries → secondary sort picks the one with lexicographically smaller `id.value`
+  - [x] 4.12 Test cost source (AC #6): the returned `unlockCost` field equals `Influence(def.unlockCost)` for the corresponding `CountryDef` — assert via `expect(teaser.unlockCost, equals(Influence(def.unlockCost)))`
+  - [x] 4.13 Test `NextUnlockTeaser` value semantics: two equal-field instances compare equal and share `hashCode`; `toString` includes all three fields
 
-- [ ] Task 5: Provider tests using `ProviderContainer` (AC: 1, 2, 7)
-  - [ ] 5.1 Create `test/providers/feature_providers_test.dart` (NEW directory — first of its kind; this story establishes the convention) using `package:flutter_test/flutter_test.dart` + `package:flutter_riverpod/flutter_riverpod.dart`
-  - [ ] 5.2 Build a fixture `ContentRegistry` (reuse the same multi-continent helper from Task 4 — extract to `test/helpers/continent_fixture_content.dart` if convenient, or inline)
-  - [ ] 5.3 Strategy for state mutation in tests: override `gameWorldProvider` with a `StateProvider<GameState>`-shim approach (see "Provider test wiring" in Dev Notes) so tests can mutate state without invoking `UnlockCountry` (which doesn't exist until Story 4.1 lands)
-  - [ ] 5.4 Test: `nextUnlockInContinentProvider(ContinentId('africa'))` returns the expected teaser when the override-state has egypt unlocked + nigeria locked
-  - [ ] 5.5 Test: changing the underlying override-state (e.g. flip nigeria to unlocked) and re-reading the provider yields a NEW teaser (AC #7)
-  - [ ] 5.6 Test: `nextUnlockOverallProvider` returns africa's next when only africa is effectively unlocked
-  - [ ] 5.7 Test: while `contentRegistryProvider` is still in `AsyncValue.loading()` (override with `AsyncValue.loading()`), both providers return `null` rather than throwing
-  - [ ] 5.8 Always `addTearDown(container.dispose);` to avoid leaks
+- [x] Task 5: Provider tests using `ProviderContainer` (AC: 1, 2, 7)
+  - [x] 5.1 Create `test/providers/feature_providers_test.dart` (NEW directory — first of its kind; this story establishes the convention) using `package:flutter_test/flutter_test.dart` + `package:flutter_riverpod/flutter_riverpod.dart`
+  - [x] 5.2 Build a fixture `ContentRegistry` (reuse the same multi-continent helper from Task 4 — extract to `test/helpers/continent_fixture_content.dart` if convenient, or inline)
+  - [x] 5.3 Strategy for state mutation in tests: override `gameWorldProvider` with a `StateProvider<GameState>`-shim approach (see "Provider test wiring" in Dev Notes) so tests can mutate state without invoking `UnlockCountry` (which doesn't exist until Story 4.1 lands)
+  - [x] 5.4 Test: `nextUnlockInContinentProvider(ContinentId('africa'))` returns the expected teaser when the override-state has egypt unlocked + nigeria locked
+  - [x] 5.5 Test: changing the underlying override-state (e.g. flip nigeria to unlocked) and re-reading the provider yields a NEW teaser (AC #7)
+  - [x] 5.6 Test: `nextUnlockOverallProvider` returns africa's next when only africa is effectively unlocked
+  - [x] 5.7 Test: while `contentRegistryProvider` is still in `AsyncValue.loading()` (override with `AsyncValue.loading()`), both providers return `null` rather than throwing
+  - [x] 5.8 Always `addTearDown(container.dispose);` to avoid leaks
 
-- [ ] Task 6: Architecture compliance verification (AC: all)
-  - [ ] 6.1 Run `flutter test test/architecture/` — the new files in `lib/game/features/continents/` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports (enforced by `test/architecture/game_boundary_test.dart`)
-  - [ ] 6.2 Confirm `next_unlock_selector.dart` does NOT match the income-math grep guard in `test/architecture/no_duplicate_income_math_test.dart` — the guard fails on `def.baseInfluence *` / `country.baseInfluence *` patterns; this selector reads `def.unlockCost` (no asterisk math), so it's safe
+- [x] Task 6: Architecture compliance verification (AC: all)
+  - [x] 6.1 Run `flutter test test/architecture/` — the new files in `lib/game/features/continents/` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports (enforced by `test/architecture/game_boundary_test.dart`)
+  - [x] 6.2 Confirm `next_unlock_selector.dart` does NOT match the income-math grep guard in `test/architecture/no_duplicate_income_math_test.dart` — the guard fails on `def.baseInfluence *` / `country.baseInfluence *` patterns; this selector reads `def.unlockCost` (no asterisk math), so it's safe
 
-- [ ] Task 7: Full validation (AC: all)
-  - [ ] 7.1 `flutter analyze` — 0 warnings
-  - [ ] 7.2 `dart format --set-exit-if-changed .`
-  - [ ] 7.3 `flutter test` — all pass (existing + new)
-  - [ ] 7.4 Update `Status` to `review` and append entries to the Completion Notes / File List
+- [x] Task 7: Full validation (AC: all)
+  - [x] 7.1 `flutter analyze` — 0 warnings
+  - [x] 7.2 `dart format --set-exit-if-changed .`
+  - [x] 7.3 `flutter test` — all pass (existing + new)
+  - [x] 7.4 Update `Status` to `review` and append entries to the Completion Notes / File List
+
+### Review Findings
+
+- [x] [Review][Patch] Add missing-country-state selector test coverage [test/game/features/continents/next_unlock_selector_test.dart:32]
+- [x] [Review][Patch] Prove declaration-order behavior independent of unlockCost ordering [test/helpers/next_unlock_test_fixtures.dart:33]
+- [x] [Review][Patch] Add threshold-gating edge test for overall selector [test/game/features/continents/next_unlock_selector_test.dart:120]
+- [x] [Review][Patch] Add mutation reactivity test for overall provider [test/providers/feature_providers_test.dart:134]
 
 ## Dev Notes
 
@@ -305,10 +312,28 @@ Extracted from `_bmad-output/project-context.md` — applies to this story:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `NextUnlockTeaser` and pure selectors `nextUnlockInContinent` / `nextUnlockOverall` under `lib/game/features/continents/`, with continent ordering by threshold then `ContinentId.value`, skipping fully unlocked continents for overall teaser.
+- Added `lib/providers/feature_providers.dart` with `Provider.family` and plain `Provider`, using `ref.watch` on `gameWorldProvider` and `contentRegistryProvider.valueOrNull` for loading-safe null.
+- Tests: `test/game/features/continents/next_unlock_selector_test.dart` (package:test), shared JSON fixtures in `test/helpers/next_unlock_test_fixtures.dart`, and `test/providers/feature_providers_test.dart` using `_TestGameWorldNotifier extends GameWorldNotifier` plus `await container.read(contentRegistryProvider.future)` for async resolution; loading case uses a never-completing `Completer` future (equivalent to staying in loading).
+- Validation: `flutter analyze` clean, `dart format --set-exit-if-changed .`, full `flutter test` green.
+- Code-review patch pass: added selector/provider edge-case tests for missing state entries, declaration-order-vs-cost behavior, overall threshold gating, and overall provider mutation reactivity; targeted test run green.
+
 ### File List
+
+- lib/game/features/continents/next_unlock_teaser.dart
+- lib/game/features/continents/next_unlock_selector.dart
+- lib/providers/feature_providers.dart
+- test/helpers/next_unlock_test_fixtures.dart
+- test/game/features/continents/next_unlock_selector_test.dart
+- test/providers/feature_providers_test.dart
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-04-25: Story 4-5 implemented — next-unlock teaser value type, pure selectors, Riverpod providers, unit and provider tests; status → review.

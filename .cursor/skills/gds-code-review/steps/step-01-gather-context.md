@@ -75,9 +75,9 @@ story_key: '' # set at runtime when discovered from sprint status
    - If the user opts to chunk: agree on the first group, narrow `{diff_output}` accordingly, and list the remaining groups for the user to note for follow-up runs.
    - If the user declines: proceed as-is with the full diff.
 
-### CHECKPOINT
+### CHECKPOINT (informational only)
 
-Present a summary before proceeding: diff stats (files changed, lines added/removed), `{review_mode}`, and loaded spec/context docs (if any). HALT and wait for user confirmation to proceed.
+Present a summary: diff stats (files changed, lines added/removed), `{review_mode}`, and loaded spec/context docs (if any). **Do not** ask the user to confirm or reply "Proceed" before the review — continue immediately to the next step after this summary.
 
 
 ## NEXT

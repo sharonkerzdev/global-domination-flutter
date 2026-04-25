@@ -1,6 +1,6 @@
 # Story 4.4: Continent Completion Permanent Multiplier
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,39 +22,45 @@ so that every subsequent action is amplified by my completed conquests.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend Story 4.3's `evaluateMilestones` to flip `continentCompletions[continentId]` at the 100% tier (AC: #1, #3)
-  - [ ] Subtask 1.1: Edit `lib/game/features/continents/milestones_reducer.dart` (created by Story 4.3). Inside the per-continent loop, when the 100% tier is detected as crossed AND being appended to `reachedMilestones`, ALSO build an updated `continentCompletions` map with `continentId: true`.
-  - [ ] Subtask 1.2: The `continentCompletions` mutation is **atomic** with the milestone tier append and the `MilestoneReached(100)` + `ContinentCompleted(id)` emissions — they all flow into the SAME returned `GameState`. Do not split into two passes.
-  - [ ] Subtask 1.3: Wrap the new `continentCompletions` map with `Map.unmodifiable(...)` (mirror the constructor pattern in `lib/game/game_state.dart` lines 35–37).
-  - [ ] Subtask 1.4: Idempotency — if `state.continentCompletions[continentId] == true` already, do NOT re-flip (no allocation) and do NOT emit a duplicate `ContinentCompleted` (Story 4.3's `reachedMilestones` ledger already prevents the milestone re-fire; relying on that means the flag flip is automatically idempotent because the 100%-tier branch never re-enters).
-  - [ ] Subtask 1.5: When zero continents reach 100% in this evaluation pass, `state.continentCompletions` MUST be the same instance as the input (no spurious `copyWith` allocation). Use `identical` or a "did anything change" boolean.
-- [ ] Task 2: Make the continent-completion bonus global in `IncomeCalculator` (AC: #2, #4, #5, #6, #7)
-  - [ ] Subtask 2.1: In `lib/game/features/economy/income_calculator.dart`, replace the body of `_continentCompletionBonus(CountryDef def, GameState state, ContentRegistry content)` so it ignores `def.continent` entirely and instead computes `∏(Decimal.one + content.continents[id].completionBonus)` over every `id` in `state.continentCompletions.entries.where((e) => e.value == true).map((e) => e.key)`. If no continents are complete, return `Decimal.one`.
-  - [ ] Subtask 2.2: Skip ids missing from `content.continents` (defensive — AC #6) by treating them as factor `1.0` (continue the loop).
-  - [ ] Subtask 2.3: Remove the unused `def` parameter from `_continentCompletionBonus` and update the single call site at line 44 of the same file. (Caller no longer needs to pass `def` for this helper.)
-  - [ ] Subtask 2.4: Update the docstring on `IncomeCalculator` (the numbered comment block, step 4 around line 18). New text should read: `× product over all complete continents of (1 + ContinentDef.completionBonus) — global factor, NOT per-country`.
-  - [ ] Subtask 2.5: Iteration order must be deterministic — iterate `state.continentCompletions.entries` (insertion order via `LinkedHashMap`) to produce reproducible product order. (`Decimal` multiplication is associative & commutative so order does not affect the value, but a stable order eases debugging.)
-- [ ] Task 3: Tests — `package:test/test.dart` only, NEVER `flutter_test` (AC: all)
-  - [ ] Subtask 3.1: Extend `test/game/features/economy/income_calculator_test.dart`:
+- [x] Task 1: Extend Story 4.3's `evaluateMilestones` to flip `continentCompletions[continentId]` at the 100% tier (AC: #1, #3)
+  - [x] Subtask 1.1: Edit `lib/game/features/continents/milestones_reducer.dart` (created by Story 4.3). Inside the per-continent loop, when the 100% tier is detected as crossed AND being appended to `reachedMilestones`, ALSO build an updated `continentCompletions` map with `continentId: true`.
+  - [x] Subtask 1.2: The `continentCompletions` mutation is **atomic** with the milestone tier append and the `MilestoneReached(100)` + `ContinentCompleted(id)` emissions — they all flow into the SAME returned `GameState`. Do not split into two passes.
+  - [x] Subtask 1.3: Wrap the new `continentCompletions` map with `Map.unmodifiable(...)` (mirror the constructor pattern in `lib/game/game_state.dart` lines 35–37).
+  - [x] Subtask 1.4: Idempotency — if `state.continentCompletions[continentId] == true` already, do NOT re-flip (no allocation) and do NOT emit a duplicate `ContinentCompleted` (Story 4.3's `reachedMilestones` ledger already prevents the milestone re-fire; relying on that means the flag flip is automatically idempotent because the 100%-tier branch never re-enters).
+  - [x] Subtask 1.5: When zero continents reach 100% in this evaluation pass, `state.continentCompletions` MUST be the same instance as the input (no spurious `copyWith` allocation). Use `identical` or a "did anything change" boolean.
+- [x] Task 2: Make the continent-completion bonus global in `IncomeCalculator` (AC: #2, #4, #5, #6, #7)
+  - [x] Subtask 2.1: In `lib/game/features/economy/income_calculator.dart`, replace the body of `_continentCompletionBonus(CountryDef def, GameState state, ContentRegistry content)` so it ignores `def.continent` entirely and instead computes `∏(Decimal.one + content.continents[id].completionBonus)` over every `id` in `state.continentCompletions.entries.where((e) => e.value == true).map((e) => e.key)`. If no continents are complete, return `Decimal.one`.
+  - [x] Subtask 2.2: Skip ids missing from `content.continents` (defensive — AC #6) by treating them as factor `1.0` (continue the loop).
+  - [x] Subtask 2.3: Remove the unused `def` parameter from `_continentCompletionBonus` and update the single call site at line 44 of the same file. (Caller no longer needs to pass `def` for this helper.)
+  - [x] Subtask 2.4: Update the docstring on `IncomeCalculator` (the numbered comment block, step 4 around line 18). New text should read: `× product over all complete continents of (1 + ContinentDef.completionBonus) — global factor, NOT per-country`.
+  - [x] Subtask 2.5: Iteration order must be deterministic — iterate `state.continentCompletions.entries` (insertion order via `LinkedHashMap`) to produce reproducible product order. (`Decimal` multiplication is associative & commutative so order does not affect the value, but a stable order eases debugging.)
+- [x] Task 3: Tests — `package:test/test.dart` only, NEVER `flutter_test` (AC: all)
+  - [x] Subtask 3.1: Extend `test/game/features/economy/income_calculator_test.dart`:
     - Add test `5.6b continent completion is global, not country-own-continent`: Egypt + `continentCompletions = {europe: true}` → rate `1.5` (proving cross-continent semantics).
     - Add test `5.6c continent completion product across two continents`: Egypt + `continentCompletions = {africa: true, europe: true}` → rate `1.25 × 1.50 = 1.875`.
     - Add test `5.6d continent completion product across all seven`: Egypt + `continentCompletions = {africa: true, europe: true, middle_east: true, asia: true, north_america: true, south_america: true, oceania: true}` → rate `Decimal.parse('41.6015625')`.
     - Add test `5.6e continent completion ignores ids missing from content`: Egypt + `continentCompletions = {africa: true, ContinentId('atlantis'): true}` → rate `1.25` (atlantis silently skipped).
     - Test `5.6 continent completion isolation` and test `5.11 composed stack order regression` MUST be left unchanged AND MUST still pass with no expected-value drift. AC #7 hangs on this.
-  - [ ] Subtask 3.2: Extend `test/game/features/continents/milestones_reducer_test.dart` (created by Story 4.3):
+  - [x] Subtask 3.2: Extend `test/game/features/continents/milestones_reducer_test.dart` (created by Story 4.3):
     - Add test `100% milestone flips continentCompletions atomically with event emission`: build a state where 3 of 3 Africa countries are unlocked but `continentCompletions` is empty AND `reachedMilestones[africa]` does not contain 100. Run `evaluateMilestones`. Assert (a) returned state has `continentCompletions[africa] == true`, (b) returned state has `reachedMilestones[africa]` containing 100, (c) the event list contains `MilestoneReached(...100...)` IMMEDIATELY followed by `ContinentCompleted(africa)`.
     - Add test `re-running evaluator on a complete continent is a no-op (loaded-from-save scenario)`: build a state where `continentCompletions[africa] = true` AND `reachedMilestones[africa]` already contains 100, with all 3 Africa countries unlocked. Run `evaluateMilestones`. Assert (a) returned state is `identical` to input (no allocation), (b) event list is empty.
     - Add test `partial unlock does not flip continentCompletions`: 2 of 3 Africa countries unlocked, no prior milestones. Run `evaluateMilestones`. Assert `continentCompletions[africa]` stays absent/false even though 50% milestone fires.
-  - [ ] Subtask 3.3: Extend `test/game/game_world_test.dart`:
+  - [x] Subtask 3.3: Extend `test/game/game_world_test.dart`:
     - Add test `complete-africa via applyCommand emits ContinentCompleted and flips flag`: construct a `GameWorld` whose `initialState` has 3 of 3 Africa countries unlocked but `continentCompletions` empty (no save loaded yet, just a hand-built state). Dispatch any successful no-op-style command (e.g., `TapCountry` on a country with `bankedInfluence = Influence.zero` — succeeds with `Result.success` and no event). Subscribe to `world.events` and assert: `MilestoneReached(...100...)` appears followed by `ContinentCompleted(africa)`, and `world.state.continentCompletions[africa] == true` after the command returns.
     - Add test `loaded-state with continentCompletions[africa]=true does NOT re-fire ContinentCompleted on first command`: same as above but seed `continentCompletions = {africa: true}` AND `reachedMilestones = {africa: {25, 50, 75, 100}}`. Dispatch `TapCountry`. Assert `world.events` produces ZERO `ContinentCompleted` events for the lifetime of the world.
-  - [ ] Subtask 3.4: Run `flutter test` and confirm 449+ existing tests still pass after the `_continentCompletionBonus` semantics change. Tests `5.6` and `5.11` MUST still pass unchanged.
-- [ ] Task 4: Pre-flight verification before submitting for review
-  - [ ] Subtask 4.1: `flutter analyze` → zero warnings.
-  - [ ] Subtask 4.2: `dart format --set-exit-if-changed .` → no diff.
-  - [ ] Subtask 4.3: Grep `lib/game/` for `package:flutter` and `dart:ui` — must return zero matches in any file you edited.
-  - [ ] Subtask 4.4: Confirm `IncomeCalculator.compute` retains the documented multiplier-stack order (Story 3.1's invariant). The order of operations between steps 2–8 MUST be unchanged; only step 4's *value* changes.
-  - [ ] Subtask 4.5: Confirm no new `GameCommand`, no new `GameEvent`, no new state field, and no new file are introduced by this story. All deltas are inside `milestones_reducer.dart` (Task 1) and `income_calculator.dart` (Task 2) plus their tests.
+  - [x] Subtask 3.4: Run `flutter test` and confirm 449+ existing tests still pass after the `_continentCompletionBonus` semantics change. Tests `5.6` and `5.11` MUST still pass unchanged.
+- [x] Task 4: Pre-flight verification before submitting for review
+  - [x] Subtask 4.1: `flutter analyze` → zero warnings.
+  - [x] Subtask 4.2: `dart format --set-exit-if-changed .` → no diff.
+  - [x] Subtask 4.3: Grep `lib/game/` for `package:flutter` and `dart:ui` — must return zero matches in any file you edited.
+  - [x] Subtask 4.4: Confirm `IncomeCalculator.compute` retains the documented multiplier-stack order (Story 3.1's invariant). The order of operations between steps 2–8 MUST be unchanged; only step 4's *value* changes.
+  - [x] Subtask 4.5: Confirm no new `GameCommand`, no new `GameEvent`, no new state field, and no new file are introduced by this story. All deltas are inside `milestones_reducer.dart` (Task 1) and `income_calculator.dart` (Task 2) plus their tests.
+
+### Review Findings
+
+- [x] [Review][Decision] Milestone evaluation trigger semantics conflict — resolved to keep mutation-gated milestone evaluation (`_evaluateMilestones` runs only when command execution mutates state). Update Story 4.4 wording to match implementation semantics; do not change runtime behavior.
+- [x] [Review][Patch] Prevent duplicate `ContinentCompleted` when completion flag is already true but `reachedMilestones` is inconsistent [`lib/game/features/continents/milestones_reducer.dart`]
+- [x] [Review][Patch] Make all-seven completion test data-driven from live continent content source instead of hardcoded in-test continent values [`test/game/features/economy/income_calculator_test.dart`]
 
 ## Dev Notes
 
@@ -253,14 +259,30 @@ If profiling later shows this loop is hot (unlikely until 7+ continents are comp
 - [Source: _bmad-output/implementation-artifacts/4-2-unlock-continent-at-influence-threshold.md — sibling story that establishes `lib/game/features/continents/` folder convention and `_evaluateContinentUnlocks` post-command pattern]
 - [Source: _bmad-output/implementation-artifacts/3-3-leader-hire-and-tier-system.md — most recent shipped story; mirror its review-fix cadence and test discipline]
 
+## Change Log
+
+- 2026-04-25: Implemented atomic `continentCompletions` flip at 100% in `evaluateMilestones`, global product in `IncomeCalculator._continentCompletionBonus`, tests 5.6b–5.6e + milestone/game_world coverage; full suite 512 tests, analyze clean, format clean.
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- `evaluateMilestones` now builds optional `updatedCompletions` only when crossing 100% for a continent not already marked complete; `copyWith(continentCompletions: null)` preserves the input map instance when no completion flip occurs (same as Subtask 1.5). `GameState` constructor still applies `Map.unmodifiable` to any new map.
+- `_continentCompletionBonus` iterates `state.continentCompletions.entries` in insertion order, multiplies `(1 + completionBonus)` for each completed id present in `content.continents`, skips unknown ids.
+- GameWorld integration test uses `UnlockCountry` for the third African country (not zero-bank `TapCountry`) because milestone evaluation only runs when `applyCommand` mutates state; loaded-save test uses `TapCountry` with banked influence so milestones run without re-firing `ContinentCompleted`.
+- Subtask 3.1 story text still mentions `41.6015625` for 5.6d; implementation follows AC #5 and Dev Notes: expected product is computed from fixture continents (matching live `continents.json` bonuses → `64.96875`).
+
 ### File List
+
+- `lib/game/features/continents/milestones_reducer.dart`
+- `lib/game/features/economy/income_calculator.dart`
+- `test/game/features/continents/milestones_reducer_test.dart`
+- `test/game/features/economy/income_calculator_test.dart`
+- `test/game/game_world_test.dart`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`

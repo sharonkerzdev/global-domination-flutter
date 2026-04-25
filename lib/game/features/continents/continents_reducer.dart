@@ -18,8 +18,7 @@ Result<(GameState, List<GameEvent>), GameError> evaluateContinentUnlocks(
     if (c.unlockThreshold < Decimal.zero) {
       return Result.failure(
         GameError.internalInvariantBroken(
-          message:
-              'continent ${c.id.value} has negative unlockThreshold',
+          message: 'continent ${c.id.value} has negative unlockThreshold',
         ),
       );
     }
@@ -52,10 +51,8 @@ Result<(GameState, List<GameEvent>), GameError> evaluateContinentUnlocks(
       .map((c) => ContinentUnlocked(now, continentId: c.id))
       .toList(growable: false);
 
-  return Result.success(
-    (
-      state.copyWith(unlockedContinents: Map.unmodifiable(newMap)),
-      events,
-    ),
-  );
+  return Result.success((
+    state.copyWith(unlockedContinents: Map.unmodifiable(newMap)),
+    events,
+  ));
 }

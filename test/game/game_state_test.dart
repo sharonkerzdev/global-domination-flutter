@@ -30,7 +30,8 @@ void main() {
         GameState().toString(),
         equals(
           'GameState(countries: 0 entries, totalInfluence: Influence(0), '
-          'unlockedContinents: 0, continentCompletions: 0, earnedAchievementIds: 0, '
+          'unlockedContinents: 0, reachedMilestones: 0, continentCompletions: 0, '
+          'earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
           'boostMultiplier: 1)',
         ),
@@ -50,6 +51,42 @@ void main() {
       final c = GameState(unlockedContinents: {id: false});
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
+    });
+
+    test('equality includes reachedMilestones nested sets', () {
+      const id = ContinentId('africa');
+      final a = GameState(
+        reachedMilestones: {
+          id: {25, 50},
+        },
+      );
+      final b = GameState(
+        reachedMilestones: {
+          id: {25, 50},
+        },
+      );
+      final c = GameState(
+        reachedMilestones: {
+          id: {25},
+        },
+      );
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+    });
+
+    test('copyWith round-trips reachedMilestones', () {
+      const id = ContinentId('africa');
+      final s = GameState(
+        reachedMilestones: {
+          id: {25},
+        },
+      );
+      final t = s.copyWith(
+        reachedMilestones: {
+          id: {25, 50},
+        },
+      );
+      expect(t.reachedMilestones[id], {25, 50});
     });
   });
 }

@@ -36,8 +36,9 @@ class MapScreen extends ConsumerWidget {
 
 CountryVisualState _toVisualState(CountryState cs) {
   if (!cs.unlocked) return CountryVisualState.locked;
-  if (cs.bankedInfluence > Influence.zero)
+  if (cs.bankedInfluence > Influence.zero) {
     return CountryVisualState.readyToCollect;
+  }
   return CountryVisualState.unlocked;
 }
 

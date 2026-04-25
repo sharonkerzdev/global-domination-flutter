@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
@@ -21,6 +22,13 @@ ContentRegistry _fixtureRegistry() {
       'name': 'Africa',
       'unlockThreshold': '0',
       'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '0',
+      'completionBonus': '0.50',
       'milestoneRewards': <dynamic>[],
     },
     {
@@ -104,6 +112,9 @@ ContentRegistry _fixtureRegistry() {
     globalUpgradesJson: upgrades,
   );
 }
+
+String _liveContinentsJson() =>
+    File('assets/data/continents.json').readAsStringSync();
 
 CountryState _egypt({
   bool unlocked = true,
@@ -201,6 +212,71 @@ void main() {
 
   test('5.6 continent completion isolation', () {
     final s = _state(continentCompletions: {const ContinentId('africa'): true});
+    expect(
+      IncomeCalculator.compute(_egypt(), s, content).value,
+      equals(Decimal.parse('1.25')),
+    );
+  });
+
+  test('5.6b continent completion is global, not country-own-continent', () {
+    final s = _state(continentCompletions: {const ContinentId('europe'): true});
+    expect(
+      IncomeCalculator.compute(_egypt(), s, content).value,
+      equals(Decimal.parse('1.5')),
+    );
+  });
+
+  test('5.6c continent completion product across two continents', () {
+    final s = _state(
+      continentCompletions: {
+        const ContinentId('africa'): true,
+        const ContinentId('europe'): true,
+      },
+    );
+    expect(
+      IncomeCalculator.compute(_egypt(), s, content).value,
+      equals(Decimal.parse('1.875')),
+    );
+  });
+
+  test('5.6d continent completion product across all seven', () {
+    final seven = ContentRegistry.fromJsonStrings(
+      countriesJson: jsonEncode([
+        {
+          'id': 'egypt',
+          'continent': 'africa',
+          'baseInfluence': '1',
+          'unlockCost': '0',
+          'tier': 1,
+          'generationSeconds': 1,
+        },
+      ]),
+      continentsJson: _liveContinentsJson(),
+      leadersJson: '[]',
+      achievementsJson: '[]',
+      missionsJson: '[]',
+      globalUpgradesJson: '[]',
+    );
+    final expected = seven.continents.values.fold<Decimal>(
+      Decimal.one,
+      (acc, c) => acc * (Decimal.one + c.completionBonus),
+    );
+    final s = _state(
+      continentCompletions: {for (final id in seven.continents.keys) id: true},
+    );
+    expect(
+      IncomeCalculator.compute(_egypt(), s, seven).value,
+      equals(expected),
+    );
+  });
+
+  test('5.6e continent completion ignores ids missing from content', () {
+    final s = _state(
+      continentCompletions: {
+        const ContinentId('africa'): true,
+        const ContinentId('atlantis'): true,
+      },
+    );
     expect(
       IncomeCalculator.compute(_egypt(), s, content).value,
       equals(Decimal.parse('1.25')),
@@ -440,22 +516,10 @@ void main() {
 
   group('leader costs (Story 3.3)', () {
     test('BalanceConfig leaderMultipliers are 1.0, 1.5, 2.0, 3.0', () {
-      expect(
-        BalanceConfig.leaderMultipliers[LeaderTier.none],
-        '1.0',
-      );
-      expect(
-        BalanceConfig.leaderMultipliers[LeaderTier.tier1],
-        '1.5',
-      );
-      expect(
-        BalanceConfig.leaderMultipliers[LeaderTier.tier2],
-        '2.0',
-      );
-      expect(
-        BalanceConfig.leaderMultipliers[LeaderTier.tier3],
-        '3.0',
-      );
+      expect(BalanceConfig.leaderMultipliers[LeaderTier.none], '1.0');
+      expect(BalanceConfig.leaderMultipliers[LeaderTier.tier1], '1.5');
+      expect(BalanceConfig.leaderMultipliers[LeaderTier.tier2], '2.0');
+      expect(BalanceConfig.leaderMultipliers[LeaderTier.tier3], '3.0');
     });
 
     test('leaderHireCost and leaderUpgradeCost', () {
@@ -470,13 +534,15 @@ void main() {
       expect(
         IncomeCalculator.leaderUpgradeCost(egypt, LeaderTier.tier1).value,
         equals(
-          egypt.baseInfluence * BalanceConfig.leaderUpgradeT1T2BaseInfluenceScale,
+          egypt.baseInfluence *
+              BalanceConfig.leaderUpgradeT1T2BaseInfluenceScale,
         ),
       );
       expect(
         IncomeCalculator.leaderUpgradeCost(egypt, LeaderTier.tier2).value,
         equals(
-          egypt.baseInfluence * BalanceConfig.leaderUpgradeT2T3BaseInfluenceScale,
+          egypt.baseInfluence *
+              BalanceConfig.leaderUpgradeT2T3BaseInfluenceScale,
         ),
       );
     });

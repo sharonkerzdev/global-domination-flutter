@@ -1,6 +1,6 @@
 # Story 4.3: Continent Milestone Rewards at 25/50/75/100%
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -54,45 +54,45 @@ so that I feel celebrated for making steady progress, not just final completion.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add events to `lib/game/game_event.dart` (AC: 1, 4)
-  - [ ] Subtask 1.1: Add `MilestoneReached(at, continentId, percent, rewardType, rewardValue)` with `Decimal rewardValue` field, equality/hashCode/toString
-  - [ ] Subtask 1.2: Add `ContinentCompleted(at, continentId)` with equality/hashCode/toString
-- [ ] Task 2: Extend `lib/game/game_state.dart` with `reachedMilestones` (AC: 1, 6, 7)
-  - [ ] Subtask 2.1: Add field `final Map<ContinentId, Set<int>> reachedMilestones` (unmodifiable; outer map and inner sets both wrapped via `Map.unmodifiable` / `Set.unmodifiable`)
-  - [ ] Subtask 2.2: Wire through constructor, `copyWith`, `initialSeed` (default to empty), `==`, `hashCode`, `toString`
-  - [ ] Subtask 2.3: Use `MapEquality<ContinentId, Set<int>>` with a custom `SetEquality` for nested-set comparison — mirror the `_continentCompletionEq` / `_stringSetEq` patterns already in the file
-- [ ] Task 3: Create `lib/game/features/continents/milestones_reducer.dart` (AC: 1, 2, 3, 5, 6)
-  - [ ] Subtask 3.1: Implement `(GameState, List<GameEvent>) evaluateMilestones(GameState state, ContentRegistry content, DateTime now)`
-  - [ ] Subtask 3.2: Iterate `content.continents` in deterministic order (sort by continent id string for determinism); for each continent compute `total = count(content.countries where continent == id)`, `owned = count(state.countries where unlocked && def.continent == id)`
-  - [ ] Subtask 3.3: For each tier in `[25, 50, 75, 100]` (ascending): if `owned >= (tier * total / 100).floor()` AND `tier` not in `state.reachedMilestones[continentId]`, append the tier and emit `MilestoneReached`. Look up the matching `MilestoneReward` from `content.continents[id].milestoneRewards.firstWhere((r) => r.percent == tier)`. If `rewardType == 'influence'`, add `Influence(rewardValue)` to `totalInfluence`. At tier 100, also append `ContinentCompleted(now, id)` immediately after the `MilestoneReached(100)`.
-  - [ ] Subtask 3.4: Return `(newState, eventList)` — `newState` reflects updated `reachedMilestones` and any `totalInfluence` increases; `eventList` is empty when nothing crosses
-  - [ ] Subtask 3.5: Pure function — no `DateTime.now()`, no I/O, no exceptions for control flow (use `assert` only for programmer-error invariants)
-- [ ] Task 4: Wire evaluator into `lib/game/game_world.dart` (AC: 9, 10)
-  - [ ] Subtask 4.1: Add private helper `void _evaluateMilestones(DateTime now)` that calls `evaluateMilestones(_state, _content, now)`, assigns `_state = newState`, then emits each event in returned-list order via `_events.add(e)`
-  - [ ] Subtask 4.2: At the END of every successful `_apply*` helper (`_applyTapCountry`, `_applyPurchaseUpgrade`, `_applyHireLeader`, `_applyUpgradeLeader`, plus `_applyUnlockCountry` once 4.1 lands), call `_evaluateMilestones(_clock.now())` AFTER the originating event has been emitted AND AFTER 4.2's `_evaluateContinentUnlocks(_clock.now())` (if present). The call order matters: command-event → continent-unlock-events → milestone-events
-  - [ ] Subtask 4.3: Do NOT run `_evaluateMilestones` inside `tick()` — `tickCountries` only mutates `bankedInfluence`, never `unlocked`, so milestones never cross during tick. (Skip ticks for performance — milestone evaluation iterates all continents × all countries.)
-  - [ ] Subtask 4.4: If Story 4.2 has not yet landed when this story is implemented, add the call site as documented and leave a TODO referencing 4.2 for the continent-unlock evaluator slot. If 4.2 has landed, slot `_evaluateMilestones` immediately after the existing `_evaluateContinentUnlocks` call.
-- [ ] Task 5: Populate `assets/data/continents.json` milestoneRewards (AC: 8)
-  - [ ] Subtask 5.1: For every continent, replace the empty `milestoneRewards: []` with 4 entries: `{percent: 25/50/75/100, rewardType: 'influence', rewardValue: '<placeholder>'}`. Use placeholder values that scale with continent unlockThreshold (e.g., for Africa: 1e3 / 1e4 / 1e5 / 1e6; for Europe: 1e9 * 0.001 / 0.01 / 0.1 / 1.0; etc.). Mark as Epic 10 placeholders in this story's File List notes.
-- [ ] Task 6: Pure-Dart tests `test/game/features/continents/milestones_reducer_test.dart` (AC: 1, 2, 3, 5, 6, 7)
-  - [ ] Subtask 6.1: Use `package:test/test.dart` (NOT `flutter_test`) — `lib/game/` headless invariant
-  - [ ] Subtask 6.2: Build a small `ContentRegistry` via `ContentRegistry.fromJsonStrings` with a 4-country continent (so 25/50/75/100 land at exactly 1/2/3/4 owned) and one influence-type reward per tier
-  - [ ] Subtask 6.3: Test: empty seed → no events, no state change
-  - [ ] Subtask 6.4: Test: ownership jumps 0 → 1 fires only `MilestoneReached(25)` and grants influence
-  - [ ] Subtask 6.5: Test: ownership jumps 0 → 4 fires `MilestoneReached(25)`, `MilestoneReached(50)`, `MilestoneReached(75)`, `MilestoneReached(100)`, `ContinentCompleted` IN THAT ORDER
-  - [ ] Subtask 6.6: Test: replaying `evaluateMilestones` on the post-state emits zero events (idempotent — `reachedMilestones` prevents re-fire)
-  - [ ] Subtask 6.7: Test: `rewardType == 'permanentMultiplier'` does NOT mutate `totalInfluence` but still emits the event
-  - [ ] Subtask 6.8: Test: 100% milestone does NOT flip `state.continentCompletions[c]` (4.4's job)
-  - [ ] Subtask 6.9: Test: floor math — for N=19 (Africa), 25% threshold is `floor(0.25 * 19) = 4`, so 25% fires when 4 (not 5) countries are owned
-  - [ ] Subtask 6.10: Test: multi-continent — owning all of Africa AND all of Oceania emits 8 milestone events + 2 ContinentCompleted events; deterministic order across continents (sorted by `ContinentId.value`)
-- [ ] Task 7: Tests for `GameState.reachedMilestones` (AC: 7)
-  - [ ] Subtask 7.1: Add cases to `test/game/game_state_test.dart` (or create if missing) — `initialSeed` returns empty `reachedMilestones`; `copyWith` round-trips; `==` and `hashCode` reflect nested-set equality
-- [ ] Task 8: Update `test/game/game_event_test.dart` for the two new events (AC: 1, 4)
-  - [ ] Subtask 8.1: Verify equality, hashCode, toString cover all fields (`continentId`, `percent`, `rewardType`, `rewardValue` for `MilestoneReached`; `continentId` for `ContinentCompleted`)
-- [ ] Task 9: Update `test/game/game_world_test.dart` to verify wiring (AC: 9)
-  - [ ] Subtask 9.1: Construct a `GameWorld` with content where the seed already has 25% of a continent owned AND `state.reachedMilestones` is empty (use `GameWorld(initialState: ...)`); dispatch any successful command (e.g., `TapCountry` after seeding `bankedInfluence`); assert that `MilestoneReached(25)` is emitted on `events` AFTER the originating `CountryTapped` event
-  - [ ] Subtask 9.2: Confirm `tick()` does NOT trigger milestone events (ticks don't change `unlocked`)
-- [ ] Task 10: Run `flutter analyze` — must be zero warnings; `dart format --set-exit-if-changed .` — must pass
+- [x] Task 1: Add events to `lib/game/game_event.dart` (AC: 1, 4)
+  - [x] Subtask 1.1: Add `MilestoneReached(at, continentId, percent, rewardType, rewardValue)` with `Decimal rewardValue` field, equality/hashCode/toString
+  - [x] Subtask 1.2: Add `ContinentCompleted(at, continentId)` with equality/hashCode/toString
+- [x] Task 2: Extend `lib/game/game_state.dart` with `reachedMilestones` (AC: 1, 6, 7)
+  - [x] Subtask 2.1: Add field `final Map<ContinentId, Set<int>> reachedMilestones` (unmodifiable; outer map and inner sets both wrapped via `Map.unmodifiable` / `Set.unmodifiable`)
+  - [x] Subtask 2.2: Wire through constructor, `copyWith`, `initialSeed` (default to empty), `==`, `hashCode`, `toString`
+  - [x] Subtask 2.3: Use `MapEquality<ContinentId, Set<int>>` with a custom `SetEquality` for nested-set comparison — mirror the `_continentCompletionEq` / `_stringSetEq` patterns already in the file
+- [x] Task 3: Create `lib/game/features/continents/milestones_reducer.dart` (AC: 1, 2, 3, 5, 6)
+  - [x] Subtask 3.1: Implement `(GameState, List<GameEvent>) evaluateMilestones(GameState state, ContentRegistry content, DateTime now)`
+  - [x] Subtask 3.2: Iterate `content.continents` in deterministic order (sort by continent id string for determinism); for each continent compute `total = count(content.countries where continent == id)`, `owned = count(state.countries where unlocked && def.continent == id)`
+  - [x] Subtask 3.3: For each tier in `[25, 50, 75, 100]` (ascending): if `owned >= (tier * total / 100).floor()` AND `tier` not in `state.reachedMilestones[continentId]`, append the tier and emit `MilestoneReached`. Look up the matching `MilestoneReward` from `content.continents[id].milestoneRewards.firstWhere((r) => r.percent == tier)`. If `rewardType == 'influence'`, add `Influence(rewardValue)` to `totalInfluence`. At tier 100, also append `ContinentCompleted(now, id)` immediately after the `MilestoneReached(100)`.
+  - [x] Subtask 3.4: Return `(newState, eventList)` — `newState` reflects updated `reachedMilestones` and any `totalInfluence` increases; `eventList` is empty when nothing crosses
+  - [x] Subtask 3.5: Pure function — no `DateTime.now()`, no I/O, no exceptions for control flow (use `assert` only for programmer-error invariants)
+- [x] Task 4: Wire evaluator into `lib/game/game_world.dart` (AC: 9, 10)
+  - [x] Subtask 4.1: Add private helper `void _evaluateMilestones(DateTime now)` that calls `evaluateMilestones(_state, _content, now)`, assigns `_state = newState`, then emits each event in returned-list order via `_events.add(e)`
+  - [x] Subtask 4.2: At the END of every successful `_apply*` helper (`_applyTapCountry`, `_applyPurchaseUpgrade`, `_applyHireLeader`, `_applyUpgradeLeader`, plus `_applyUnlockCountry` once 4.1 lands), call `_evaluateMilestones(_clock.now())` AFTER the originating event has been emitted AND AFTER 4.2's `_evaluateContinentUnlocks(_clock.now())` (if present). The call order matters: command-event → continent-unlock-events → milestone-events
+  - [x] Subtask 4.3: Do NOT run `_evaluateMilestones` inside `tick()` — `tickCountries` only mutates `bankedInfluence`, never `unlocked`, so milestones never cross during tick. (Skip ticks for performance — milestone evaluation iterates all continents × all countries.)
+  - [x] Subtask 4.4: If Story 4.2 has not yet landed when this story is implemented, add the call site as documented and leave a TODO referencing 4.2 for the continent-unlock evaluator slot. If 4.2 has landed, slot `_evaluateMilestones` immediately after the existing `_evaluateContinentUnlocks` call.
+- [x] Task 5: Populate `assets/data/continents.json` milestoneRewards (AC: 8)
+  - [x] Subtask 5.1: For every continent, replace the empty `milestoneRewards: []` with 4 entries: `{percent: 25/50/75/100, rewardType: 'influence', rewardValue: '<placeholder>'}`. Use placeholder values that scale with continent unlockThreshold (e.g., for Africa: 1e3 / 1e4 / 1e5 / 1e6; for Europe: 1e9 * 0.001 / 0.01 / 0.1 / 1.0; etc.). Mark as Epic 10 placeholders in this story's File List notes.
+- [x] Task 6: Pure-Dart tests `test/game/features/continents/milestones_reducer_test.dart` (AC: 1, 2, 3, 5, 6, 7)
+  - [x] Subtask 6.1: Use `package:test/test.dart` (NOT `flutter_test`) — `lib/game/` headless invariant
+  - [x] Subtask 6.2: Build a small `ContentRegistry` via `ContentRegistry.fromJsonStrings` with a 4-country continent (so 25/50/75/100 land at exactly 1/2/3/4 owned) and one influence-type reward per tier
+  - [x] Subtask 6.3: Test: empty seed → no events, no state change
+  - [x] Subtask 6.4: Test: ownership jumps 0 → 1 fires only `MilestoneReached(25)` and grants influence
+  - [x] Subtask 6.5: Test: ownership jumps 0 → 4 fires `MilestoneReached(25)`, `MilestoneReached(50)`, `MilestoneReached(75)`, `MilestoneReached(100)`, `ContinentCompleted` IN THAT ORDER
+  - [x] Subtask 6.6: Test: replaying `evaluateMilestones` on the post-state emits zero events (idempotent — `reachedMilestones` prevents re-fire)
+  - [x] Subtask 6.7: Test: `rewardType == 'permanentMultiplier'` does NOT mutate `totalInfluence` but still emits the event
+  - [x] Subtask 6.8: Test: 100% milestone does NOT flip `state.continentCompletions[c]` (4.4's job)
+  - [x] Subtask 6.9: Test: floor math — for N=19 (Africa), 25% threshold is `floor(0.25 * 19) = 4`, so 25% fires when 4 (not 5) countries are owned
+  - [x] Subtask 6.10: Test: multi-continent — owning all of Africa AND all of Oceania emits 8 milestone events + 2 ContinentCompleted events; deterministic order across continents (sorted by `ContinentId.value`)
+- [x] Task 7: Tests for `GameState.reachedMilestones` (AC: 7)
+  - [x] Subtask 7.1: Add cases to `test/game/game_state_test.dart` (or create if missing) — `initialSeed` returns empty `reachedMilestones`; `copyWith` round-trips; `==` and `hashCode` reflect nested-set equality
+- [x] Task 8: Update `test/game/game_event_test.dart` for the two new events (AC: 1, 4)
+  - [x] Subtask 8.1: Verify equality, hashCode, toString cover all fields (`continentId`, `percent`, `rewardType`, `rewardValue` for `MilestoneReached`; `continentId` for `ContinentCompleted`)
+- [x] Task 9: Update `test/game/game_world_test.dart` to verify wiring (AC: 9)
+  - [x] Subtask 9.1: Construct a `GameWorld` with content where the seed already has 25% of a continent owned AND `state.reachedMilestones` is empty (use `GameWorld(initialState: ...)`); dispatch any successful command (e.g., `TapCountry` after seeding `bankedInfluence`); assert that `MilestoneReached(25)` is emitted on `events` AFTER the originating `CountryTapped` event
+  - [x] Subtask 9.2: Confirm `tick()` does NOT trigger milestone events (ticks don't change `unlocked`)
+- [x] Task 10: Run `flutter analyze` — must be zero warnings; `dart format --set-exit-if-changed .` — must pass
 
 ## Dev Notes
 
@@ -192,10 +192,34 @@ Most recent code work (`be1fe53`) established the leaders + upgrades + economy r
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `MilestoneReached` and `ContinentCompleted` on `GameEvent`; `GameState.reachedMilestones` with nested `MapEquality` / `SetEquality`; pure `evaluateMilestones` in `milestones_reducer.dart` (sorted `ContinentId`s, integer threshold `owned >= (tier * total) ~/ 100`, skip `tier < 100` when required count is 0 to avoid degenerate single-country continents, skip continents with empty `milestoneRewards` so existing tests stay valid).
+- `GameWorld`: `_evaluateMilestones` after successful commands, following `_evaluateContinentUnlocks`; `UnlockCountry` path runs continent unlocks again after apply then milestones. Milestones not evaluated in `tick()`.
+- `assets/data/continents.json`: four `influence` milestone rows per continent (Epic 10 placeholders, scaled by tier progression).
+- Tests: `milestones_reducer_test.dart`, `game_event_test` switches, `game_state_test` / `game_state_seed_test` for `reachedMilestones`, `game_world_test` wiring. Repo-wide `dart format .` applied; `flutter analyze` clean (const `UpgradePurchased`, `map_screen` curly braces for lint).
+
+### Change Log
+
+- 2026-04-24: Story 4.3 implemented — continent milestone rewards, events, state, wiring, JSON placeholders, tests; sprint status → review.
+
 ### File List
+
+- `lib/game/game_event.dart`
+- `lib/game/game_state.dart`
+- `lib/game/game_world.dart`
+- `lib/game/features/continents/milestones_reducer.dart` (new)
+- `lib/ui/features/map/map_screen.dart` (lint: braces on if)
+- `assets/data/continents.json` (Epic 10 placeholder `milestoneRewards` per continent)
+- `test/game/features/continents/milestones_reducer_test.dart` (new)
+- `test/game/game_event_test.dart`
+- `test/game/game_state_test.dart`
+- `test/game/game_state_seed_test.dart`
+- `test/game/game_world_test.dart`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/4-3-continent-milestone-rewards-at-25-50-75-100.md` (this file — status/tasks/agent record only)
+- Additional files touched only by `dart format .` (no logic changes): `lib/game/features/continents/continents_reducer.dart`, `lib/game/features/leaders/leaders_reducer.dart`, `test/game/features/continents/continents_reducer_test.dart`, `test/game/features/continents/unlocks_reducer_test.dart`, `test/game/features/countries/countries_reducer_test.dart`, `test/game/features/economy/income_calculator_test.dart`, `test/game/features/leaders/leaders_reducer_test.dart`, `test/game/features/upgrades/upgrades_reducer_test.dart`, `test/game/game_command_test.dart`

@@ -51,6 +51,8 @@ void main() {
         LeaderUpgraded() => 'leader_upgraded',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       expect(result, equals('tick'));
     });
@@ -75,6 +77,8 @@ void main() {
         LeaderUpgraded() => 'leader_upgraded',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       expect(result, equals('upgrade'));
     });
@@ -103,6 +107,8 @@ void main() {
         LeaderUpgraded() => 'leader_upgraded',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -112,6 +118,8 @@ void main() {
         LeaderUpgraded() => 'g',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -136,10 +144,7 @@ void main() {
         cost: Influence(Decimal.parse('5')),
       );
       expect(a, equals(b));
-      expect(
-        a.toString(),
-        contains('CountryUnlocked'),
-      );
+      expect(a.toString(), contains('CountryUnlocked'));
     });
 
     test('exhaustive switch routes CountryUnlocked', () {
@@ -158,6 +163,8 @@ void main() {
         LeaderUpgraded() => 'leader_upgraded',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -187,8 +194,90 @@ void main() {
         LeaderUpgraded() => 'leader_upgraded',
         ContinentUnlocked() => 'continent_unlocked',
         CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
       };
       expect(result, equals('continent_unlocked'));
+    });
+  });
+
+  group('MilestoneReached', () {
+    final now = DateTime.utc(2026, 4, 24);
+
+    test('equality, hashCode, toString', () {
+      const cid = ContinentId('africa');
+      final a = MilestoneReached(
+        now,
+        continentId: cid,
+        percent: 25,
+        rewardType: 'influence',
+        rewardValue: Decimal.parse('10'),
+      );
+      final b = MilestoneReached(
+        now,
+        continentId: cid,
+        percent: 25,
+        rewardType: 'influence',
+        rewardValue: Decimal.parse('10'),
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a.toString(), contains('MilestoneReached'));
+      expect(a.toString(), contains('percent: 25'));
+    });
+
+    test('exhaustive switch routes MilestoneReached', () {
+      const cid = ContinentId('africa');
+      final GameEvent event = MilestoneReached(
+        now,
+        continentId: cid,
+        percent: 50,
+        rewardType: 'influence',
+        rewardValue: Decimal.one,
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
+      };
+      expect(result, equals('milestone_reached'));
+    });
+  });
+
+  group('ContinentCompleted', () {
+    final now = DateTime.utc(2026, 4, 24);
+
+    test('equality, toString', () {
+      const cid = ContinentId('africa');
+      final a = ContinentCompleted(now, continentId: cid);
+      final b = ContinentCompleted(now, continentId: cid);
+      expect(a, equals(b));
+      expect(a.toString(), contains('ContinentCompleted'));
+    });
+
+    test('exhaustive switch routes ContinentCompleted', () {
+      final GameEvent event = ContinentCompleted(
+        now,
+        continentId: const ContinentId('europe'),
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
+      };
+      expect(result, equals('continent_completed'));
     });
   });
 }

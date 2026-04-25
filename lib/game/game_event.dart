@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:meta/meta.dart';
 
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
@@ -57,7 +58,7 @@ final class UpgradePurchased extends GameEvent {
   final int bulkRequested;
   final Influence totalCost;
 
-  UpgradePurchased(
+  const UpgradePurchased(
     super.at, {
     required this.countryId,
     required this.levelsAdded,
@@ -159,8 +160,7 @@ final class ContinentUnlocked extends GameEvent {
   int get hashCode => Object.hash(at, continentId);
 
   @override
-  String toString() =>
-      'ContinentUnlocked(at: $at, continentId: $continentId)';
+  String toString() => 'ContinentUnlocked(at: $at, continentId: $continentId)';
 }
 
 final class CountryUnlocked extends GameEvent {
@@ -191,4 +191,57 @@ final class CountryUnlocked extends GameEvent {
   String toString() =>
       'CountryUnlocked(at: $at, countryId: $countryId, continent: $continent, '
       'cost: $cost)';
+}
+
+final class MilestoneReached extends GameEvent {
+  final ContinentId continentId;
+  final int percent;
+  final String rewardType;
+  final Decimal rewardValue;
+
+  const MilestoneReached(
+    super.at, {
+    required this.continentId,
+    required this.percent,
+    required this.rewardType,
+    required this.rewardValue,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MilestoneReached &&
+          at == other.at &&
+          continentId == other.continentId &&
+          percent == other.percent &&
+          rewardType == other.rewardType &&
+          rewardValue == other.rewardValue);
+
+  @override
+  int get hashCode =>
+      Object.hash(at, continentId, percent, rewardType, rewardValue);
+
+  @override
+  String toString() =>
+      'MilestoneReached(at: $at, continentId: $continentId, percent: $percent, '
+      'rewardType: $rewardType, rewardValue: $rewardValue)';
+}
+
+final class ContinentCompleted extends GameEvent {
+  final ContinentId continentId;
+
+  const ContinentCompleted(super.at, {required this.continentId});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ContinentCompleted &&
+          at == other.at &&
+          continentId == other.continentId);
+
+  @override
+  int get hashCode => Object.hash(at, continentId);
+
+  @override
+  String toString() => 'ContinentCompleted(at: $at, continentId: $continentId)';
 }

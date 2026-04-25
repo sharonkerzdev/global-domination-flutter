@@ -15,8 +15,8 @@ import 'package:global_domination/game/values/influence.dart';
 /// 1. `baseInfluence` from [CountryDef]
 /// 2. × `(1 + ipLevel × BalanceConfig.ipMultPerLevel)` — Influence Power
 /// 3. × `leaderMultiplier(country.leaderTier)`
-/// 4. × continent completion bonus — `1 + completionBonus` when the country's
-///    continent is marked complete in [GameState.continentCompletions], else `1`
+/// 4. × product over all complete continents of `(1 + ContinentDef.completionBonus)`
+///    — global factor, NOT per-country
 /// 5. × `(1 + Σ achievementMultipliers)` — achievements with
 ///    `rewardType == 'influenceMultiplier'` sum additively, then +1
 /// 6. × product of `influenceAmplifier` for each id in
@@ -41,7 +41,7 @@ abstract final class IncomeCalculator {
         Decimal.one +
         Decimal.fromInt(country.ipLevel) * BalanceConfig.ipMultPerLevel;
     rate *= _leaderMultiplier(country.leaderTier);
-    rate *= _continentCompletionBonus(def, state, content);
+    rate *= _continentCompletionBonus(state, content);
     rate *= Decimal.one + _sumAchievementMultipliers(state, content);
     rate *= _globalUpgradeAmplifier(state, content);
     rate *= state.goldenOpportunityMultiplier;
@@ -54,15 +54,17 @@ abstract final class IncomeCalculator {
       BalanceConfig.leaderMultiplier(tier);
 
   static Decimal _continentCompletionBonus(
-    CountryDef def,
     GameState state,
     ContentRegistry content,
   ) {
-    final continentId = def.continent;
-    if (state.continentCompletions[continentId] != true) return Decimal.one;
-    final continentDef = content.continents[continentId];
-    if (continentDef == null) return Decimal.one;
-    return Decimal.one + continentDef.completionBonus;
+    var product = Decimal.one;
+    for (final e in state.continentCompletions.entries) {
+      if (e.value != true) continue;
+      final continentDef = content.continents[e.key];
+      if (continentDef == null) continue;
+      product *= Decimal.one + continentDef.completionBonus;
+    }
+    return product;
   }
 
   static Decimal _sumAchievementMultipliers(

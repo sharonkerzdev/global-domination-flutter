@@ -116,10 +116,7 @@ void main() {
       const a = HireLeader(countryId: CountryId('egypt'));
       const b = HireLeader(countryId: CountryId('egypt'));
       expect(a, equals(b));
-      expect(
-        a.toString(),
-        equals('HireLeader(egypt)'),
-      );
+      expect(a.toString(), equals('HireLeader(egypt)'));
     });
   });
 

@@ -94,57 +94,63 @@ void main() {
       final (newState, events) = r.valueOrNull!;
       expect(events, hasLength(1));
       expect(events.single, isA<ContinentUnlocked>());
-      expect((events.single as ContinentUnlocked).continentId, const ContinentId('europe'));
+      expect(
+        (events.single as ContinentUnlocked).continentId,
+        const ContinentId('europe'),
+      );
       expect(newState.unlockedContinents[const ContinentId('europe')], isTrue);
     });
 
-    test('below threshold returns same GameState instance and empty events', () {
-      final continents = jsonEncode([
-        {
-          'id': 'africa',
-          'name': 'Africa',
-          'unlockThreshold': '0',
-          'completionBonus': '0.25',
-          'milestoneRewards': <dynamic>[],
-        },
-        {
-          'id': 'europe',
-          'name': 'Europe',
-          'unlockThreshold': '100',
-          'completionBonus': '0.25',
-          'milestoneRewards': <dynamic>[],
-        },
-      ]);
-      final countries = jsonEncode([
-        {
-          'id': 'egypt',
-          'continent': 'africa',
-          'baseInfluence': '1',
-          'unlockCost': '0',
-          'tier': 1,
-          'generationSeconds': 1,
-        },
-        {
-          'id': 'france',
-          'continent': 'europe',
-          'baseInfluence': '1',
-          'unlockCost': '10',
-          'tier': 1,
-          'generationSeconds': 1,
-        },
-      ]);
-      final content = _registry(continents, countries);
-      final state = _minimalState(
-        total: Influence(Decimal.fromInt(99)),
-        unlockedContinents: {const ContinentId('africa'): true},
-      );
+    test(
+      'below threshold returns same GameState instance and empty events',
+      () {
+        final continents = jsonEncode([
+          {
+            'id': 'africa',
+            'name': 'Africa',
+            'unlockThreshold': '0',
+            'completionBonus': '0.25',
+            'milestoneRewards': <dynamic>[],
+          },
+          {
+            'id': 'europe',
+            'name': 'Europe',
+            'unlockThreshold': '100',
+            'completionBonus': '0.25',
+            'milestoneRewards': <dynamic>[],
+          },
+        ]);
+        final countries = jsonEncode([
+          {
+            'id': 'egypt',
+            'continent': 'africa',
+            'baseInfluence': '1',
+            'unlockCost': '0',
+            'tier': 1,
+            'generationSeconds': 1,
+          },
+          {
+            'id': 'france',
+            'continent': 'europe',
+            'baseInfluence': '1',
+            'unlockCost': '10',
+            'tier': 1,
+            'generationSeconds': 1,
+          },
+        ]);
+        final content = _registry(continents, countries);
+        final state = _minimalState(
+          total: Influence(Decimal.fromInt(99)),
+          unlockedContinents: {const ContinentId('africa'): true},
+        );
 
-      final r = evaluateContinentUnlocks(state, content, now: now);
-      expect(r.isSuccess, isTrue);
-      final (newState, events) = r.valueOrNull!;
-      expect(events, isEmpty);
-      expect(identical(newState, state), isTrue);
-    });
+        final r = evaluateContinentUnlocks(state, content, now: now);
+        expect(r.isSuccess, isTrue);
+        final (newState, events) = r.valueOrNull!;
+        expect(events, isEmpty);
+        expect(identical(newState, state), isTrue);
+      },
+    );
 
     test('multiple thresholds crossed emit events in threshold ASC order', () {
       final continents = jsonEncode([
@@ -206,43 +212,55 @@ void main() {
       expect(r.isSuccess, isTrue);
       final (_, events) = r.valueOrNull!;
       expect(events, hasLength(3));
-      expect((events[0] as ContinentUnlocked).continentId, const ContinentId('africa'));
-      expect((events[1] as ContinentUnlocked).continentId, const ContinentId('europe'));
-      expect((events[2] as ContinentUnlocked).continentId, const ContinentId('asia'));
-    });
-
-    test('already-unlocked continent emits nothing and leaves state unchanged', () {
-      final continents = jsonEncode([
-        {
-          'id': 'africa',
-          'name': 'Africa',
-          'unlockThreshold': '0',
-          'completionBonus': '0.25',
-          'milestoneRewards': <dynamic>[],
-        },
-      ]);
-      final countries = jsonEncode([
-        {
-          'id': 'egypt',
-          'continent': 'africa',
-          'baseInfluence': '1',
-          'unlockCost': '0',
-          'tier': 1,
-          'generationSeconds': 1,
-        },
-      ]);
-      final content = _registry(continents, countries);
-      final state = _minimalState(
-        total: Influence.zero,
-        unlockedContinents: {const ContinentId('africa'): true},
+      expect(
+        (events[0] as ContinentUnlocked).continentId,
+        const ContinentId('africa'),
       );
-
-      final r = evaluateContinentUnlocks(state, content, now: now);
-      expect(r.isSuccess, isTrue);
-      final (newState, events) = r.valueOrNull!;
-      expect(events, isEmpty);
-      expect(identical(newState, state), isTrue);
+      expect(
+        (events[1] as ContinentUnlocked).continentId,
+        const ContinentId('europe'),
+      );
+      expect(
+        (events[2] as ContinentUnlocked).continentId,
+        const ContinentId('asia'),
+      );
     });
+
+    test(
+      'already-unlocked continent emits nothing and leaves state unchanged',
+      () {
+        final continents = jsonEncode([
+          {
+            'id': 'africa',
+            'name': 'Africa',
+            'unlockThreshold': '0',
+            'completionBonus': '0.25',
+            'milestoneRewards': <dynamic>[],
+          },
+        ]);
+        final countries = jsonEncode([
+          {
+            'id': 'egypt',
+            'continent': 'africa',
+            'baseInfluence': '1',
+            'unlockCost': '0',
+            'tier': 1,
+            'generationSeconds': 1,
+          },
+        ]);
+        final content = _registry(continents, countries);
+        final state = _minimalState(
+          total: Influence.zero,
+          unlockedContinents: {const ContinentId('africa'): true},
+        );
+
+        final r = evaluateContinentUnlocks(state, content, now: now);
+        expect(r.isSuccess, isTrue);
+        final (newState, events) = r.valueOrNull!;
+        expect(events, isEmpty);
+        expect(identical(newState, state), isTrue);
+      },
+    );
 
     test('tied thresholds: secondary sort by continent id.value ASC', () {
       final continents = jsonEncode([
@@ -289,8 +307,14 @@ void main() {
       expect(r.isSuccess, isTrue);
       final (_, events) = r.valueOrNull!;
       expect(events, hasLength(2));
-      expect((events[0] as ContinentUnlocked).continentId, const ContinentId('alpha'));
-      expect((events[1] as ContinentUnlocked).continentId, const ContinentId('zulu'));
+      expect(
+        (events[0] as ContinentUnlocked).continentId,
+        const ContinentId('alpha'),
+      );
+      expect(
+        (events[1] as ContinentUnlocked).continentId,
+        const ContinentId('zulu'),
+      );
     });
 
     test('negative unlockThreshold returns InvariantBroken', () {
@@ -342,7 +366,10 @@ void main() {
         },
       ]);
       final content = _registry(continents, countries);
-      final state = _minimalState(total: Influence.zero, unlockedContinents: const {});
+      final state = _minimalState(
+        total: Influence.zero,
+        unlockedContinents: const {},
+      );
 
       final r = evaluateContinentUnlocks(state, content, now: now);
       expect(r.isSuccess, isTrue);

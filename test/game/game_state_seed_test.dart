@@ -174,6 +174,12 @@ void main() {
       expect(state.totalInfluence, equals(Influence.zero));
     });
 
+    test('initialSeed has empty reachedMilestones (Story 4.3)', () {
+      final content = _buildContent();
+      final state = GameState.initialSeed(content);
+      expect(state.reachedMilestones, isEmpty);
+    });
+
     test(
       '4.2: seed includes continents with unlockThreshold <= 0 in unlockedContinents',
       () {

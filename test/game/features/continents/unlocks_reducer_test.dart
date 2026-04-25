@@ -136,35 +136,38 @@ void main() {
   const cmd = UnlockCountry(countryId: nigeria);
 
   group('applyUnlockCountry', () {
-    test('happy path: unlock nigeria, deducts def.unlockCost, emits CountryUnlocked', () {
-      final content = _contentAfrica();
-      final base = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.fromInt(5)),
-      );
-      final r = applyUnlockCountry(base, content, cmd, now: now);
-      expect(r.isSuccess, isTrue);
-      final (next, ev) = r.valueOrNull!;
-      final unlocked = next.countries[nigeria]!;
-      expect(unlocked.unlocked, isTrue);
-      expect(unlocked.ipLevel, equals(1));
-      expect(unlocked.leaderTier, LeaderTier.none);
-      expect(unlocked.bankedInfluence, Influence.zero);
-      expect(unlocked.lastCollectedAt, isNull);
-      expect(next.totalInfluence, equals(Influence.zero));
-      expect(ev, isA<CountryUnlocked>());
-      final e = ev! as CountryUnlocked;
-      expect(e.at, equals(now));
-      expect(e.countryId, nigeria);
-      expect(e.continent, const ContinentId('africa'));
-      expect(e.cost, equals(Influence(Decimal.fromInt(5))));
-    });
+    test(
+      'happy path: unlock nigeria, deducts def.unlockCost, emits CountryUnlocked',
+      () {
+        final content = _contentAfrica();
+        final base = GameState.initialSeed(
+          content,
+        ).copyWith(totalInfluence: Influence(Decimal.fromInt(5)));
+        final r = applyUnlockCountry(base, content, cmd, now: now);
+        expect(r.isSuccess, isTrue);
+        final (next, ev) = r.valueOrNull!;
+        final unlocked = next.countries[nigeria]!;
+        expect(unlocked.unlocked, isTrue);
+        expect(unlocked.ipLevel, equals(1));
+        expect(unlocked.leaderTier, LeaderTier.none);
+        expect(unlocked.bankedInfluence, Influence.zero);
+        expect(unlocked.lastCollectedAt, isNull);
+        expect(next.totalInfluence, equals(Influence.zero));
+        expect(ev, isA<CountryUnlocked>());
+        final e = ev! as CountryUnlocked;
+        expect(e.at, equals(now));
+        expect(e.countryId, nigeria);
+        expect(e.continent, const ContinentId('africa'));
+        expect(e.cost, equals(Influence(Decimal.fromInt(5))));
+      },
+    );
 
     test('already unlocked → Locked(already_unlocked), no mutation', () {
       final content = _contentAfrica();
       final r1 = applyUnlockCountry(
-        GameState.initialSeed(content).copyWith(
-          totalInfluence: Influence(Decimal.fromInt(5)),
-        ),
+        GameState.initialSeed(
+          content,
+        ).copyWith(totalInfluence: Influence(Decimal.fromInt(5))),
         content,
         cmd,
         now: now,
@@ -211,20 +214,23 @@ void main() {
       expect(before, equals(unchanged));
     });
 
-    test('insufficient funds → InsufficientFunds(required: cost), no mutation', () {
-      final content = _contentAfrica();
-      final before = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.parse('4')),
-      );
-      final r = applyUnlockCountry(before, content, cmd, now: now);
-      expect(r.isFailure, isTrue);
-      final err = r.errorOrNull! as InsufficientFunds;
-      expect(err.required, equals(Influence(Decimal.fromInt(5))));
-      final unchanged = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.parse('4')),
-      );
-      expect(before, equals(unchanged));
-    });
+    test(
+      'insufficient funds → InsufficientFunds(required: cost), no mutation',
+      () {
+        final content = _contentAfrica();
+        final before = GameState.initialSeed(
+          content,
+        ).copyWith(totalInfluence: Influence(Decimal.parse('4')));
+        final r = applyUnlockCountry(before, content, cmd, now: now);
+        expect(r.isFailure, isTrue);
+        final err = r.errorOrNull! as InsufficientFunds;
+        expect(err.required, equals(Influence(Decimal.fromInt(5))));
+        final unchanged = GameState.initialSeed(
+          content,
+        ).copyWith(totalInfluence: Influence(Decimal.parse('4')));
+        expect(before, equals(unchanged));
+      },
+    );
 
     test('missing country id not in state → MissingCountry', () {
       final content = _contentAfrica();
@@ -269,26 +275,26 @@ void main() {
 
     test('africa threshold 0: exact cost boundary succeeds (>=)', () {
       final content = _contentAfrica();
-      final s = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.fromInt(5)),
-      );
+      final s = GameState.initialSeed(
+        content,
+      ).copyWith(totalInfluence: Influence(Decimal.fromInt(5)));
       final r = applyUnlockCountry(s, content, cmd, now: now);
       expect(r.isSuccess, isTrue);
     });
 
     test('negative unlockCost in content → InvariantBroken', () {
       final content = _contentNegativeUnlockCost();
-      final before = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.fromInt(10)),
-      );
+      final before = GameState.initialSeed(
+        content,
+      ).copyWith(totalInfluence: Influence(Decimal.fromInt(10)));
       final r = applyUnlockCountry(before, content, cmd, now: now);
       expect(r.isFailure, isTrue);
       expect(r.errorOrNull, isA<InvariantBroken>());
       final err = r.errorOrNull! as InvariantBroken;
       expect(err.message, contains('negative unlockCost'));
-      final unchanged = GameState.initialSeed(content).copyWith(
-        totalInfluence: Influence(Decimal.fromInt(10)),
-      );
+      final unchanged = GameState.initialSeed(
+        content,
+      ).copyWith(totalInfluence: Influence(Decimal.fromInt(10)));
       expect(before, equals(unchanged));
     });
   });

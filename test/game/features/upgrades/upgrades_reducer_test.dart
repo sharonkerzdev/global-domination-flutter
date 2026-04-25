@@ -252,7 +252,10 @@ void main() {
         missionsJson: '[]',
         globalUpgradesJson: '[]',
       );
-      final state = _egyptState(ipLevel: 1, total: Influence(Decimal.parse('1000')));
+      final state = _egyptState(
+        ipLevel: 1,
+        total: Influence(Decimal.parse('1000')),
+      );
       final r = applyPurchaseUpgrade(
         state,
         emptyContent,
