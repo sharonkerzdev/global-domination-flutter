@@ -7,6 +7,7 @@ import 'package:global_domination/game/features/continents/unlocks_reducer.dart'
 import 'package:global_domination/game/features/countries/countries_collect_reducer.dart';
 import 'package:global_domination/game/features/countries/countries_reducer.dart';
 import 'package:global_domination/game/features/leaders/leaders_reducer.dart';
+import 'package:global_domination/game/features/boosts/boosts_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
 import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
@@ -43,17 +44,26 @@ class GameWorld {
     assert(!dt.isNegative, 'tick dt must be non-negative, got $dt');
     assert(dt.inMilliseconds <= 100, 'tick dt should be clamped to 100ms');
 
+    final now = _clock.now();
+    final (boostExpiredState, boostEvents) = evaluateBoostExpiry(
+      _state,
+      now: now,
+    );
+    final boostExpired = boostEvents.isNotEmpty;
+    if (boostExpired) {
+      _state = boostExpiredState;
+      for (final e in boostEvents) {
+        _events.add(e);
+      }
+    }
+
     final newCountries = tickCountries(_state, dt, _content);
     final countriesChanged = !identical(newCountries, _state.countries);
     if (countriesChanged) {
       _state = _state.copyWith(countries: newCountries);
     }
 
-    final unlockRes = evaluateContinentUnlocks(
-      _state,
-      _content,
-      now: _clock.now(),
-    );
+    final unlockRes = evaluateContinentUnlocks(_state, _content, now: now);
     if (unlockRes.isFailure) {
       throw AssertionError(unlockRes.errorOrNull);
     }
@@ -69,7 +79,7 @@ class GameWorld {
       _state,
       _content,
       dt,
-      now: _clock.now(),
+      now: now,
       rng: _rng,
     );
     if (goldenEvents.isNotEmpty) {
@@ -81,8 +91,9 @@ class GameWorld {
 
     if (countriesChanged ||
         continentEvents.isNotEmpty ||
-        goldenEvents.isNotEmpty) {
-      _events.add(Tick(_clock.now()));
+        goldenEvents.isNotEmpty ||
+        boostExpired) {
+      _events.add(Tick(now));
     }
   }
 
@@ -114,6 +125,7 @@ class GameWorld {
       PurchaseUpgrade() => _applyPurchaseUpgrade(cmd),
       HireLeader() => _applyHireLeader(cmd),
       UpgradeLeader() => _applyUpgradeLeader(cmd),
+      ActivateBoost() => _applyActivateBoost(cmd),
       Noop() => const Success<void, GameError>(null),
       UnlockCountry() => const Success<void, GameError>(null),
       ClaimGolden() => throw AssertionError('unreachable ClaimGolden: $cmd'),
@@ -199,6 +211,15 @@ class GameWorld {
 
   Result<void, GameError> _applyClaimGolden(ClaimGolden cmd) {
     final result = applyClaimGolden(_state, cmd, now: _clock.now());
+    return result.map((tuple) {
+      final (newState, event) = tuple;
+      _state = newState;
+      if (event != null) _events.add(event);
+    });
+  }
+
+  Result<void, GameError> _applyActivateBoost(ActivateBoost cmd) {
+    final result = applyActivateBoost(_state, cmd, now: _clock.now());
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;

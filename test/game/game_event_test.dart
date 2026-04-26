@@ -6,6 +6,7 @@ import 'package:global_domination/game/game_event.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 void main() {
   group('Tick', () {
@@ -56,6 +57,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('tick'));
     });
@@ -85,6 +88,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('upgrade'));
     });
@@ -118,6 +123,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -132,6 +139,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -180,6 +189,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -214,6 +225,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('continent_unlocked'));
     });
@@ -266,6 +279,8 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('milestone_reached'));
     });
@@ -300,8 +315,43 @@ void main() {
         GoldenSpawned() => 'golden_spawned',
         GoldenClaimed() => 'golden_claimed',
         GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
       };
       expect(result, equals('continent_completed'));
+    });
+  });
+
+  group('BoostActivated / BoostExpired', () {
+    final at = DateTime.utc(2026, 1, 1);
+    final exp = DateTime.utc(2026, 1, 1, 0, 0, 30);
+    final spent = Intel(Decimal.parse('100'));
+
+    test('BoostActivated equality, hashCode, toString', () {
+      final a = BoostActivated(
+        at,
+        multiplier: Decimal.parse('2.0'),
+        expiresAt: exp,
+        intelSpent: spent,
+      );
+      final b = BoostActivated(
+        at,
+        multiplier: Decimal.parse('2.0'),
+        expiresAt: exp,
+        intelSpent: spent,
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a.toString(), contains('BoostActivated'));
+      expect(a.toString(), contains('multiplier'));
+      expect(a.toString(), contains('intelSpent'));
+    });
+
+    test('BoostExpired matches Tick pattern', () {
+      final a = BoostExpired(at);
+      final b = BoostExpired(at);
+      expect(a, equals(b));
+      expect(a.toString(), equals('BoostExpired(at: $at)'));
     });
   });
 }

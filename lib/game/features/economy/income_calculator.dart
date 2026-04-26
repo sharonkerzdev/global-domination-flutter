@@ -22,7 +22,8 @@ import 'package:global_domination/game/values/influence.dart';
 /// 6. × product of `influenceAmplifier` for each id in
 ///    [GameState.activeGlobalUpgradeIds]
 /// 7. × [GameState.goldenOpportunityMultiplier]
-/// 8. × [GameState.boostMultiplier]
+/// 8. × `(state.activeBoost?.multiplier ?? Decimal.one)` — boost slot: 1.0 when
+///    no active boost, else the active boost's multiplier.
 abstract final class IncomeCalculator {
   static Influence compute(
     CountryState country,
@@ -45,7 +46,7 @@ abstract final class IncomeCalculator {
     rate *= Decimal.one + _sumAchievementMultipliers(state, content);
     rate *= _globalUpgradeAmplifier(state, content);
     rate *= state.goldenOpportunityMultiplier;
-    rate *= state.boostMultiplier;
+    rate *= state.activeBoost?.multiplier ?? Decimal.one;
 
     return Influence(rate);
   }

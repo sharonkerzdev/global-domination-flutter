@@ -1,6 +1,6 @@
 # Story 5.2: Activate Boost (2× / 30s) Using Intel
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -61,46 +61,46 @@ _(UI rendering of the Boost button + "active" indicator lands in Epic 7 — this
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add Intel and active-boost fields to GameState (AC: #1, #4, #10)
-  - [ ] 1.1 In `lib/game/game_state.dart`, add `final Intel totalIntel` (default `Intel.zero`) — import `package:global_domination/game/values/intel.dart`.
-  - [ ] 1.2 In the same file, **replace** the existing `final Decimal boostMultiplier` field with `final BoostState? activeBoost` — drop the corresponding constructor param, copyWith param, equality, hash, toString fragment for `boostMultiplier`. Add `import '../features/boosts/boost_state.dart';` (the new file from Task 2).
-  - [ ] 1.3 Update `copyWith({...})` so it accepts `Intel? totalIntel` and `BoostState? activeBoost`. **Important:** because `activeBoost` is nullable AND can be cleared to null on expiry, follow the existing `lastCollectedAt` nullable-copyWith pattern in `lib/game/features/countries/country_state.dart` (use a sentinel object, OR use the named-param-with-`Object()`-default trick). Read `country_state.dart` first to mirror exactly.
-  - [ ] 1.4 Update `==`, `hashCode`, and `toString` to include `totalIntel` and `activeBoost`. Update the existing `test/game/game_state_test.dart` toString assertion (line 36) to match the new format.
-  - [ ] 1.5 Update `GameState.initialSeed(content)` to pass `totalIntel: Intel.zero` (explicit) and `activeBoost: null` (explicit).
-  - [ ] 1.6 **Backward compatibility is OUT OF SCOPE** per the project user rule — do NOT add migration paths, default-value fallbacks, or save-format guards. Old saves break and require a reset; that's accepted during development.
+- [x] Task 1: Add Intel and active-boost fields to GameState (AC: #1, #4, #10)
+  - [x] 1.1 In `lib/game/game_state.dart`, add `final Intel totalIntel` (default `Intel.zero`) — import `package:global_domination/game/values/intel.dart`.
+  - [x] 1.2 In the same file, **replace** the existing `final Decimal boostMultiplier` field with `final BoostState? activeBoost` — drop the corresponding constructor param, copyWith param, equality, hash, toString fragment for `boostMultiplier`. Add `import '../features/boosts/boost_state.dart';` (the new file from Task 2).
+  - [x] 1.3 Update `copyWith({...})` so it accepts `Intel? totalIntel` and `BoostState? activeBoost`. **Important:** because `activeBoost` is nullable AND can be cleared to null on expiry, follow the existing `lastCollectedAt` nullable-copyWith pattern in `lib/game/features/countries/country_state.dart` (use a sentinel object, OR use the named-param-with-`Object()`-default trick). Read `country_state.dart` first to mirror exactly.
+  - [x] 1.4 Update `==`, `hashCode`, and `toString` to include `totalIntel` and `activeBoost`. Update the existing `test/game/game_state_test.dart` toString assertion (line 36) to match the new format.
+  - [x] 1.5 Update `GameState.initialSeed(content)` to pass `totalIntel: Intel.zero` (explicit) and `activeBoost: null` (explicit).
+  - [x] 1.6 **Backward compatibility is OUT OF SCOPE** per the project user rule — do NOT add migration paths, default-value fallbacks, or save-format guards. Old saves break and require a reset; that's accepted during development.
 
-- [ ] Task 2: Create the BoostState value class (AC: #1, #4, #10)
-  - [ ] 2.1 Create `lib/game/features/boosts/boost_state.dart` (NEW file; folder is also new — first file under `lib/game/features/boosts/`).
-  - [ ] 2.2 Define `@immutable class BoostState` with two final fields: `final Decimal multiplier; final DateTime expiresAt;` and a `const` constructor `const BoostState({required this.multiplier, required this.expiresAt});`.
-  - [ ] 2.3 Implement `==`, `hashCode`, `toString` manually (no `freezed`) — follow the pattern in `lib/game/features/continents/next_unlock_teaser.dart` and `lib/game/values/influence.dart`.
-  - [ ] 2.4 Imports: `package:meta/meta.dart` and `package:decimal/decimal.dart` only. NO Flutter, NO `dart:ui`, NO `lib/data/`.
+- [x] Task 2: Create the BoostState value class (AC: #1, #4, #10)
+  - [x] 2.1 Create `lib/game/features/boosts/boost_state.dart` (NEW file; folder is also new — first file under `lib/game/features/boosts/`).
+  - [x] 2.2 Define `@immutable class BoostState` with two final fields: `final Decimal multiplier; final DateTime expiresAt;` and a `const` constructor `const BoostState({required this.multiplier, required this.expiresAt});`.
+  - [x] 2.3 Implement `==`, `hashCode`, `toString` manually (no `freezed`) — follow the pattern in `lib/game/features/continents/next_unlock_teaser.dart` and `lib/game/values/influence.dart`.
+  - [x] 2.4 Imports: `package:meta/meta.dart` and `package:decimal/decimal.dart` only. NO Flutter, NO `dart:ui`, NO `lib/data/`.
 
-- [ ] Task 3: Add the ActivateBoost command (AC: #1, #2, #3, #9)
-  - [ ] 3.1 In `lib/game/game_command.dart`, add `final class ActivateBoost extends GameCommand` with no fields.
-  - [ ] 3.2 Implement a `const` zero-arg constructor, `==` (always true vs another `ActivateBoost`), `hashCode = runtimeType.hashCode`, and `toString => 'ActivateBoost()'` — mirror the `Noop` pattern at the top of the same file.
+- [x] Task 3: Add the ActivateBoost command (AC: #1, #2, #3, #9)
+  - [x] 3.1 In `lib/game/game_command.dart`, add `final class ActivateBoost extends GameCommand` with no fields.
+  - [x] 3.2 Implement a `const` zero-arg constructor, `==` (always true vs another `ActivateBoost`), `hashCode = runtimeType.hashCode`, and `toString => 'ActivateBoost()'` — mirror the `Noop` pattern at the top of the same file.
 
-- [ ] Task 4: Add BoostActivated and BoostExpired events (AC: #1, #4, #9)
-  - [ ] 4.1 In `lib/game/game_event.dart`, add `final class BoostActivated extends GameEvent` with fields: `final Decimal multiplier; final DateTime expiresAt; final Intel intelSpent;`. Constructor: `const BoostActivated(super.at, {required this.multiplier, required this.expiresAt, required this.intelSpent});`. Implement `==`, `hashCode`, `toString` — mirror `LeaderHired` (lines 89–116).
-  - [ ] 4.2 In the same file, add `final class BoostExpired extends GameEvent` with no extra fields. Constructor: `const BoostExpired(super.at);`. Implement `==`, `hashCode`, `toString` — mirror `Tick` (lines 15–27).
-  - [ ] 4.3 Import `package:global_domination/game/values/intel.dart` at the top of `game_event.dart` (next to the existing `influence.dart` import).
-  - [ ] 4.4 Do NOT add `IntelGained` / `IntelSpent` events in this story even though `_bmad-output/game-architecture.md` lines 264–266 list them as planned event types. Those are the responsibility of Story 5.3 (Missions) and Story 5.5 (Achievements), which actually grant Intel. The Intel SPEND in this story is captured fully by `BoostActivated.intelSpent`.
+- [x] Task 4: Add BoostActivated and BoostExpired events (AC: #1, #4, #9)
+  - [x] 4.1 In `lib/game/game_event.dart`, add `final class BoostActivated extends GameEvent` with fields: `final Decimal multiplier; final DateTime expiresAt; final Intel intelSpent;`. Constructor: `const BoostActivated(super.at, {required this.multiplier, required this.expiresAt, required this.intelSpent});`. Implement `==`, `hashCode`, `toString` — mirror `LeaderHired` (lines 89–116).
+  - [x] 4.2 In the same file, add `final class BoostExpired extends GameEvent` with no extra fields. Constructor: `const BoostExpired(super.at);`. Implement `==`, `hashCode`, `toString` — mirror `Tick` (lines 15–27).
+  - [x] 4.3 Import `package:global_domination/game/values/intel.dart` at the top of `game_event.dart` (next to the existing `influence.dart` import).
+  - [x] 4.4 Do NOT add `IntelGained` / `IntelSpent` events in this story even though `_bmad-output/game-architecture.md` lines 264–266 list them as planned event types. Those are the responsibility of Story 5.3 (Missions) and Story 5.5 (Achievements), which actually grant Intel. The Intel SPEND in this story is captured fully by `BoostActivated.intelSpent`.
 
-- [ ] Task 5: Add the userInsufficientIntel error variant (AC: #3)
-  - [ ] 5.1 In `lib/game/game_error.dart`, add a new factory: `const factory GameError.userInsufficientIntel({required Intel required}) = InsufficientIntel;` next to the existing `userInsufficientFunds` factory.
-  - [ ] 5.2 Add a new `final class InsufficientIntel extends UserError` mirroring `InsufficientFunds` (lines 33–47): one final `Intel required` field, const ctor, manual `==`, `hashCode`, `toString`.
-  - [ ] 5.3 Import `package:global_domination/game/values/intel.dart` at the top of `game_error.dart` (currently it only imports `influence.dart`).
-  - [ ] 5.4 Do NOT modify `InsufficientFunds` or its `Influence required` field — existing reducers (`upgrades_reducer`, `unlocks_reducer`, `leaders_reducer`) all use it for Influence costs and must continue unchanged.
+- [x] Task 5: Add the userInsufficientIntel error variant (AC: #3)
+  - [x] 5.1 In `lib/game/game_error.dart`, add a new factory: `const factory GameError.userInsufficientIntel({required Intel required}) = InsufficientIntel;` next to the existing `userInsufficientFunds` factory.
+  - [x] 5.2 Add a new `final class InsufficientIntel extends UserError` mirroring `InsufficientFunds` (lines 33–47): one final `Intel required` field, const ctor, manual `==`, `hashCode`, `toString`.
+  - [x] 5.3 Import `package:global_domination/game/values/intel.dart` at the top of `game_error.dart` (currently it only imports `influence.dart`).
+  - [x] 5.4 Do NOT modify `InsufficientFunds` or its `Influence required` field — existing reducers (`upgrades_reducer`, `unlocks_reducer`, `leaders_reducer`) all use it for Influence costs and must continue unchanged.
 
-- [ ] Task 6: Add Boost balance constants (AC: #1, #5, #10)
-  - [ ] 6.1 In `lib/game/config/balance.dart`, add `static final Intel boostCost = Intel(Decimal.fromInt(100));` (placeholder — Epic 10 retunes; do not change without Epic 10 coordination).
-  - [ ] 6.2 Add `static final Decimal boostMultiplier = Decimal.parse('2.0');` (placeholder — same Epic 10 caveat).
-  - [ ] 6.3 Add `static const int boostDurationSeconds = 30;` (placeholder — Epic 10).
-  - [ ] 6.4 Add `import 'package:global_domination/game/values/intel.dart';` at the top of `balance.dart` (next to the `decimal` import).
-  - [ ] 6.5 Document each constant with a one-line `///` comment matching the existing style ("Epic 10 retunes; do not change here without Epic 10 coordination.").
+- [x] Task 6: Add Boost balance constants (AC: #1, #5, #10)
+  - [x] 6.1 In `lib/game/config/balance.dart`, add `static final Intel boostCost = Intel(Decimal.fromInt(100));` (placeholder — Epic 10 retunes; do not change without Epic 10 coordination).
+  - [x] 6.2 Add `static final Decimal boostMultiplier = Decimal.parse('2.0');` (placeholder — same Epic 10 caveat).
+  - [x] 6.3 Add `static const int boostDurationSeconds = 30;` (placeholder — Epic 10).
+  - [x] 6.4 Add `import 'package:global_domination/game/values/intel.dart';` at the top of `balance.dart` (next to the `decimal` import).
+  - [x] 6.5 Document each constant with a one-line `///` comment matching the existing style ("Epic 10 retunes; do not change here without Epic 10 coordination.").
 
-- [ ] Task 7: Implement the boosts reducer (AC: #1, #2, #3, #4, #6, #7)
-  - [ ] 7.1 Create `lib/game/features/boosts/boosts_reducer.dart` (NEW file in the same folder as `boost_state.dart`).
-  - [ ] 7.2 Implement `Result<(GameState, GameEvent?), GameError> applyActivateBoost(GameState state, ActivateBoost cmd, {required DateTime now})`:
+- [x] Task 7: Implement the boosts reducer (AC: #1, #2, #3, #4, #6, #7)
+  - [x] 7.1 Create `lib/game/features/boosts/boosts_reducer.dart` (NEW file in the same folder as `boost_state.dart`).
+  - [x] 7.2 Implement `Result<(GameState, GameEvent?), GameError> applyActivateBoost(GameState state, ActivateBoost cmd, {required DateTime now})`:
     - **Order of checks (lock this in — do NOT reorder):**
       1. If `state.activeBoost != null && state.activeBoost!.expiresAt.isAfter(now)` → `return const Result.failure(GameError.userLocked(reason: 'boost_already_active'));`
       2. If `state.totalIntel < BalanceConfig.boostCost` → `return Result.failure(GameError.userInsufficientIntel(required: BalanceConfig.boostCost));`
@@ -111,18 +111,18 @@ _(UI rendering of the Boost button + "active" indicator lands in Epic 7 — this
       - `final event = BoostActivated(now, multiplier: BalanceConfig.boostMultiplier, expiresAt: expiresAt, intelSpent: BalanceConfig.boostCost);`
       - `return Result.success((newState, event));`
     - The reducer takes only `GameState` and `ActivateBoost cmd` — it does NOT take `ContentRegistry` (boost cost/duration/multiplier all come from `BalanceConfig`, not content JSON). Match the signature of `applyHireLeader` shape but drop the `ContentRegistry content` param.
-  - [ ] 7.3 Implement `(GameState, List<GameEvent>) evaluateBoostExpiry(GameState state, {required DateTime now})`:
+  - [x] 7.3 Implement `(GameState, List<GameEvent>) evaluateBoostExpiry(GameState state, {required DateTime now})`:
     - If `state.activeBoost == null` → `return (state, const <GameEvent>[]);`
     - If `state.activeBoost!.expiresAt.isAfter(now)` → `return (state, const <GameEvent>[]);` (still active)
     - Otherwise → `return (state.copyWith(activeBoost: null), [BoostExpired(now)]);`
     - **Boundary rule:** `expiresAt == now` is treated as expired (consistent with "30s elapsed → boost ends"). The predicate `!expiresAt.isAfter(now)` covers `<=` cleanly.
     - Pure: no `DateTime.now()`, no `Random()`, no I/O. `now` is the only time source.
-  - [ ] 7.4 Imports: `package:global_domination/game/config/balance.dart`, `package:global_domination/game/features/boosts/boost_state.dart`, `package:global_domination/game/game_command.dart`, `package:global_domination/game/game_error.dart`, `package:global_domination/game/game_event.dart`, `package:global_domination/game/game_state.dart`, `package:global_domination/game/values/result.dart`. NO Flutter, NO `dart:ui`, NO `lib/data/`.
-  - [ ] 7.5 No income math — this reducer must NOT contain `def.baseInfluence *` or `country.baseInfluence *` patterns (would trip `test/architecture/no_duplicate_income_math_test.dart`).
+  - [x] 7.4 Imports: `package:global_domination/game/config/balance.dart`, `package:global_domination/game/features/boosts/boost_state.dart`, `package:global_domination/game/game_command.dart`, `package:global_domination/game/game_error.dart`, `package:global_domination/game/game_event.dart`, `package:global_domination/game/game_state.dart`, `package:global_domination/game/values/result.dart`. NO Flutter, NO `dart:ui`, NO `lib/data/`.
+  - [x] 7.5 No income math — this reducer must NOT contain `def.baseInfluence *` or `country.baseInfluence *` patterns (would trip `test/architecture/no_duplicate_income_math_test.dart`).
 
-- [ ] Task 8: Wire ActivateBoost and boost-expiry into GameWorld (AC: #1, #2, #3, #4, #8)
-  - [ ] 8.1 In `lib/game/game_world.dart`, import `package:global_domination/game/features/boosts/boosts_reducer.dart`.
-  - [ ] 8.2 Modify `tick(Duration dt)` so the order of operations is **(1) expire boost → (2) tickCountries → (3) evaluateContinentUnlocks → (4) emit Tick if anything changed**:
+- [x] Task 8: Wire ActivateBoost and boost-expiry into GameWorld (AC: #1, #2, #3, #4, #8)
+  - [x] 8.1 In `lib/game/game_world.dart`, import `package:global_domination/game/features/boosts/boosts_reducer.dart`.
+  - [x] 8.2 Modify `tick(Duration dt)` so the order of operations is **(1) expire boost → (2) tickCountries → (3) evaluateContinentUnlocks → (4) emit Tick if anything changed**:
     ```dart
     void tick(Duration dt) {
       assert(!dt.isNegative, 'tick dt must be non-negative, got $dt');
@@ -154,8 +154,8 @@ _(UI rendering of the Boost button + "active" indicator lands in Epic 7 — this
     }
     ```
     Pin `now` once at the top of the method so all three evaluators see the same wall-clock instant.
-  - [ ] 8.3 In `applyCommand(GameCommand cmd)`, add `ActivateBoost() => _applyActivateBoost(cmd)` to the inner `switch` (next to `HireLeader()`, `UpgradeLeader()`). Keep the post-success `_evaluateContinentUnlocks` / `_evaluateMilestones` calls — they are idempotent and safe even though boost activation does not change country state.
-  - [ ] 8.4 Implement the private helper:
+  - [x] 8.3 In `applyCommand(GameCommand cmd)`, add `ActivateBoost() => _applyActivateBoost(cmd)` to the inner `switch` (next to `HireLeader()`, `UpgradeLeader()`). Keep the post-success `_evaluateContinentUnlocks` / `_evaluateMilestones` calls — they are idempotent and safe even though boost activation does not change country state.
+  - [x] 8.4 Implement the private helper:
     ```dart
     Result<void, GameError> _applyActivateBoost(ActivateBoost cmd) {
       final result = applyActivateBoost(_state, cmd, now: _clock.now());
@@ -166,73 +166,73 @@ _(UI rendering of the Boost button + "active" indicator lands in Epic 7 — this
       });
     }
     ```
-  - [ ] 8.5 Do NOT pass `ContentRegistry` to the boost reducer (it doesn't take one — see Task 7.2). Boost values come from `BalanceConfig`, not content.
+  - [x] 8.5 Do NOT pass `ContentRegistry` to the boost reducer (it doesn't take one — see Task 7.2). Boost values come from `BalanceConfig`, not content.
 
-- [ ] Task 9: Update IncomeCalculator to read activeBoost (AC: #5, #10)
-  - [ ] 9.1 In `lib/game/features/economy/income_calculator.dart`, replace `rate *= state.boostMultiplier;` with `rate *= state.activeBoost?.multiplier ?? Decimal.one;`.
-  - [ ] 9.2 Update the docblock at the top: replace `8. × [GameState.boostMultiplier]` with `8. × (state.activeBoost?.multiplier ?? Decimal.one)` and add a one-line note: `// Boost slot: 1.0 when no active boost, else state.activeBoost!.multiplier.`
-  - [ ] 9.3 Do NOT change the order of slots 1–8 — Epic 11 balance tuning depends on it. The boost slot stays last.
+- [x] Task 9: Update IncomeCalculator to read activeBoost (AC: #5, #10)
+  - [x] 9.1 In `lib/game/features/economy/income_calculator.dart`, replace `rate *= state.boostMultiplier;` with `rate *= state.activeBoost?.multiplier ?? Decimal.one;`.
+  - [x] 9.2 Update the docblock at the top: replace `8. × [GameState.boostMultiplier]` with `8. × (state.activeBoost?.multiplier ?? Decimal.one)` and add a one-line note: `// Boost slot: 1.0 when no active boost, else state.activeBoost!.multiplier.`
+  - [x] 9.3 Do NOT change the order of slots 1–8 — Epic 11 balance tuning depends on it. The boost slot stays last.
 
-- [ ] Task 10: Update existing tests that reference `boostMultiplier` (AC: #10)
-  - [ ] 10.1 `test/game/features/economy/income_calculator_test.dart`:
+- [x] Task 10: Update existing tests that reference `boostMultiplier` (AC: #10)
+  - [x] 10.1 `test/game/features/economy/income_calculator_test.dart`:
     - In `_state(...)` helper (lines 133–149), replace the `Decimal? boostMultiplier` named param with `BoostState? activeBoost`. Pass it to the `GameState(...)` ctor as `activeBoost: activeBoost`.
     - Update test `5.10 boost isolation` (line 343) to pass `activeBoost: BoostState(multiplier: Decimal.parse('2'), expiresAt: DateTime.utc(2026, 5, 1))` (any future timestamp — the calculator does not check expiry; that's `evaluateBoostExpiry`'s job).
     - Update test `5.11 composed stack order regression` (line 354) similarly. The expected Decimal `2227.5` does NOT change — only the way the multiplier is supplied to the fixture changes.
     - Update test `5.14 zero baseInfluence → zero` (line 396) similarly.
     - Update test `5.15 precision stress` (line 414) similarly.
     - Add a NEW test: `boost slot is 1.0 when activeBoost == null` — pin every other multiplier to 1, set `activeBoost: null`, expect `Decimal.one`.
-  - [ ] 10.2 `test/game/game_state_test.dart`:
+  - [x] 10.2 `test/game/game_state_test.dart`:
     - Update the `toString` assertion (line 36) to match the new field naming: e.g. drop `boostMultiplier: 1` and add `totalIntel: Intel(0)` and `activeBoost: null` in the expected string. Run the test once to capture the actual output, then pin it.
     - Add a new test group: `equality includes totalIntel` (mirror the `equality includes unlockedContinents` test at line 47).
     - Add a new test group: `equality includes activeBoost` — two states with the same `BoostState(multiplier, expiresAt)` are equal; differing `expiresAt` makes them unequal.
     - Add a new `copyWith clears activeBoost back to null` test — covers the nullable-copyWith sentinel pattern from Task 1.3.
-  - [ ] 10.3 `test/game/game_event_test.dart`: Add tests for `BoostActivated` and `BoostExpired`: equality (same `at + payload` → equal), `hashCode` consistency, `toString` includes all fields. Mirror existing `LeaderHired` and `Tick` test patterns.
-  - [ ] 10.4 `test/game/game_command_test.dart`: Add tests for `ActivateBoost`: two `const ActivateBoost()` instances are equal, share `hashCode`, `toString == 'ActivateBoost()'`. Mirror the existing `Noop` test pattern.
-  - [ ] 10.5 Do NOT touch `test/game/game_world_test.dart` lines 553+ existing applyCommand cases — only ADD new cases (Task 12).
+  - [x] 10.3 `test/game/game_event_test.dart`: Add tests for `BoostActivated` and `BoostExpired`: equality (same `at + payload` → equal), `hashCode` consistency, `toString` includes all fields. Mirror existing `LeaderHired` and `Tick` test patterns.
+  - [x] 10.4 `test/game/game_command_test.dart`: Add tests for `ActivateBoost`: two `const ActivateBoost()` instances are equal, share `hashCode`, `toString == 'ActivateBoost()'`. Mirror the existing `Noop` test pattern.
+  - [x] 10.5 Do NOT touch `test/game/game_world_test.dart` lines 553+ existing applyCommand cases — only ADD new cases (Task 12).
 
-- [ ] Task 11: Pure-Dart unit tests for the boosts reducer (AC: #1, #2, #3, #4, #7)
-  - [ ] 11.1 Create `test/game/features/boosts/boosts_reducer_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart tests under `test/game/**` are an architectural invariant per `test/architecture/game_boundary_test.dart`).
-  - [ ] 11.2 Test happy path: starting state with `totalIntel: Intel(Decimal.fromInt(500))`, `activeBoost: null` → `applyActivateBoost(state, ActivateBoost(), now: t0)` returns `Result.success((newState, event))` with `newState.totalIntel == Intel(Decimal.fromInt(400))`, `newState.activeBoost!.multiplier == Decimal.parse('2.0')`, `newState.activeBoost!.expiresAt == t0.add(Duration(seconds: 30))`, and `event` is the expected `BoostActivated`.
-  - [ ] 11.3 Test `boost_already_active`: state with `activeBoost: BoostState(multiplier: 2.0, expiresAt: t0.add(Duration(seconds: 10)))` → `applyActivateBoost(state, ..., now: t0)` returns `Result.failure(GameError.userLocked(reason: 'boost_already_active'))`. State is structurally identical to input.
-  - [ ] 11.4 Test "expired-but-not-yet-cleared" edge: state with `activeBoost: BoostState(multiplier: 2.0, expiresAt: t0)` (i.e. expiresAt == now exactly) → `applyActivateBoost(state, ..., now: t0)` SUCCEEDS (re-activates) because `!t0.isAfter(t0) == true`. This is intentional — expiry boundary belongs to the new boost. Document this in a test name like `'allows re-activation when prior boost expiresAt == now (boundary)'`.
-  - [ ] 11.5 Test insufficient Intel: state with `totalIntel: Intel(Decimal.fromInt(50))` (less than 100), no active boost → returns `Result.failure(GameError.userInsufficientIntel(required: BalanceConfig.boostCost))`.
-  - [ ] 11.6 Test priority: state with both `activeBoost` (still active) AND `totalIntel < boostCost` → the reducer returns `boost_already_active` (the first check wins). Pin this so the dev agent doesn't "fix" it to insufficient-intel later.
-  - [ ] 11.7 Test purity: call `applyActivateBoost` twice with identical inputs → identical Result (proves no `DateTime.now()` / `Random()` calls).
-  - [ ] 11.8 Tests for `evaluateBoostExpiry`:
+- [x] Task 11: Pure-Dart unit tests for the boosts reducer (AC: #1, #2, #3, #4, #7)
+  - [x] 11.1 Create `test/game/features/boosts/boosts_reducer_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart tests under `test/game/**` are an architectural invariant per `test/architecture/game_boundary_test.dart`).
+  - [x] 11.2 Test happy path: starting state with `totalIntel: Intel(Decimal.fromInt(500))`, `activeBoost: null` → `applyActivateBoost(state, ActivateBoost(), now: t0)` returns `Result.success((newState, event))` with `newState.totalIntel == Intel(Decimal.fromInt(400))`, `newState.activeBoost!.multiplier == Decimal.parse('2.0')`, `newState.activeBoost!.expiresAt == t0.add(Duration(seconds: 30))`, and `event` is the expected `BoostActivated`.
+  - [x] 11.3 Test `boost_already_active`: state with `activeBoost: BoostState(multiplier: 2.0, expiresAt: t0.add(Duration(seconds: 10)))` → `applyActivateBoost(state, ..., now: t0)` returns `Result.failure(GameError.userLocked(reason: 'boost_already_active'))`. State is structurally identical to input.
+  - [x] 11.4 Test "expired-but-not-yet-cleared" edge: state with `activeBoost: BoostState(multiplier: 2.0, expiresAt: t0)` (i.e. expiresAt == now exactly) → `applyActivateBoost(state, ..., now: t0)` SUCCEEDS (re-activates) because `!t0.isAfter(t0) == true`. This is intentional — expiry boundary belongs to the new boost. Document this in a test name like `'allows re-activation when prior boost expiresAt == now (boundary)'`.
+  - [x] 11.5 Test insufficient Intel: state with `totalIntel: Intel(Decimal.fromInt(50))` (less than 100), no active boost → returns `Result.failure(GameError.userInsufficientIntel(required: BalanceConfig.boostCost))`.
+  - [x] 11.6 Test priority: state with both `activeBoost` (still active) AND `totalIntel < boostCost` → the reducer returns `boost_already_active` (the first check wins). Pin this so the dev agent doesn't "fix" it to insufficient-intel later.
+  - [x] 11.7 Test purity: call `applyActivateBoost` twice with identical inputs → identical Result (proves no `DateTime.now()` / `Random()` calls).
+  - [x] 11.8 Tests for `evaluateBoostExpiry`:
     - 11.8.a No active boost → `(state, [])`.
     - 11.8.b Active boost with `expiresAt > now` → `(state, [])`. State identity preserved.
     - 11.8.c Active boost with `expiresAt < now` → `(state.copyWith(activeBoost: null), [BoostExpired(now)])`.
     - 11.8.d Active boost with `expiresAt == now` (boundary) → expired (same as 11.8.c). Pin this.
     - 11.8.e After expiry: a follow-up `evaluateBoostExpiry(newState, now: ...)` returns `(newState, [])` — already cleared, idempotent.
 
-- [ ] Task 12: GameWorld integration tests (AC: #1, #2, #3, #4, #8)
-  - [ ] 12.1 In `test/game/game_world_test.dart`, add new tests under the existing `group('GameWorld.applyCommand', ...)`:
+- [x] Task 12: GameWorld integration tests (AC: #1, #2, #3, #4, #8)
+  - [x] 12.1 In `test/game/game_world_test.dart`, add new tests under the existing `group('GameWorld.applyCommand', ...)`:
     - `applyCommand(ActivateBoost) succeeds when intel sufficient and no active boost` — assert state mutated AND `BoostActivated` event observed on the events stream.
     - `applyCommand(ActivateBoost) returns failure (locked) when boost already active`.
     - `applyCommand(ActivateBoost) returns failure (insufficientIntel) when intel below boostCost`.
     - `applyCommand(ActivateBoost) on success makes activeBoost.expiresAt = clock.now() + 30s`.
-  - [ ] 12.2 Add a new test group: `group('GameWorld.tick boost expiry', ...)`:
+  - [x] 12.2 Add a new test group: `group('GameWorld.tick boost expiry', ...)`:
     - `tick clears active boost when expiresAt has passed and emits BoostExpired`. Build a `FakeClock` at `t0`, seed state with `activeBoost: BoostState(multiplier: 2.0, expiresAt: t0)` (so already expired), advance clock by `Duration(milliseconds: 100)`, call `tick(Duration(milliseconds: 100))`, assert `state.activeBoost == null`, assert one `BoostExpired` event AND one `Tick` event were observed.
     - `tick does NOT clear an unexpired boost`. Seed `activeBoost.expiresAt = t0 + 60s`, advance clock 100ms, tick — `state.activeBoost` unchanged, NO `BoostExpired` emitted.
     - `tick income generated AFTER boost expiry uses 1.0 multiplier`. Seed Egypt unlocked + ipLevel=0 + baseInfluence=1, `activeBoost.expiresAt = t0`, advance clock 1000ms, tick at 100ms intervals (10 ticks), assert `state.countries[egypt]!.bankedInfluence == Influence(Decimal.fromInt(1))` (NOT 2 — boost expired immediately at the start of the first tick). This is the strict-correct ordering test; if the dev agent reorders boost-expiry AFTER tickCountries, this test fails.
-  - [ ] 12.3 Build helper functions in the test file that seed states with non-zero Intel and known active-boost configurations. Follow the existing `_buildSingleCountryContent()` / `_seedAfricaUnlocked` / fake-clock fixtures already in the file (see lines 27–46, 19–25).
+  - [x] 12.3 Build helper functions in the test file that seed states with non-zero Intel and known active-boost configurations. Follow the existing `_buildSingleCountryContent()` / `_seedAfricaUnlocked` / fake-clock fixtures already in the file (see lines 27–46, 19–25).
 
-- [ ] Task 13: BoostState value-class tests (AC: #1, #4, #6)
-  - [ ] 13.1 Create `test/game/features/boosts/boost_state_test.dart` using `package:test/test.dart`.
-  - [ ] 13.2 Test value semantics: two `BoostState` with same `(multiplier, expiresAt)` are `==` and share `hashCode`. Differing `multiplier` → `!=`. Differing `expiresAt` → `!=`.
-  - [ ] 13.3 Test `toString` includes both fields.
+- [x] Task 13: BoostState value-class tests (AC: #1, #4, #6)
+  - [x] 13.1 Create `test/game/features/boosts/boost_state_test.dart` using `package:test/test.dart`.
+  - [x] 13.2 Test value semantics: two `BoostState` with same `(multiplier, expiresAt)` are `==` and share `hashCode`. Differing `multiplier` → `!=`. Differing `expiresAt` → `!=`.
+  - [x] 13.3 Test `toString` includes both fields.
 
-- [ ] Task 14: Architecture compliance verification (AC: #6, #9)
-  - [ ] 14.1 Run `flutter test test/architecture/` — all tests must pass:
+- [x] Task 14: Architecture compliance verification (AC: #6, #9)
+  - [x] 14.1 Run `flutter test test/architecture/` — all tests must pass:
     - `game_boundary_test.dart`: New files in `lib/game/features/boosts/` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports.
     - `no_duplicate_income_math_test.dart`: `boosts_reducer.dart` and `boost_state.dart` must NOT match `def.baseInfluence *` / `country.baseInfluence *` / `baseInfluence * ratio` patterns. The boost reducer touches Intel and a multiplier constant only — no income math at all.
-  - [ ] 14.2 Confirm `IncomeCalculator.compute` (the only legal place for the multiplier stack) has been updated to read `state.activeBoost?.multiplier ?? Decimal.one` — no other source file should reference `state.activeBoost?.multiplier` for income purposes (UI-side reads in Epic 7 are a separate concern and out of scope).
+  - [x] 14.2 Confirm `IncomeCalculator.compute` (the only legal place for the multiplier stack) has been updated to read `state.activeBoost?.multiplier ?? Decimal.one` — no other source file should reference `state.activeBoost?.multiplier` for income purposes (UI-side reads in Epic 7 are a separate concern and out of scope).
 
-- [ ] Task 15: Full validation (AC: all)
-  - [ ] 15.1 `flutter analyze` — 0 warnings. Address every "missing case" warning the compiler raises from the new `ActivateBoost` / `BoostActivated` / `BoostExpired` variants in the existing exhaustive switches.
-  - [ ] 15.2 `dart format --set-exit-if-changed .` — clean.
-  - [ ] 15.3 `flutter test` — all tests pass (existing 512+ tests + the new boost suite).
-  - [ ] 15.4 Update `Status` to `review` and append entries to the Completion Notes / File List.
+- [x] Task 15: Full validation (AC: all)
+  - [x] 15.1 `flutter analyze` — 0 warnings. Address every "missing case" warning the compiler raises from the new `ActivateBoost` / `BoostActivated` / `BoostExpired` variants in the existing exhaustive switches.
+  - [x] 15.2 `dart format --set-exit-if-changed .` — clean.
+  - [x] 15.3 `flutter test` — all tests pass (existing 512+ tests + the new boost suite).
+  - [x] 15.4 Update `Status` to `review` and append entries to the Completion Notes / File List.
 
 ## Dev Notes
 
@@ -475,14 +475,37 @@ Extracted from `_bmad-output/project-context.md` — applies to this story:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented Story 5.2: `GameState` now has `totalIntel` and `activeBoost` (replaces `boostMultiplier`); `BalanceConfig` boost cost/duration/multiplier; `applyActivateBoost` / `evaluateBoostExpiry` in `lib/game/features/boosts/boosts_reducer.dart`; `GameWorld.tick` runs `evaluateBoostExpiry` before `tickCountries` and includes `boostExpired` in `Tick` emission; exhaustive switches updated in tests and `game_error_test` for `InsufficientIntel`. Full suite, `flutter analyze`, `dart format`, and `test/architecture/` all green (2026-04-26).
+
 ### File List
+
+- lib/game/features/boosts/boost_state.dart
+- lib/game/features/boosts/boosts_reducer.dart
+- lib/game/config/balance.dart
+- lib/game/game_state.dart
+- lib/game/game_command.dart
+- lib/game/game_event.dart
+- lib/game/game_error.dart
+- lib/game/features/economy/income_calculator.dart
+- lib/game/game_world.dart
+- test/game/features/boosts/boost_state_test.dart
+- test/game/features/boosts/boosts_reducer_test.dart
+- test/game/features/economy/income_calculator_test.dart
+- test/game/game_state_test.dart
+- test/game/game_event_test.dart
+- test/game/game_command_test.dart
+- test/game/game_error_test.dart
+- test/game/game_world_test.dart
+- _bmad-output/implementation-artifacts/5-2-activate-boost-2x-30s-using-intel.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
 
 ## Change Log
 
+- 2026-04-26: Story 5-2 implementation complete → review (boosts feature: state, command, events, reducers, GameWorld wiring, tests, analyze+format)
 - 2026-04-25: Story 5-2 created → ready-for-dev (ActivateBoost command, BoostActivated/BoostExpired events, BoostState value class, applyActivateBoost + evaluateBoostExpiry reducers in lib/game/features/boosts/, GameState.totalIntel + activeBoost replacing boostMultiplier, GameError.userInsufficientIntel variant, BalanceConfig boost constants, IncomeCalculator slot 8 source change, GameWorld.tick boost-expiry-first ordering)

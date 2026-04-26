@@ -4,15 +4,18 @@ import 'package:meta/meta.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/features/goldens/active_golden.dart';
 import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 @immutable
 class GameState {
+  static const Object _activeBoostUnchanged = Object();
   static const Object _activeGoldenEffectUnchanged = Object();
 
   static final _continentCompletionEq = MapEquality<ContinentId, bool>();
@@ -25,30 +28,33 @@ class GameState {
 
   final Map<CountryId, CountryState> countries;
   final Influence totalInfluence;
+  final Intel totalIntel;
   final Map<ContinentId, bool> unlockedContinents;
   final Map<ContinentId, Set<int>> reachedMilestones;
   final Map<ContinentId, bool> continentCompletions;
   final Set<String> earnedAchievementIds;
   final Set<String> activeGlobalUpgradeIds;
   final Decimal goldenOpportunityMultiplier;
-  final Decimal boostMultiplier;
+  final BoostState? activeBoost;
   final Map<String, ActiveGolden> activeGoldens;
   final ActiveGoldenEffect? activeGoldenEffect;
 
   GameState({
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
+    Intel? totalIntel,
     Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, Set<int>>? reachedMilestones,
     Map<ContinentId, bool>? continentCompletions,
     Set<String>? earnedAchievementIds,
     Set<String>? activeGlobalUpgradeIds,
     Decimal? goldenOpportunityMultiplier,
-    Decimal? boostMultiplier,
+    this.activeBoost,
     Map<String, ActiveGolden>? activeGoldens,
     this.activeGoldenEffect,
   }) : countries = countries ?? const {},
        totalInfluence = totalInfluence ?? Influence.zero,
+       totalIntel = totalIntel ?? Intel.zero,
        unlockedContinents = Map.unmodifiable(
          unlockedContinents ?? const <ContinentId, bool>{},
        ),
@@ -67,7 +73,6 @@ class GameState {
          activeGlobalUpgradeIds ?? const <String>{},
        ),
        goldenOpportunityMultiplier = goldenOpportunityMultiplier ?? Decimal.one,
-       boostMultiplier = boostMultiplier ?? Decimal.one,
        activeGoldens = Map.unmodifiable(
          activeGoldens ?? const <String, ActiveGolden>{},
        );
@@ -75,19 +80,21 @@ class GameState {
   GameState copyWith({
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
+    Intel? totalIntel,
     Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, Set<int>>? reachedMilestones,
     Map<ContinentId, bool>? continentCompletions,
     Set<String>? earnedAchievementIds,
     Set<String>? activeGlobalUpgradeIds,
     Decimal? goldenOpportunityMultiplier,
-    Decimal? boostMultiplier,
+    Object? activeBoost = _activeBoostUnchanged,
     Map<String, ActiveGolden>? activeGoldens,
     Object? activeGoldenEffect = _activeGoldenEffectUnchanged,
   }) {
     return GameState(
       countries: countries ?? this.countries,
       totalInfluence: totalInfluence ?? this.totalInfluence,
+      totalIntel: totalIntel ?? this.totalIntel,
       unlockedContinents: unlockedContinents ?? this.unlockedContinents,
       reachedMilestones: reachedMilestones ?? this.reachedMilestones,
       continentCompletions: continentCompletions ?? this.continentCompletions,
@@ -96,7 +103,9 @@ class GameState {
           activeGlobalUpgradeIds ?? this.activeGlobalUpgradeIds,
       goldenOpportunityMultiplier:
           goldenOpportunityMultiplier ?? this.goldenOpportunityMultiplier,
-      boostMultiplier: boostMultiplier ?? this.boostMultiplier,
+      activeBoost: identical(activeBoost, _activeBoostUnchanged)
+          ? this.activeBoost
+          : activeBoost as BoostState?,
       activeGoldens: activeGoldens ?? this.activeGoldens,
       activeGoldenEffect:
           identical(activeGoldenEffect, _activeGoldenEffectUnchanged)
@@ -129,6 +138,8 @@ class GameState {
     return GameState(
       countries: Map.unmodifiable(countries),
       totalInfluence: Influence.zero,
+      totalIntel: Intel.zero,
+      activeBoost: null,
       unlockedContinents: Map.unmodifiable(unlockedContinents),
       reachedMilestones: const <ContinentId, Set<int>>{},
     );
@@ -140,6 +151,7 @@ class GameState {
       (other is GameState &&
           _mapsEqual(countries, other.countries) &&
           totalInfluence == other.totalInfluence &&
+          totalIntel == other.totalIntel &&
           _unlockedContinentsEq.equals(
             unlockedContinents,
             other.unlockedContinents,
@@ -161,7 +173,7 @@ class GameState {
             other.activeGlobalUpgradeIds,
           ) &&
           goldenOpportunityMultiplier == other.goldenOpportunityMultiplier &&
-          boostMultiplier == other.boostMultiplier &&
+          activeBoost == other.activeBoost &&
           _activeGoldensEq.equals(activeGoldens, other.activeGoldens) &&
           activeGoldenEffect == other.activeGoldenEffect);
 
@@ -169,13 +181,14 @@ class GameState {
   int get hashCode => Object.hash(
     _mapHash(countries),
     totalInfluence,
+    totalIntel,
     _unlockedContinentsEq.hash(unlockedContinents),
     _reachedMilestonesEq.hash(reachedMilestones),
     _continentCompletionEq.hash(continentCompletions),
     _stringSetEq.hash(earnedAchievementIds),
     _stringSetEq.hash(activeGlobalUpgradeIds),
     goldenOpportunityMultiplier,
-    boostMultiplier,
+    activeBoost,
     _activeGoldensEq.hash(activeGoldens),
     activeGoldenEffect,
   );
@@ -184,13 +197,14 @@ class GameState {
   String toString() =>
       'GameState(countries: ${countries.length} entries, '
       'totalInfluence: $totalInfluence, '
+      'totalIntel: $totalIntel, '
       'unlockedContinents: ${unlockedContinents.length}, '
       'reachedMilestones: ${reachedMilestones.length}, '
       'continentCompletions: ${continentCompletions.length}, '
       'earnedAchievementIds: ${earnedAchievementIds.length}, '
       'activeGlobalUpgradeIds: ${activeGlobalUpgradeIds.length}, '
       'goldenOpportunityMultiplier: $goldenOpportunityMultiplier, '
-      'boostMultiplier: $boostMultiplier, '
+      'activeBoost: $activeBoost, '
       'activeGoldens: ${activeGoldens.length}, '
       'activeGoldenEffect: $activeGoldenEffect)';
 

@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 
 import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/goldens/active_golden.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
@@ -18,6 +19,7 @@ import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 import '../helpers/fake_clock.dart';
 
@@ -1561,6 +1563,196 @@ void main() {
       expect(w.state.activeGoldens, isEmpty);
       await sub.cancel();
     });
+  });
+
+  group('Story 5-2 boost (ActivateBoost, tick expiry)', () {
+    test(
+      'applyCommand(ActivateBoost) succeeds when intel sufficient and no active boost',
+      () async {
+        final initial = stateWithUnlockedEgypt().copyWith(
+          totalIntel: Intel(Decimal.fromInt(500)),
+        );
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final events = <GameEvent>[];
+        final sub = w.events.listen(events.add);
+        final r = w.applyCommand(const ActivateBoost());
+        expect(r.isSuccess, isTrue);
+        expect(w.state.totalIntel, Intel(Decimal.fromInt(400)));
+        expect(w.state.activeBoost, isNotNull);
+        expect(
+          w.state.activeBoost!.expiresAt,
+          DateTime.utc(2026, 1, 1).add(const Duration(seconds: 30)),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(events, hasLength(1));
+        expect(events.single, isA<BoostActivated>());
+        await sub.cancel();
+      },
+    );
+
+    test(
+      'applyCommand(ActivateBoost) returns failure (locked) when boost already active',
+      () {
+        final initial = stateWithUnlockedEgypt().copyWith(
+          totalIntel: Intel.zero,
+          activeBoost: BoostState(
+            multiplier: Decimal.parse('2'),
+            expiresAt: DateTime.utc(2026, 1, 1, 0, 1, 0),
+          ),
+        );
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final r = w.applyCommand(const ActivateBoost());
+        expect(r.isFailure, isTrue);
+        expect(r.errorOrNull, isA<Locked>());
+        expect((r.errorOrNull! as Locked).reason, 'boost_already_active');
+      },
+    );
+
+    test(
+      'applyCommand(ActivateBoost) returns failure (insufficientIntel) when intel below boostCost',
+      () {
+        final initial = stateWithUnlockedEgypt().copyWith(
+          totalIntel: Intel(Decimal.fromInt(50)),
+        );
+        final w = GameWorld(
+          content: content,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final r = w.applyCommand(const ActivateBoost());
+        expect(r.isFailure, isTrue);
+        expect(r.errorOrNull, isA<InsufficientIntel>());
+      },
+    );
+
+    test(
+      'applyCommand(ActivateBoost) on success makes activeBoost.expiresAt = clock.now() + 30s',
+      () {
+        final t = DateTime.utc(2026, 3, 15, 8);
+        final fc = FakeClock(t);
+        final initial = stateWithUnlockedEgypt().copyWith(
+          totalIntel: Intel(Decimal.fromInt(500)),
+        );
+        final w = GameWorld(
+          content: content,
+          clock: fc,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        w.applyCommand(const ActivateBoost());
+        expect(
+          w.state.activeBoost!.expiresAt,
+          t.add(const Duration(seconds: BalanceConfig.boostDurationSeconds)),
+        );
+      },
+    );
+  });
+
+  group('GameWorld.tick boost expiry', () {
+    test(
+      'tick clears active boost when expiresAt has passed and emits BoostExpired and Tick',
+      () async {
+        final t0 = DateTime.utc(2026, 6, 1);
+        final fc = FakeClock(t0);
+        final initial = stateWithUnlockedEgypt().copyWith(
+          activeBoost: BoostState(
+            multiplier: Decimal.parse('2'),
+            expiresAt: t0,
+          ),
+        );
+        final w = GameWorld(
+          content: content,
+          clock: fc,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        fc.advance(const Duration(milliseconds: 100));
+        w.tick(const Duration(milliseconds: 100));
+        await Future<void>.delayed(Duration.zero);
+        expect(w.state.activeBoost, isNull);
+        expect(log.whereType<BoostExpired>(), hasLength(1));
+        expect(log.whereType<Tick>(), hasLength(1));
+        await sub.cancel();
+      },
+    );
+
+    test('tick does NOT clear an unexpired boost', () {
+      final t0 = DateTime.utc(2026, 6, 1);
+      final fc = FakeClock(t0);
+      final boost = BoostState(
+        multiplier: Decimal.parse('2'),
+        expiresAt: t0.add(const Duration(seconds: 60)),
+      );
+      final initial = stateWithUnlockedEgypt().copyWith(activeBoost: boost);
+      final w = GameWorld(
+        content: content,
+        clock: fc,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
+      addTearDown(w.dispose);
+      fc.advance(const Duration(milliseconds: 100));
+      w.tick(const Duration(milliseconds: 100));
+      expect(w.state.activeBoost, equals(boost));
+    });
+
+    test(
+      'tick income generated AFTER boost expiry uses 1.0 multiplier (strict order)',
+      () {
+        final t0 = DateTime.utc(2026, 6, 1, 10);
+        final fc = FakeClock(t0);
+        final egypt = CountryState(
+          id: CountryId('egypt'),
+          unlocked: true,
+          ipLevel: 0,
+          leaderTier: LeaderTier.none,
+          bankedInfluence: Influence.zero,
+        );
+        final initial = GameState(
+          countries: {CountryId('egypt'): egypt},
+          totalInfluence: Influence.zero,
+          totalIntel: Intel.zero,
+          unlockedContinents: _seedAfricaUnlocked,
+          activeBoost: BoostState(
+            multiplier: Decimal.parse('2'),
+            expiresAt: t0,
+          ),
+        );
+        final w = GameWorld(
+          content: _buildSingleCountryContent(),
+          clock: fc,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        for (var i = 0; i < 10; i++) {
+          fc.advance(const Duration(milliseconds: 100));
+          w.tick(const Duration(milliseconds: 100));
+        }
+        expect(
+          w.state.countries[CountryId('egypt')]!.bankedInfluence,
+          equals(Influence(Decimal.fromInt(1))),
+        );
+      },
+    );
   });
 
   group('GameWorld.dispose', () {

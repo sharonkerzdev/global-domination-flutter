@@ -7,6 +7,7 @@ import 'package:test/test.dart';
 import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/content/country_def.dart';
+import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
@@ -136,7 +137,7 @@ GameState _state({
   Set<String>? earnedAchievementIds,
   Set<String>? activeGlobalUpgradeIds,
   Decimal? goldenOpportunityMultiplier,
-  Decimal? boostMultiplier,
+  BoostState? activeBoost,
 }) {
   return GameState(
     countries: {const CountryId('egypt'): egypt ?? _egypt()},
@@ -144,7 +145,7 @@ GameState _state({
     earnedAchievementIds: earnedAchievementIds,
     activeGlobalUpgradeIds: activeGlobalUpgradeIds,
     goldenOpportunityMultiplier: goldenOpportunityMultiplier,
-    boostMultiplier: boostMultiplier,
+    activeBoost: activeBoost,
   );
 }
 
@@ -358,10 +359,26 @@ void main() {
     expect(
       IncomeCalculator.compute(
         _egypt(),
-        _state(boostMultiplier: Decimal.parse('2')),
+        _state(
+          activeBoost: BoostState(
+            multiplier: Decimal.parse('2'),
+            expiresAt: DateTime.utc(2026, 5, 1),
+          ),
+        ),
         content,
       ).value,
       equals(Decimal.parse('2')),
+    );
+  });
+
+  test('boost slot is 1.0 when activeBoost is null', () {
+    expect(
+      IncomeCalculator.compute(
+        _egypt(),
+        _state(goldenOpportunityMultiplier: Decimal.one, activeBoost: null),
+        content,
+      ),
+      equals(IncomeCalculator.compute(_egypt(), _state(), content)),
     );
   });
 
@@ -372,7 +389,10 @@ void main() {
       earnedAchievementIds: {'ach_mult_small', 'ach_mult_big'},
       activeGlobalUpgradeIds: {'upg_small', 'upg_big'},
       goldenOpportunityMultiplier: Decimal.parse('10'),
-      boostMultiplier: Decimal.parse('2'),
+      activeBoost: BoostState(
+        multiplier: Decimal.parse('2'),
+        expiresAt: DateTime.utc(2026, 5, 1),
+      ),
     );
     // 1 × (1 + 10) × 2 × 1.25 × 1.35 × 3 × 10 × 2 = 2227.5
     final country = s.countries[const CountryId('egypt')]!;
@@ -420,7 +440,10 @@ void main() {
       earnedAchievementIds: {'ach_mult_small'},
       activeGlobalUpgradeIds: {'upg_small'},
       goldenOpportunityMultiplier: Decimal.parse('99'),
-      boostMultiplier: Decimal.parse('99'),
+      activeBoost: BoostState(
+        multiplier: Decimal.parse('99'),
+        expiresAt: DateTime.utc(2026, 5, 1),
+      ),
     );
     expect(IncomeCalculator.compute(z, s, content), equals(Influence.zero));
   });
@@ -474,7 +497,10 @@ void main() {
       earnedAchievementIds: achIds,
       activeGlobalUpgradeIds: upgradeIds,
       goldenOpportunityMultiplier: Decimal.parse('100'),
-      boostMultiplier: Decimal.parse('2'),
+      activeBoost: BoostState(
+        multiplier: Decimal.parse('2'),
+        expiresAt: DateTime.utc(2026, 5, 1),
+      ),
     );
     final country = s.countries[const CountryId('egypt')]!;
     final out = IncomeCalculator.compute(country, s, c);

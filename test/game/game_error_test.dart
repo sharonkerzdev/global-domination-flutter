@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:global_domination/game/game_error.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 import 'package:global_domination/game/values/result.dart';
 import 'package:test/test.dart';
 
@@ -254,6 +255,7 @@ void main() {
       final UserError error = Locked(reason: 'test');
       final result = switch (error) {
         InsufficientFunds(:final required) => 'funds: $required',
+        InsufficientIntel(:final required) => 'intel: $required',
         Locked(:final reason) => 'locked: $reason',
         InvalidTarget(:final detail) => 'target: $detail',
       };
@@ -284,6 +286,14 @@ void main() {
         (error as InsufficientFunds).required,
         Influence(Decimal.fromInt(50)),
       );
+    });
+
+    test('GameError.userInsufficientIntel produces InsufficientIntel', () {
+      final need = Intel(Decimal.fromInt(100));
+      final error = GameError.userInsufficientIntel(required: need);
+      expect(error, isA<InsufficientIntel>());
+      expect(error, isA<UserError>());
+      expect((error as InsufficientIntel).required, need);
     });
 
     test('GameError.userLocked produces Locked', () {

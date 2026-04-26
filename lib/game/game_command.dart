@@ -124,3 +124,17 @@ final class ClaimGolden extends GameCommand {
   @override
   String toString() => 'ClaimGolden($goldenId)';
 }
+
+final class ActivateBoost extends GameCommand {
+  const ActivateBoost();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is ActivateBoost;
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() => 'ActivateBoost()';
+}

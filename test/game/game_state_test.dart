@@ -1,7 +1,10 @@
+import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
 
+import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 void main() {
   group('GameState', () {
@@ -30,10 +33,11 @@ void main() {
         GameState().toString(),
         equals(
           'GameState(countries: 0 entries, totalInfluence: Influence(0), '
+          'totalIntel: Intel(0), '
           'unlockedContinents: 0, reachedMilestones: 0, continentCompletions: 0, '
           'earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
-          'boostMultiplier: 1, activeGoldens: 0, activeGoldenEffect: null)',
+          'activeBoost: null, activeGoldens: 0, activeGoldenEffect: null)',
         ),
       );
     });
@@ -51,6 +55,40 @@ void main() {
       final c = GameState(unlockedContinents: {id: false});
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
+    });
+
+    test('equality includes totalIntel', () {
+      final a = GameState(totalIntel: Intel(Decimal.fromInt(10)));
+      final b = GameState(totalIntel: Intel(Decimal.fromInt(10)));
+      final c = GameState(totalIntel: Intel(Decimal.fromInt(5)));
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+    });
+
+    test('equality includes activeBoost', () {
+      final t1 = DateTime.utc(2026, 1, 1);
+      final t2 = DateTime.utc(2026, 1, 2);
+      final boost = BoostState(multiplier: Decimal.parse('2'), expiresAt: t1);
+      final a = GameState(activeBoost: boost);
+      final b = GameState(
+        activeBoost: BoostState(multiplier: Decimal.parse('2'), expiresAt: t1),
+      );
+      final c = GameState(
+        activeBoost: BoostState(multiplier: Decimal.parse('2'), expiresAt: t2),
+      );
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+    });
+
+    test('copyWith clears activeBoost back to null', () {
+      final s = GameState(
+        activeBoost: BoostState(
+          multiplier: Decimal.parse('2'),
+          expiresAt: DateTime.utc(2026, 1, 1),
+        ),
+      );
+      final cleared = s.copyWith(activeBoost: null);
+      expect(cleared.activeBoost, isNull);
     });
 
     test('equality includes reachedMilestones nested sets', () {

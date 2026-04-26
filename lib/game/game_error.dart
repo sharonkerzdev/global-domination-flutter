@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 @immutable
 sealed class GameError {
@@ -9,6 +10,8 @@ sealed class GameError {
 
   const factory GameError.userInsufficientFunds({required Influence required}) =
       InsufficientFunds;
+  const factory GameError.userInsufficientIntel({required Intel required}) =
+      InsufficientIntel;
   const factory GameError.userLocked({required String reason}) = Locked;
   const factory GameError.userInvalidTarget({required String detail}) =
       InvalidTarget;
@@ -44,6 +47,22 @@ final class InsufficientFunds extends UserError {
 
   @override
   String toString() => 'InsufficientFunds(required: $required)';
+}
+
+final class InsufficientIntel extends UserError {
+  final Intel required;
+  const InsufficientIntel({required this.required});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InsufficientIntel && required == other.required);
+
+  @override
+  int get hashCode => required.hashCode;
+
+  @override
+  String toString() => 'InsufficientIntel(required: $required)';
 }
 
 final class Locked extends UserError {

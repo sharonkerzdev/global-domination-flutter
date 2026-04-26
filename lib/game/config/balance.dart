@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 /// Balance constants. Values pinned here are placeholders until Epic 10 final
 /// tuning pass. Re-tuning changes happen ONLY in this file + content JSON.
@@ -65,4 +66,16 @@ abstract final class BalanceConfig {
 
   /// Seconds the post-claim multiplier burst remains active.
   static const int goldenEffectDurationSeconds = 30;
+
+  /// Intel cost to activate the time-limited income boost. Epic 10 retunes; do
+  /// not change here without Epic 10 coordination.
+  static final Intel boostCost = Intel(Decimal.fromInt(100));
+
+  /// Active boost income multiplier (e.g. 2×). Epic 10 retunes; do not change
+  /// here without Epic 10 coordination.
+  static final Decimal boostMultiplier = Decimal.parse('2.0');
+
+  /// Wall-clock duration of the boost. Epic 10 retunes; do not change here
+  /// without Epic 10 coordination.
+  static const int boostDurationSeconds = 30;
 }

@@ -5,6 +5,7 @@ import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
 @immutable
 sealed class GameEvent {
@@ -338,4 +339,48 @@ final class GoldenExpired extends GameEvent {
   @override
   String toString() =>
       'GoldenExpired(at: $at, goldenId: $goldenId, claimed: $claimed)';
+}
+
+final class BoostActivated extends GameEvent {
+  const BoostActivated(
+    super.at, {
+    required this.multiplier,
+    required this.expiresAt,
+    required this.intelSpent,
+  });
+
+  final Decimal multiplier;
+  final DateTime expiresAt;
+  final Intel intelSpent;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BoostActivated &&
+          at == other.at &&
+          multiplier == other.multiplier &&
+          expiresAt == other.expiresAt &&
+          intelSpent == other.intelSpent);
+
+  @override
+  int get hashCode => Object.hash(at, multiplier, expiresAt, intelSpent);
+
+  @override
+  String toString() =>
+      'BoostActivated(at: $at, multiplier: $multiplier, expiresAt: $expiresAt, '
+      'intelSpent: $intelSpent)';
+}
+
+final class BoostExpired extends GameEvent {
+  const BoostExpired(super.at);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is BoostExpired && at == other.at);
+
+  @override
+  int get hashCode => at.hashCode;
+
+  @override
+  String toString() => 'BoostExpired(at: $at)';
 }

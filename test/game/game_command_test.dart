@@ -37,6 +37,7 @@ void main() {
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
       };
       expect(result, equals('noop'));
     });
@@ -85,6 +86,7 @@ void main() {
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
       };
       expect(result, equals('tap_country'));
     });
@@ -109,6 +111,7 @@ void main() {
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
       };
       expect(result, equals('purchase'));
     });
@@ -134,6 +137,7 @@ void main() {
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
       };
       expect(result, equals('upgrade_leader'));
     });
@@ -157,6 +161,7 @@ void main() {
         UpgradeLeader() => 'upgrade_leader',
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
       };
       expect(result, equals('unlock_country'));
     });
@@ -170,6 +175,28 @@ void main() {
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
       expect(a.toString(), equals('ClaimGolden(x@1)'));
+    });
+  });
+
+  group('ActivateBoost', () {
+    test('equality, hashCode, toString, exhaustive switch', () {
+      const a = ActivateBoost();
+      const b = ActivateBoost();
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a.toString(), equals('ActivateBoost()'));
+      const GameCommand cmd = ActivateBoost();
+      final result = switch (cmd) {
+        Noop() => 'noop',
+        TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
+      };
+      expect(result, equals('activate_boost'));
     });
   });
 }
