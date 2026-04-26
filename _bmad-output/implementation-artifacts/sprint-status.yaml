@@ -85,7 +85,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-21
-last_updated: 2026-04-25
+last_updated: 2026-04-26
 # 2026-04-24: Story 4-1 created → ready-for-dev (UnlockCountry command + CountryUnlocked event + applyUnlockCountry reducer in lib/game/features/continents/; def.unlockCost from content, continent-gate via totalInfluence >= continentDef.unlockThreshold)
 # 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
@@ -163,7 +163,7 @@ development_status:
   # Epic 5: Active Play — Goldens, Boosts, Missions, Dailies, Achievements
   epic-5: in-progress
   5-1-golden-opportunity-spawn-and-claim: done
-  5-2-activate-boost-2x-30s-using-intel: review
+  5-2-activate-boost-2x-30s-using-intel: done
   5-3-missions-cycle-rotating-objectives-rewarding-intel: ready-for-dev
   5-4-7-day-daily-reward-streak: ready-for-dev
   5-5-27-achievements-granting-permanent-multipliers: ready-for-dev

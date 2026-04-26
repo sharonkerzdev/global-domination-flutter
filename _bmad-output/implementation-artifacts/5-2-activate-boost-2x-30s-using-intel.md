@@ -1,6 +1,6 @@
 # Story 5.2: Activate Boost (2× / 30s) Using Intel
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
