@@ -5,6 +5,8 @@ import 'package:meta/meta.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/boosts/boost_state.dart';
+import 'package:global_domination/game/features/missions/mission_state.dart';
+import 'package:global_domination/game/features/missions/missions_seed.dart';
 import 'package:global_domination/game/features/goldens/active_golden.dart';
 import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
@@ -25,10 +27,13 @@ class GameState {
   );
   static final _activeGoldensEq = MapEquality<String, ActiveGolden>();
   static final _stringSetEq = SetEquality<String>();
+  static final _activeMissionsEq = ListEquality<MissionState>();
 
   final Map<CountryId, CountryState> countries;
   final Influence totalInfluence;
   final Intel totalIntel;
+  final List<MissionState> activeMissions;
+  final Set<String> completedMissionIds;
   final Map<ContinentId, bool> unlockedContinents;
   final Map<ContinentId, Set<int>> reachedMilestones;
   final Map<ContinentId, bool> continentCompletions;
@@ -52,9 +57,15 @@ class GameState {
     this.activeBoost,
     Map<String, ActiveGolden>? activeGoldens,
     this.activeGoldenEffect,
+    List<MissionState>? activeMissions,
+    Set<String>? completedMissionIds,
   }) : countries = countries ?? const {},
        totalInfluence = totalInfluence ?? Influence.zero,
        totalIntel = totalIntel ?? Intel.zero,
+       activeMissions = List.unmodifiable(activeMissions ?? const []),
+       completedMissionIds = Set.unmodifiable(
+         completedMissionIds ?? const <String>{},
+       ),
        unlockedContinents = Map.unmodifiable(
          unlockedContinents ?? const <ContinentId, bool>{},
        ),
@@ -90,11 +101,15 @@ class GameState {
     Object? activeBoost = _activeBoostUnchanged,
     Map<String, ActiveGolden>? activeGoldens,
     Object? activeGoldenEffect = _activeGoldenEffectUnchanged,
+    List<MissionState>? activeMissions,
+    Set<String>? completedMissionIds,
   }) {
     return GameState(
       countries: countries ?? this.countries,
       totalInfluence: totalInfluence ?? this.totalInfluence,
       totalIntel: totalIntel ?? this.totalIntel,
+      activeMissions: activeMissions ?? this.activeMissions,
+      completedMissionIds: completedMissionIds ?? this.completedMissionIds,
       unlockedContinents: unlockedContinents ?? this.unlockedContinents,
       reachedMilestones: reachedMilestones ?? this.reachedMilestones,
       continentCompletions: continentCompletions ?? this.continentCompletions,
@@ -142,6 +157,8 @@ class GameState {
       activeBoost: null,
       unlockedContinents: Map.unmodifiable(unlockedContinents),
       reachedMilestones: const <ContinentId, Set<int>>{},
+      activeMissions: seedActiveMissions(content),
+      completedMissionIds: const <String>{},
     );
   }
 
@@ -152,6 +169,8 @@ class GameState {
           _mapsEqual(countries, other.countries) &&
           totalInfluence == other.totalInfluence &&
           totalIntel == other.totalIntel &&
+          _activeMissionsEq.equals(activeMissions, other.activeMissions) &&
+          _stringSetEq.equals(completedMissionIds, other.completedMissionIds) &&
           _unlockedContinentsEq.equals(
             unlockedContinents,
             other.unlockedContinents,
@@ -182,6 +201,8 @@ class GameState {
     _mapHash(countries),
     totalInfluence,
     totalIntel,
+    _activeMissionsEq.hash(activeMissions),
+    _stringSetEq.hash(completedMissionIds),
     _unlockedContinentsEq.hash(unlockedContinents),
     _reachedMilestonesEq.hash(reachedMilestones),
     _continentCompletionEq.hash(continentCompletions),
@@ -198,6 +219,8 @@ class GameState {
       'GameState(countries: ${countries.length} entries, '
       'totalInfluence: $totalInfluence, '
       'totalIntel: $totalIntel, '
+      'activeMissions: ${activeMissions.length}, '
+      'completedMissionIds: ${completedMissionIds.length}, '
       'unlockedContinents: ${unlockedContinents.length}, '
       'reachedMilestones: ${reachedMilestones.length}, '
       'continentCompletions: ${continentCompletions.length}, '

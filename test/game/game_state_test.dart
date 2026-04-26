@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
 
+import 'package:global_domination/game/config/balance.dart';
+import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/boosts/boost_state.dart';
+import 'package:global_domination/game/features/missions/mission_state.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/intel.dart';
@@ -33,7 +38,7 @@ void main() {
         GameState().toString(),
         equals(
           'GameState(countries: 0 entries, totalInfluence: Influence(0), '
-          'totalIntel: Intel(0), '
+          'totalIntel: Intel(0), activeMissions: 0, completedMissionIds: 0, '
           'unlockedContinents: 0, reachedMilestones: 0, continentCompletions: 0, '
           'earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
@@ -125,6 +130,129 @@ void main() {
         },
       );
       expect(t.reachedMilestones[id], {25, 50});
+    });
+
+    ContentRegistry minimalContent({required String missionsJson}) {
+      return ContentRegistry.fromJsonStrings(
+        countriesJson:
+            '[{"id":"egypt","continent":"africa","baseInfluence":"1","unlockCost":"0","tier":1,"generationSeconds":1}]',
+        continentsJson:
+            '[{"id":"africa","name":"Africa","unlockThreshold":"0","completionBonus":"0","milestoneRewards":[]}]',
+        leadersJson: '[]',
+        achievementsJson: '[]',
+        missionsJson: missionsJson,
+        globalUpgradesJson: '[]',
+      );
+    }
+
+    final fiveMissionsJson = jsonEncode([
+      {
+        'id': 'm1',
+        'name': 'M1',
+        'conditionType': 'tap_countries_n',
+        'conditionParams': {'count': 1},
+        'rewardIntel': '1',
+      },
+      {
+        'id': 'm2',
+        'name': 'M2',
+        'conditionType': 'tap_countries_n',
+        'conditionParams': {'count': 1},
+        'rewardIntel': '1',
+      },
+      {
+        'id': 'm3',
+        'name': 'M3',
+        'conditionType': 'tap_countries_n',
+        'conditionParams': {'count': 1},
+        'rewardIntel': '1',
+      },
+      {
+        'id': 'm4',
+        'name': 'M4',
+        'conditionType': 'tap_countries_n',
+        'conditionParams': {'count': 1},
+        'rewardIntel': '1',
+      },
+      {
+        'id': 'm5',
+        'name': 'M5',
+        'conditionType': 'tap_countries_n',
+        'conditionParams': {'count': 1},
+        'rewardIntel': '1',
+      },
+    ]);
+
+    test('initialSeed fills activeMissions up to missionCatalogSize', () {
+      final c = minimalContent(missionsJson: fiveMissionsJson);
+      final s = GameState.initialSeed(c);
+      expect(s.activeMissions.length, BalanceConfig.missionCatalogSize);
+      expect(s.totalIntel, Intel.zero);
+      expect(s.completedMissionIds, isEmpty);
+    });
+
+    test('initialSeed uses fewer slots when catalog is short', () {
+      final two = jsonEncode([
+        {
+          'id': 'a',
+          'name': 'A',
+          'conditionType': 'tap_countries_n',
+          'conditionParams': {'count': 1},
+          'rewardIntel': '1',
+        },
+        {
+          'id': 'b',
+          'name': 'B',
+          'conditionType': 'tap_countries_n',
+          'conditionParams': {'count': 1},
+          'rewardIntel': '1',
+        },
+      ]);
+      final c = minimalContent(missionsJson: two);
+      final s = GameState.initialSeed(c);
+      expect(s.activeMissions.length, 2);
+    });
+
+    test('equality distinguishes activeMissions progress', () {
+      final a = MissionState(
+        id: 'x',
+        progress: 0,
+        target: 3,
+        rewardIntel: Intel.zero,
+      );
+      final b = MissionState(
+        id: 'x',
+        progress: 1,
+        target: 3,
+        rewardIntel: Intel.zero,
+      );
+      expect(
+        GameState(activeMissions: [a]),
+        isNot(equals(GameState(activeMissions: [b]))),
+      );
+    });
+
+    test('equality distinguishes completedMissionIds', () {
+      expect(
+        GameState(completedMissionIds: {'a'}),
+        isNot(equals(GameState(completedMissionIds: {'b'}))),
+      );
+    });
+
+    test('copyWith swaps activeMissions completedMissionIds totalIntel', () {
+      final m = MissionState(
+        id: 'z',
+        progress: 0,
+        target: 1,
+        rewardIntel: Intel(Decimal.one),
+      );
+      final base = GameState();
+      final t1 = base.copyWith(totalIntel: Intel(Decimal.fromInt(9)));
+      expect(t1.totalIntel, Intel(Decimal.fromInt(9)));
+      final t2 = base.copyWith(activeMissions: [m]);
+      expect(t2.activeMissions.single, m);
+      final t3 = base.copyWith(completedMissionIds: {'done'});
+      expect(t3.completedMissionIds, {'done'});
     });
   });
 }

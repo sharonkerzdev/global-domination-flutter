@@ -78,4 +78,7 @@ abstract final class BalanceConfig {
   /// Wall-clock duration of the boost. Epic 10 retunes; do not change here
   /// without Epic 10 coordination.
   static const int boostDurationSeconds = 30;
+
+  /// Concurrent mission slots shown in the Missions UI. Epic 10 may retune.
+  static const int missionCatalogSize = 3;
 }

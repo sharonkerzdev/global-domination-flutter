@@ -384,3 +384,56 @@ final class BoostExpired extends GameEvent {
   @override
   String toString() => 'BoostExpired(at: $at)';
 }
+
+final class MissionCompleted extends GameEvent {
+  const MissionCompleted(
+    super.at, {
+    required this.missionId,
+    required this.rewardIntel,
+  });
+
+  final String missionId;
+  final Intel rewardIntel;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MissionCompleted &&
+          at == other.at &&
+          missionId == other.missionId &&
+          rewardIntel == other.rewardIntel);
+
+  @override
+  int get hashCode => Object.hash(at, missionId, rewardIntel);
+
+  @override
+  String toString() =>
+      'MissionCompleted(at: $at, missionId: $missionId, rewardIntel: $rewardIntel)';
+}
+
+final class MissionRotated extends GameEvent {
+  const MissionRotated(
+    super.at, {
+    required this.oldMissionId,
+    this.newMissionId,
+  });
+
+  final String oldMissionId;
+  final String? newMissionId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MissionRotated &&
+          at == other.at &&
+          oldMissionId == other.oldMissionId &&
+          newMissionId == other.newMissionId);
+
+  @override
+  int get hashCode => Object.hash(at, oldMissionId, newMissionId);
+
+  @override
+  String toString() =>
+      'MissionRotated(at: $at, oldMissionId: $oldMissionId, '
+      'newMissionId: $newMissionId)';
+}

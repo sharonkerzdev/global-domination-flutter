@@ -66,6 +66,113 @@ ContentRegistry _buildSingleCountryContent() {
   );
 }
 
+ContentRegistry _buildEuropeUnlockMissionContent() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '10',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
+  final leaders = jsonEncode([
+    {
+      'id': 'default_leader',
+      'name': 'General',
+      'tierMultipliers': ['1.0', '1.5', '2.0', '3.0'],
+    },
+  ]);
+  final missions = jsonEncode([
+    {
+      'id': 'unlock_one_continent',
+      'name': 'Unlock continent',
+      'conditionType': 'unlock_continents_n',
+      'conditionParams': {'count': 1},
+      'rewardIntel': '5',
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: leaders,
+    achievementsJson: '[]',
+    missionsJson: missions,
+    globalUpgradesJson: '[]',
+  );
+}
+
+ContentRegistry _buildMissionOneTapContent() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
+  final leaders = jsonEncode([
+    {
+      'id': 'default_leader',
+      'name': 'General',
+      'tierMultipliers': ['1.0', '1.5', '2.0', '3.0'],
+    },
+  ]);
+  final missions = jsonEncode([
+    {
+      'id': 'one_tap',
+      'name': 'One tap',
+      'conditionType': 'tap_countries_n',
+      'conditionParams': {'count': 1},
+      'rewardIntel': '3',
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: leaders,
+    achievementsJson: '[]',
+    missionsJson: missions,
+    globalUpgradesJson: '[]',
+  );
+}
+
 ContentRegistry _buildThreeCountryContent() {
   final continents = jsonEncode([
     {
@@ -1751,6 +1858,107 @@ void main() {
           w.state.countries[CountryId('egypt')]!.bankedInfluence,
           equals(Influence(Decimal.fromInt(1))),
         );
+      },
+    );
+  });
+
+  group('GameWorld missions (story 5-3)', () {
+    test('mission events follow CountryTapped on the stream', () async {
+      final c = _buildMissionOneTapContent();
+      final seed = GameState.initialSeed(c);
+      final eg = seed.countries[const CountryId('egypt')]!;
+      final initial = seed.copyWith(
+        countries: {
+          const CountryId('egypt'): eg.copyWith(
+            bankedInfluence: Influence(Decimal.fromInt(4)),
+          ),
+        },
+      );
+      final w = GameWorld(
+        content: c,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      final r = w.applyCommand(TapCountry(countryId: const CountryId('egypt')));
+      expect(r.isSuccess, isTrue);
+      await Future<void>.delayed(Duration.zero);
+      final ct = log.indexWhere((e) => e is CountryTapped);
+      final mc = log.indexWhere((e) => e is MissionCompleted);
+      expect(ct, greaterThanOrEqualTo(0));
+      expect(mc, greaterThan(ct));
+      await sub.cancel();
+    });
+
+    test('tick with Tick only leaves activeMissions unchanged in value', () {
+      final w2 = GameWorld(content: content, clock: clock, rng: SeededRng(0));
+      addTearDown(w2.dispose);
+      final before = w2.state.activeMissions;
+      w2.tick(const Duration(milliseconds: 16));
+      expect(w2.state.activeMissions, equals(before));
+    });
+
+    test(
+      'tick emits ContinentUnlocked then mission completion for unlock_continents_n',
+      () async {
+        final c = _buildEuropeUnlockMissionContent();
+        final seed = GameState.initialSeed(c);
+        final initial = seed.copyWith(
+          totalInfluence: Influence(Decimal.fromInt(50)),
+          unlockedContinents: _seedAfricaUnlocked,
+        );
+        expect(initial.activeMissions.single.id, 'unlock_one_continent');
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        w.tick(const Duration(milliseconds: 16));
+        await Future<void>.delayed(Duration.zero);
+        final cu = log.indexWhere((e) => e is ContinentUnlocked);
+        final mc = log.indexWhere((e) => e is MissionCompleted);
+        expect(cu, greaterThanOrEqualTo(0));
+        expect(mc, greaterThan(cu));
+        expect(log.whereType<MissionCompleted>(), hasLength(1));
+        expect(w.state.completedMissionIds, contains('unlock_one_continent'));
+        await sub.cancel();
+      },
+    );
+
+    test(
+      'single tap emits one MissionCompleted and one MissionRotated',
+      () async {
+        final c = _buildMissionOneTapContent();
+        final seed = GameState.initialSeed(c);
+        final eg = seed.countries[const CountryId('egypt')]!;
+        final initial = seed.copyWith(
+          countries: {
+            const CountryId('egypt'): eg.copyWith(
+              bankedInfluence: Influence(Decimal.fromInt(2)),
+            ),
+          },
+        );
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        w.applyCommand(TapCountry(countryId: const CountryId('egypt')));
+        await Future<void>.delayed(Duration.zero);
+        expect(log.whereType<MissionCompleted>(), hasLength(1));
+        expect(log.whereType<MissionRotated>(), hasLength(1));
+        await sub.cancel();
       },
     );
   });

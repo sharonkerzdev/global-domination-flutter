@@ -59,6 +59,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('tick'));
     });
@@ -90,6 +92,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('upgrade'));
     });
@@ -125,6 +129,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -141,6 +147,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -191,6 +199,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -227,6 +237,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('continent_unlocked'));
     });
@@ -281,6 +293,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('milestone_reached'));
     });
@@ -317,6 +331,8 @@ void main() {
         GoldenExpired() => 'golden_expired',
         BoostActivated() => 'boost_activated',
         BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
       };
       expect(result, equals('continent_completed'));
     });

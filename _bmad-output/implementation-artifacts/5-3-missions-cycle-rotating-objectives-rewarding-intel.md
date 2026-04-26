@@ -1,6 +1,6 @@
 # Story 5.3: Missions Cycle Rotating Objectives Rewarding Intel
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -64,43 +64,43 @@ _(UI rendering of missions lands in Epic 7 — this story provides the sim layer
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `MissionState` value class (AC: 1, 2, 3, 4, 8)
-  - [ ] 1.1 Create `lib/game/features/missions/mission_state.dart`
-  - [ ] 1.2 Define `@immutable class MissionState` with four final fields: `final String id; final int progress; final int target; final Intel rewardIntel;` and a `const` constructor that takes named required params
-  - [ ] 1.3 Implement manual `==`, `hashCode`, `toString`, and `MissionState copyWith({int? progress})` (only `progress` is mutable across the lifecycle — `id`/`target`/`rewardIntel` are def-locked at seed time). Pattern: mirror `lib/game/features/countries/country_state.dart`.
-  - [ ] 1.4 Add a convenience getter `bool get isComplete => progress >= target;` — used by the evaluator and downstream UI.
-  - [ ] 1.5 NO `freezed`. NO `json_serializable`. Pure Dart with `package:meta/meta.dart`.
+- [x] Task 1: Add `MissionState` value class (AC: 1, 2, 3, 4, 8)
+  - [x] 1.1 Create `lib/game/features/missions/mission_state.dart`
+  - [x] 1.2 Define `@immutable class MissionState` with four final fields: `final String id; final int progress; final int target; final Intel rewardIntel;` and a `const` constructor that takes named required params
+  - [x] 1.3 Implement manual `==`, `hashCode`, `toString`, and `MissionState copyWith({int? progress})` (only `progress` is mutable across the lifecycle — `id`/`target`/`rewardIntel` are def-locked at seed time). Pattern: mirror `lib/game/features/countries/country_state.dart`.
+  - [x] 1.4 Add a convenience getter `bool get isComplete => progress >= target;` — used by the evaluator and downstream UI.
+  - [x] 1.5 NO `freezed`. NO `json_serializable`. Pure Dart with `package:meta/meta.dart`.
 
-- [ ] Task 2: Extend `lib/game/game_state.dart` (AC: 1, 2, 3, 8, 11)
-  - [ ] 2.1 Add three fields:
+- [x] Task 2: Extend `lib/game/game_state.dart` (AC: 1, 2, 3, 8, 11)
+  - [x] 2.1 Add three fields:
     - `final List<MissionState> activeMissions;` — unmodifiable
     - `final Set<String> completedMissionIds;` — unmodifiable
     - `final Intel totalIntel;` — defaults to `Intel.zero`
-  - [ ] 2.2 Constructor: wrap `activeMissions` in `List.unmodifiable(...)`; wrap `completedMissionIds` in `Set.unmodifiable(...)`; default `totalIntel` to `Intel.zero` when null.
-  - [ ] 2.3 `copyWith`: add the three params with `?`-nullable types and forward.
-  - [ ] 2.4 `==`/`hashCode`: add `ListEquality<MissionState>()` (reuse `package:collection`) for `activeMissions`; reuse the existing `_stringSetEq` for `completedMissionIds`; add direct `==` for `totalIntel`. Mirror the `_stringSetEq` static-final pattern already at the top of the file.
-  - [ ] 2.5 `toString`: include `activeMissions.length`, `completedMissionIds.length`, `totalIntel`. Match the existing concise-summary style.
-  - [ ] 2.6 `initialSeed(content)`: AFTER existing seed logic, call `seedActiveMissions(content)` (Task 3) and assign the result to the constructor's `activeMissions` param. `completedMissionIds` and `totalIntel` default to empty/zero.
-  - [ ] 2.7 Backward compatibility is OUT OF SCOPE per project rules — old saves will break, that is acceptable.
+  - [x] 2.2 Constructor: wrap `activeMissions` in `List.unmodifiable(...)`; wrap `completedMissionIds` in `Set.unmodifiable(...)`; default `totalIntel` to `Intel.zero` when null.
+  - [x] 2.3 `copyWith`: add the three params with `?`-nullable types and forward.
+  - [x] 2.4 `==`/`hashCode`: add `ListEquality<MissionState>()` (reuse `package:collection`) for `activeMissions`; reuse the existing `_stringSetEq` for `completedMissionIds`; add direct `==` for `totalIntel`. Mirror the `_stringSetEq` static-final pattern already at the top of the file.
+  - [x] 2.5 `toString`: include `activeMissions.length`, `completedMissionIds.length`, `totalIntel`. Match the existing concise-summary style.
+  - [x] 2.6 `initialSeed(content)`: AFTER existing seed logic, call `seedActiveMissions(content)` (Task 3) and assign the result to the constructor's `activeMissions` param. `completedMissionIds` and `totalIntel` default to empty/zero.
+  - [x] 2.7 Backward compatibility is OUT OF SCOPE per project rules — old saves will break, that is acceptable.
 
-- [ ] Task 3: Create `MissionDef → MissionState` seed helper (AC: 1, 11, 12)
-  - [ ] 3.1 Add top-level function in `lib/game/features/missions/missions_seed.dart`:
+- [x] Task 3: Create `MissionDef → MissionState` seed helper (AC: 1, 11, 12)
+  - [x] 3.1 Add top-level function in `lib/game/features/missions/missions_seed.dart`:
         `List<MissionState> seedActiveMissions(ContentRegistry content, {Set<String> completedIds = const <String>{}})`
-  - [ ] 3.2 Iterate `content.missions` in declaration order. Skip defs whose `id` is in `completedIds`. Take the FIRST `BalanceConfig.missionCatalogSize` eligible defs.
-  - [ ] 3.3 For each, build `MissionState(id: def.id, progress: 0, target: _targetFromParams(def), rewardIntel: Intel(def.rewardIntel))`. The `target` is read from `def.conditionParams['count'] as int` (or analogous key per condition type — see Dev Notes table). Use a private `int _targetFromParams(MissionDef def)` helper that switches on `def.conditionType`.
-  - [ ] 3.4 Return `List.unmodifiable(...)`. Empty list if no defs are eligible.
-  - [ ] 3.5 Pure function. No clock, no RNG.
+  - [x] 3.2 Iterate `content.missions` in declaration order. Skip defs whose `id` is in `completedIds`. Take the FIRST `BalanceConfig.missionCatalogSize` eligible defs.
+  - [x] 3.3 For each, build `MissionState(id: def.id, progress: 0, target: _targetFromParams(def), rewardIntel: Intel(def.rewardIntel))`. The `target` is read from `def.conditionParams['count'] as int` (or analogous key per condition type — see Dev Notes table). Use a private `int _targetFromParams(MissionDef def)` helper that switches on `def.conditionType`.
+  - [x] 3.4 Return `List.unmodifiable(...)`. Empty list if no defs are eligible.
+  - [x] 3.5 Pure function. No clock, no RNG.
 
-- [ ] Task 4: Add `BalanceConfig.missionCatalogSize` (AC: 1, 6, 12)
-  - [ ] 4.1 In `lib/game/config/balance.dart`, add: `static const int missionCatalogSize = 3;` with a doc comment marking it as Epic 10 retune-eligible.
+- [x] Task 4: Add `BalanceConfig.missionCatalogSize` (AC: 1, 6, 12)
+  - [x] 4.1 In `lib/game/config/balance.dart`, add: `static const int missionCatalogSize = 3;` with a doc comment marking it as Epic 10 retune-eligible.
 
-- [ ] Task 5: Add events to `lib/game/game_event.dart` (AC: 2, 3, 4, 9)
-  - [ ] 5.1 Add `final class MissionCompleted extends GameEvent` with `final String missionId; final Intel rewardIntel;` plus `==`/`hashCode`/`toString`.
-  - [ ] 5.2 Add `final class MissionRotated extends GameEvent` with `final String oldMissionId; final String? newMissionId;` (`newMissionId == null` when the slot was retired per AC #3) plus `==`/`hashCode`/`toString`.
-  - [ ] 5.3 Both extend the sealed `GameEvent` so `switch` exhaustiveness keeps audio/haptics/persistence services compilable. Update any `switch (event)` exhaustive consumers — there should be none in `lib/game/`, but check `lib/services/` if they exist (they don't as of this story; safe).
+- [x] Task 5: Add events to `lib/game/game_event.dart` (AC: 2, 3, 4, 9)
+  - [x] 5.1 Add `final class MissionCompleted extends GameEvent` with `final String missionId; final Intel rewardIntel;` plus `==`/`hashCode`/`toString`.
+  - [x] 5.2 Add `final class MissionRotated extends GameEvent` with `final String oldMissionId; final String? newMissionId;` (`newMissionId == null` when the slot was retired per AC #3) plus `==`/`hashCode`/`toString`.
+  - [x] 5.3 Both extend the sealed `GameEvent` so `switch` exhaustiveness keeps audio/haptics/persistence services compilable. Update any `switch (event)` exhaustive consumers — there should be none in `lib/game/`, but check `lib/services/` if they exist (they don't as of this story; safe).
 
-- [ ] Task 6: Create the mission evaluator `lib/game/features/missions/missions_reducer.dart` (AC: 2, 3, 4, 5, 7, 11)
-  - [ ] 6.1 Top-level pure function:
+- [x] Task 6: Create the mission evaluator `lib/game/features/missions/missions_reducer.dart` (AC: 2, 3, 4, 5, 7, 11)
+  - [x] 6.1 Top-level pure function:
         ```
         (GameState, List<GameEvent>) evaluateMissions(
           GameState state,
@@ -109,31 +109,31 @@ _(UI rendering of missions lands in Epic 7 — this story provides the sim layer
           DateTime now,
         )
         ```
-  - [ ] 6.2 Compute the per-event `delta` by switching on `triggeringEvent.runtimeType`:
+  - [x] 6.2 Compute the per-event `delta` by switching on `triggeringEvent.runtimeType`:
         - `CountryTapped` → `1` for missions of type `tap_countries_n`
         - `UpgradePurchased` → `1` for missions of type `purchase_upgrades_n` (note: do NOT scale by `levelsAdded` — one purchase = one count for v1; Epic 10 may revisit)
         - `CountryUnlocked` → `1` for missions of type `unlock_countries_n`
         - `LeaderHired` → `1` for missions of type `hire_leaders_n`
         - `ContinentUnlocked` → `1` for missions of type `unlock_continents_n`
         - All other events (incl. `Tick`, `ContinentCompleted`, `MilestoneReached`, `MissionCompleted`, `MissionRotated`, future `GoldenClaimed` / `BoostActivated`) → `0` for ALL types in this story (AC #7 — unwired condition types stay pending).
-  - [ ] 6.3 Iterate `state.activeMissions` in slot order; for each slot, look up the `MissionDef` by id in `content.missions` (linear scan is fine — catalog is small). If `def == null` (orphaned id — content was edited mid-save), skip silently and DO NOT throw. If the slot's condition matches the event type, increment `progress` by `delta` (capped at `target`). Track which slots completed in this pass.
-  - [ ] 6.4 For each completed slot in slot order: emit `MissionCompleted(now, missionId: id, rewardIntel: r)`, add `r` to `totalIntel`, append `id` to a working `completedMissionIds` set, then run the rotation step (Task 6.5) for that slot, recording the resulting `MissionRotated` event.
-  - [ ] 6.5 Rotation step (the AC #3 logic): given `completedMissionId` at catalog index `k` (linear-scan to find), iterate `content.missions` starting at index `(k + 1) % length`, wrapping ONCE. Pick the first def whose `id` is NOT in (`workingActiveMissionIds` ∪ `workingCompletedIds`). If found, replace the slot with `MissionState(id: newDef.id, progress: 0, target: _targetFromParams(newDef), rewardIntel: Intel(newDef.rewardIntel))` and emit `MissionRotated(now, oldMissionId: oldId, newMissionId: newDef.id)`. If not found, REMOVE the slot from the working list (length decreases) and emit `MissionRotated(now, oldMissionId: oldId, newMissionId: null)`.
-  - [ ] 6.6 If no missions advanced AND no missions completed, return `(state, const <GameEvent>[])` with `identical(returnedState, state) == true` (no `copyWith` invocation) — AC #5.
-  - [ ] 6.7 Otherwise return `(state.copyWith(activeMissions: List.unmodifiable(working), completedMissionIds: Set.unmodifiable(workingCompleted), totalIntel: workingIntel), events)`.
-  - [ ] 6.8 Pure function. No `DateTime.now()`, no `Random()`, no I/O. `now` flows in for event timestamps only.
-  - [ ] 6.9 Use `assert(...)` for programmer-error invariants (e.g. `assert(state.activeMissions.length <= BalanceConfig.missionCatalogSize)` — defensive but not critical).
+  - [x] 6.3 Iterate `state.activeMissions` in slot order; for each slot, look up the `MissionDef` by id in `content.missions` (linear scan is fine — catalog is small). If `def == null` (orphaned id — content was edited mid-save), skip silently and DO NOT throw. If the slot's condition matches the event type, increment `progress` by `delta` (capped at `target`). Track which slots completed in this pass.
+  - [x] 6.4 For each completed slot in slot order: emit `MissionCompleted(now, missionId: id, rewardIntel: r)`, add `r` to `totalIntel`, append `id` to a working `completedMissionIds` set, then run the rotation step (Task 6.5) for that slot, recording the resulting `MissionRotated` event.
+  - [x] 6.5 Rotation step (the AC #3 logic): given `completedMissionId` at catalog index `k` (linear-scan to find), iterate `content.missions` starting at index `(k + 1) % length`, wrapping ONCE. Pick the first def whose `id` is NOT in (`workingActiveMissionIds` ∪ `workingCompletedIds`). If found, replace the slot with `MissionState(id: newDef.id, progress: 0, target: _targetFromParams(newDef), rewardIntel: Intel(newDef.rewardIntel))` and emit `MissionRotated(now, oldMissionId: oldId, newMissionId: newDef.id)`. If not found, REMOVE the slot from the working list (length decreases) and emit `MissionRotated(now, oldMissionId: oldId, newMissionId: null)`.
+  - [x] 6.6 If no missions advanced AND no missions completed, return `(state, const <GameEvent>[])` with `identical(returnedState, state) == true` (no `copyWith` invocation) — AC #5.
+  - [x] 6.7 Otherwise return `(state.copyWith(activeMissions: List.unmodifiable(working), completedMissionIds: Set.unmodifiable(workingCompleted), totalIntel: workingIntel), events)`.
+  - [x] 6.8 Pure function. No `DateTime.now()`, no `Random()`, no I/O. `now` flows in for event timestamps only.
+  - [x] 6.9 Use `assert(...)` for programmer-error invariants (e.g. `assert(state.activeMissions.length <= BalanceConfig.missionCatalogSize)` — defensive but not critical).
 
-- [ ] Task 7: Wire evaluator into `lib/game/game_world.dart` (AC: 9, 10)
-  - [ ] 7.1 Add private helper `void _evaluateMissionsForEvents(List<GameEvent> events)` that loops the freshly-emitted events; for each event, calls `evaluateMissions(_state, _content, event, _clock.now())`; if returned events are non-empty, assigns `_state = next` and emits them via `_events.add(e)` for each. The helper must be defensive: if `evaluateMissions` itself emits a `MissionCompleted` (which feeds into a NEW `_evaluateMissionsForEvents` cycle?), short-circuit by NOT re-evaluating mission-emitted events — `MissionCompleted` and `MissionRotated` always produce `0` delta per AC #7, so this is structurally safe but ALSO MUST be enforced with an explicit early-return: `if (event is MissionCompleted || event is MissionRotated) continue;`.
-  - [ ] 7.2 In `applyCommand`: BUFFER the events emitted by the originating reducer + `_evaluateContinentUnlocks` + `_evaluateMilestones` instead of streaming them as they happen, OR (simpler) re-architect to: track events emitted in this `applyCommand` invocation by snapshotting the stream, OR (simplest) re-evaluate per-event by running the existing evaluators in their current spots and THEN running `_evaluateMissionsForEvents` against the events accumulated for this command. **Implementation choice (recommended):** add a `final List<GameEvent> _pendingEvents = [];` instance field, change every `_events.add(e)` inside `applyCommand` / `tick` to ALSO append to `_pendingEvents`, run mission evaluation against `_pendingEvents` at the end of the command/tick, then emit mission events. **DO NOT change subscriber-visible ordering** for non-mission events; keep `command-event → continent-unlock → milestone` order, then append mission events at the tail (AC #9).
-  - [ ] 7.3 Alternative (cleaner) implementation: refactor `_evaluateContinentUnlocks` / `_evaluateMilestones` to RETURN events instead of emitting directly, accumulate ALL events in a local `List<GameEvent> emitted` for the command, run `_evaluateMissionsForEvents(emitted)` once at the end, append its events to `emitted`, then call `_events.add(...)` for each in order. This keeps the stream contract intact with a single emit phase per command. **Use this alternative if the inline-buffer approach feels invasive.**
-  - [ ] 7.4 In `tick()`: SAME pattern. Mission evaluator runs ONCE at the end of `tick`, processing all events emitted that tick (currently: `Tick`, optionally `ContinentUnlocked`). Per AC #10, the per-tick path MUST short-circuit when no mission-eligible events fire — the evaluator's AC #5 `identical(next, state)` guarantee handles this if the helper checks `if (returnedEvents.isEmpty) return;` before any state assignment.
-  - [ ] 7.5 Causal ordering on the `events` stream MUST match AC #9: `command-event → continent-unlock-events → milestone-events → mission-completion-events → mission-rotated-events`. Verify with a unit test that subscribes to `world.events` via `world.events.toList()`.
-  - [ ] 7.6 Do NOT re-fire missions for the `MissionCompleted` / `MissionRotated` events themselves (the evaluator's `delta = 0` logic in Task 6.2 already guarantees this; the helper-level guard in 7.1 is belt-and-suspenders).
+- [x] Task 7: Wire evaluator into `lib/game/game_world.dart` (AC: 9, 10)
+  - [x] 7.1 Add private helper `void _evaluateMissionsForEvents(List<GameEvent> events)` that loops the freshly-emitted events; for each event, calls `evaluateMissions(_state, _content, event, _clock.now())`; if returned events are non-empty, assigns `_state = next` and emits them via `_events.add(e)` for each. The helper must be defensive: if `evaluateMissions` itself emits a `MissionCompleted` (which feeds into a NEW `_evaluateMissionsForEvents` cycle?), short-circuit by NOT re-evaluating mission-emitted events — `MissionCompleted` and `MissionRotated` always produce `0` delta per AC #7, so this is structurally safe but ALSO MUST be enforced with an explicit early-return: `if (event is MissionCompleted || event is MissionRotated) continue;`.
+  - [x] 7.2 In `applyCommand`: BUFFER the events emitted by the originating reducer + `_evaluateContinentUnlocks` + `_evaluateMilestones` instead of streaming them as they happen, OR (simpler) re-architect to: track events emitted in this `applyCommand` invocation by snapshotting the stream, OR (simplest) re-evaluate per-event by running the existing evaluators in their current spots and THEN running `_evaluateMissionsForEvents` against the events accumulated for this command. **Implementation choice (recommended):** add a `final List<GameEvent> _pendingEvents = [];` instance field, change every `_events.add(e)` inside `applyCommand` / `tick` to ALSO append to `_pendingEvents`, run mission evaluation against `_pendingEvents` at the end of the command/tick, then emit mission events. **DO NOT change subscriber-visible ordering** for non-mission events; keep `command-event → continent-unlock → milestone` order, then append mission events at the tail (AC #9).
+  - [x] 7.3 Alternative (cleaner) implementation: refactor `_evaluateContinentUnlocks` / `_evaluateMilestones` to RETURN events instead of emitting directly, accumulate ALL events in a local `List<GameEvent> emitted` for the command, run `_evaluateMissionsForEvents(emitted)` once at the end, append its events to `emitted`, then call `_events.add(...)` for each in order. This keeps the stream contract intact with a single emit phase per command. **Use this alternative if the inline-buffer approach feels invasive.**
+  - [x] 7.4 In `tick()`: SAME pattern. Mission evaluator runs ONCE at the end of `tick`, processing all events emitted that tick (currently: `Tick`, optionally `ContinentUnlocked`). Per AC #10, the per-tick path MUST short-circuit when no mission-eligible events fire — the evaluator's AC #5 `identical(next, state)` guarantee handles this if the helper checks `if (returnedEvents.isEmpty) return;` before any state assignment.
+  - [x] 7.5 Causal ordering on the `events` stream MUST match AC #9: `command-event → continent-unlock-events → milestone-events → mission-completion-events → mission-rotated-events`. Verify with a unit test that subscribes to `world.events` via `world.events.toList()`.
+  - [x] 7.6 Do NOT re-fire missions for the `MissionCompleted` / `MissionRotated` events themselves (the evaluator's `delta = 0` logic in Task 6.2 already guarantees this; the helper-level guard in 7.1 is belt-and-suspenders).
 
-- [ ] Task 8: Populate `assets/data/missions.json` (AC: 12)
-  - [ ] 8.1 Replace the empty `[]` with at least 5 entries (`missionCatalogSize=3` plus 2 spares so AC #6 rotation is testable). Suggested initial catalog (Epic 10 will retune values):
+- [x] Task 8: Populate `assets/data/missions.json` (AC: 12)
+  - [x] 8.1 Replace the empty `[]` with at least 5 entries (`missionCatalogSize=3` plus 2 spares so AC #6 rotation is testable). Suggested initial catalog (Epic 10 will retune values):
         ```json
         [
           { "id": "tap_50_countries",       "name": "Tap 50 countries",         "conditionType": "tap_countries_n",       "conditionParams": { "count": 50 },   "rewardIntel": "10" },
@@ -143,48 +143,52 @@ _(UI rendering of missions lands in Epic 7 — this story provides the sim layer
           { "id": "unlock_1_continent",     "name": "Unlock a new continent",   "conditionType": "unlock_continents_n",   "conditionParams": { "count": 1 },    "rewardIntel": "100" }
         ]
         ```
-  - [ ] 8.2 All `id`s lowercase-snake-case and unique across the catalog.
-  - [ ] 8.3 Mark these as Epic 10 placeholders in the File List notes (rewardIntel values are not balanced).
+  - [x] 8.2 All `id`s lowercase-snake-case and unique across the catalog.
+  - [x] 8.3 Mark these as Epic 10 placeholders in the File List notes (rewardIntel values are not balanced).
 
-- [ ] Task 9: Pure-Dart unit tests `test/game/features/missions/missions_reducer_test.dart` (AC: 2, 3, 4, 5, 6, 7, 11)
-  - [ ] 9.1 Use `package:test/test.dart` (NOT `flutter_test`). Pure-Dart for `lib/game/` per `test/architecture/game_boundary_test.dart`.
-  - [ ] 9.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings(...)` with 5 missions (the AC #12 catalog). Reuse the `_fixtureRegistry()` pattern from `test/game/features/economy/income_calculator_test.dart`.
-  - [ ] 9.3 Test `seedActiveMissions`: 5 defs + `missionCatalogSize=3` → 3 active missions in declaration order with `progress=0`.
-  - [ ] 9.4 Test `seedActiveMissions`: completedIds = {firstId} → skips that one, fills slots from indices 1, 2, 3.
-  - [ ] 9.5 Test `seedActiveMissions`: empty catalog → returns empty list (AC #1 graceful degrade).
-  - [ ] 9.6 Test `evaluateMissions`: `Tick` event → returns `(state, [])` and `identical(returnedState, state) == true` (AC #5).
-  - [ ] 9.7 Test `evaluateMissions`: `CountryTapped` event vs a `tap_countries_n` mission with `target=2, progress=0` → progress becomes 1, no events fired.
-  - [ ] 9.8 Test `evaluateMissions`: `CountryTapped` event with `target=2, progress=1` → completes, fires `MissionCompleted` + `MissionRotated`, `totalIntel` increases by `rewardIntel`, `completedMissionIds` adds the id, slot is replaced by next eligible def (index 3).
-  - [ ] 9.9 Test `evaluateMissions`: progress capped at target (`target=2, progress=1`, but two events arrive in one pass — wait, the evaluator processes ONE event per call; document this and verify by calling the evaluator twice in the same test). Single-event pass: progress increments by exactly +1 per matching event regardless of how many slots match.
-  - [ ] 9.10 Test rotation exhaustion (AC #3, #6): catalog of 5, complete 3 missions in sequence — verify slot retirement once eligible defs run out (`activeMissions.length` decreases from 3 to 2 to 1 as completions exceed catalog spares).
-  - [ ] 9.11 Test multi-slot match (AC #4): build a state with TWO active `tap_countries_n` missions (override the seed for the test); a single `CountryTapped` advances both slots in order.
-  - [ ] 9.12 Test unwired condition type (AC #7): seed a mission with `conditionType: 'golden_claimed_count'` in the fixture catalog; emit a `CountryTapped` — progress stays 0, no throw, no log assertion. (Logging is forbidden in pure reducers anyway — `package:logging` is not imported.)
-  - [ ] 9.13 Test orphaned-id resilience (Task 6.3): build a state whose `activeMissions` references an id NOT in `content.missions` (simulating mid-development content edits) — evaluator skips that slot and DOES NOT throw.
-  - [ ] 9.14 Test `MissionState` value semantics: equality, hashCode, toString, and `copyWith(progress: ...)` produces a new instance with all other fields preserved.
+- [x] Task 9: Pure-Dart unit tests `test/game/features/missions/missions_reducer_test.dart` (AC: 2, 3, 4, 5, 6, 7, 11)
+  - [x] 9.1 Use `package:test/test.dart` (NOT `flutter_test`). Pure-Dart for `lib/game/` per `test/architecture/game_boundary_test.dart`.
+  - [x] 9.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings(...)` with 5 missions (the AC #12 catalog). Reuse the `_fixtureRegistry()` pattern from `test/game/features/economy/income_calculator_test.dart`.
+  - [x] 9.3 Test `seedActiveMissions`: 5 defs + `missionCatalogSize=3` → 3 active missions in declaration order with `progress=0`.
+  - [x] 9.4 Test `seedActiveMissions`: completedIds = {firstId} → skips that one, fills slots from indices 1, 2, 3.
+  - [x] 9.5 Test `seedActiveMissions`: empty catalog → returns empty list (AC #1 graceful degrade).
+  - [x] 9.6 Test `evaluateMissions`: `Tick` event → returns `(state, [])` and `identical(returnedState, state) == true` (AC #5).
+  - [x] 9.7 Test `evaluateMissions`: `CountryTapped` event vs a `tap_countries_n` mission with `target=2, progress=0` → progress becomes 1, no events fired.
+  - [x] 9.8 Test `evaluateMissions`: `CountryTapped` event with `target=2, progress=1` → completes, fires `MissionCompleted` + `MissionRotated`, `totalIntel` increases by `rewardIntel`, `completedMissionIds` adds the id, slot is replaced by next eligible def (index 3).
+  - [x] 9.9 Test `evaluateMissions`: progress capped at target (`target=2, progress=1`, but two events arrive in one pass — wait, the evaluator processes ONE event per call; document this and verify by calling the evaluator twice in the same test). Single-event pass: progress increments by exactly +1 per matching event regardless of how many slots match.
+  - [x] 9.10 Test rotation exhaustion (AC #3, #6): catalog of 5, complete 3 missions in sequence — verify slot retirement once eligible defs run out (`activeMissions.length` decreases from 3 to 2 to 1 as completions exceed catalog spares).
+  - [x] 9.11 Test multi-slot match (AC #4): build a state with TWO active `tap_countries_n` missions (override the seed for the test); a single `CountryTapped` advances both slots in order.
+  - [x] 9.12 Test unwired condition type (AC #7): seed a mission with `conditionType: 'golden_claimed_count'` in the fixture catalog; emit a `CountryTapped` — progress stays 0, no throw, no log assertion. (Logging is forbidden in pure reducers anyway — `package:logging` is not imported.)
+  - [x] 9.13 Test orphaned-id resilience (Task 6.3): build a state whose `activeMissions` references an id NOT in `content.missions` (simulating mid-development content edits) — evaluator skips that slot and DOES NOT throw.
+  - [x] 9.14 Test `MissionState` value semantics: equality, hashCode, toString, and `copyWith(progress: ...)` produces a new instance with all other fields preserved.
 
-- [ ] Task 10: GameWorld integration tests `test/game/game_world_test.dart` (AC: 2, 9, 10)
-  - [ ] 10.1 Append (do NOT replace) tests to the existing `test/game/game_world_test.dart` covering missions wiring.
-  - [ ] 10.2 Test causal event order (AC #9): boot a `GameWorld` with a fixture content where Egypt is unlocked + ipLevel=1 + `bankedInfluence` non-zero; subscribe to `world.events`; dispatch `TapCountry(egypt)`; assert the emitted-event sequence matches `[CountryTapped, ...possibleContinent/MilestoneEvents, MissionCompleted?, MissionRotated?]`. Cleanest assertion: collect events into a `List<GameEvent>`, then `expect(events.indexOf(<MissionCompleted>), greaterThan(events.indexOf(<CountryTapped>)));`.
-  - [ ] 10.3 Test `tick()` mission evaluation (AC #10): boot world, advance state to a point where a tick will trigger `ContinentUnlocked`; assert that AFTER the tick, an `unlock_continents_n` mission's progress advanced by 1 and a `MissionRotated` event fires if the mission completed.
-  - [ ] 10.4 Test that a no-event tick (`Tick` only, no continent unlocks, no mission-eligible events) does NOT mutate `state.activeMissions` (`identical(stateBefore.activeMissions, stateAfter.activeMissions) == true`).
-  - [ ] 10.5 Test that `MissionCompleted` and `MissionRotated` events do NOT recursively trigger further mission evaluation (Task 7.1 guard) — assert event stream contains exactly ONE `MissionCompleted` and ONE `MissionRotated` per single-completion command, not duplicates.
+- [x] Task 10: GameWorld integration tests `test/game/game_world_test.dart` (AC: 2, 9, 10)
+  - [x] 10.1 Append (do NOT replace) tests to the existing `test/game/game_world_test.dart` covering missions wiring.
+  - [x] 10.2 Test causal event order (AC #9): boot a `GameWorld` with a fixture content where Egypt is unlocked + ipLevel=1 + `bankedInfluence` non-zero; subscribe to `world.events`; dispatch `TapCountry(egypt)`; assert the emitted-event sequence matches `[CountryTapped, ...possibleContinent/MilestoneEvents, MissionCompleted?, MissionRotated?]`. Cleanest assertion: collect events into a `List<GameEvent>`, then `expect(events.indexOf(<MissionCompleted>), greaterThan(events.indexOf(<CountryTapped>)));`.
+  - [x] 10.3 Test `tick()` mission evaluation (AC #10): boot world, advance state to a point where a tick will trigger `ContinentUnlocked`; assert that AFTER the tick, an `unlock_continents_n` mission's progress advanced by 1 and a `MissionRotated` event fires if the mission completed.
+  - [x] 10.4 Test that a no-event tick (`Tick` only, no continent unlocks, no mission-eligible events) does NOT mutate `state.activeMissions` (`identical(stateBefore.activeMissions, stateAfter.activeMissions) == true`).
+  - [x] 10.5 Test that `MissionCompleted` and `MissionRotated` events do NOT recursively trigger further mission evaluation (Task 7.1 guard) — assert event stream contains exactly ONE `MissionCompleted` and ONE `MissionRotated` per single-completion command, not duplicates.
 
-- [ ] Task 11: GameState tests `test/game/game_state_test.dart` (AC: 1, 8)
-  - [ ] 11.1 Append: `initialSeed(content)` populates `activeMissions` with `BalanceConfig.missionCatalogSize` entries when fixture has ≥ that many missions; populates fewer entries gracefully when fixture has fewer.
-  - [ ] 11.2 Append: `initialSeed(content)` sets `totalIntel == Intel.zero` AND `completedMissionIds.isEmpty`.
-  - [ ] 11.3 Append: `==` / `hashCode` / `toString` cover the new fields — two states differing only in `totalIntel` are not equal; differing only in `activeMissions[0].progress` are not equal; differing only in `completedMissionIds` are not equal.
-  - [ ] 11.4 Append: `copyWith(activeMissions: ...)` / `copyWith(completedMissionIds: ...)` / `copyWith(totalIntel: ...)` each produce a new state with the swapped field and all others identity-preserved.
+- [x] Task 11: GameState tests `test/game/game_state_test.dart` (AC: 1, 8)
+  - [x] 11.1 Append: `initialSeed(content)` populates `activeMissions` with `BalanceConfig.missionCatalogSize` entries when fixture has ≥ that many missions; populates fewer entries gracefully when fixture has fewer.
+  - [x] 11.2 Append: `initialSeed(content)` sets `totalIntel == Intel.zero` AND `completedMissionIds.isEmpty`.
+  - [x] 11.3 Append: `==` / `hashCode` / `toString` cover the new fields — two states differing only in `totalIntel` are not equal; differing only in `activeMissions[0].progress` are not equal; differing only in `completedMissionIds` are not equal.
+  - [x] 11.4 Append: `copyWith(activeMissions: ...)` / `copyWith(completedMissionIds: ...)` / `copyWith(totalIntel: ...)` each produce a new state with the swapped field and all others identity-preserved.
 
-- [ ] Task 12: Architecture compliance verification (AC: all)
-  - [ ] 12.1 Run `flutter test test/architecture/` — new files in `lib/game/features/missions/` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports (`test/architecture/game_boundary_test.dart`).
-  - [ ] 12.2 Confirm `missions_reducer.dart` does NOT match `test/architecture/no_duplicate_income_math_test.dart` patterns (it doesn't touch `def.baseInfluence *` or `country.baseInfluence *`).
-  - [ ] 12.3 Confirm no `print(`, no `Logger(...)` import in mission reducer files (hot-path discipline; AC #5 requires evaluator to be a no-op for unrelated events — logging would defeat that).
+- [x] Task 12: Architecture compliance verification (AC: all)
+  - [x] 12.1 Run `flutter test test/architecture/` — new files in `lib/game/features/missions/` MUST contain no `package:flutter/`, no `dart:ui`, no `lib/data/` imports (`test/architecture/game_boundary_test.dart`).
+  - [x] 12.2 Confirm `missions_reducer.dart` does NOT match `test/architecture/no_duplicate_income_math_test.dart` patterns (it doesn't touch `def.baseInfluence *` or `country.baseInfluence *`).
+  - [x] 12.3 Confirm no `print(`, no `Logger(...)` import in mission reducer files (hot-path discipline; AC #5 requires evaluator to be a no-op for unrelated events — logging would defeat that).
 
-- [ ] Task 13: Full validation (AC: all)
-  - [ ] 13.1 `flutter analyze` — 0 warnings.
-  - [ ] 13.2 `dart format --set-exit-if-changed .`
-  - [ ] 13.3 `flutter test` — all pass (existing + new). Expect ALL pre-existing tests to keep passing; the only legitimate breakage is tests that hand-construct `GameState` and now need to pass `activeMissions`/`completedMissionIds`/`totalIntel` — fix them by relying on `initialSeed(content)` or the `GameStateBuilder` test helper if it exists.
-  - [ ] 13.4 Update `Status` to `review` and append entries to Completion Notes / File List.
+- [x] Task 13: Full validation (AC: all)
+  - [x] 13.1 `flutter analyze` — 0 warnings.
+  - [x] 13.2 `dart format --set-exit-if-changed .`
+  - [x] 13.3 `flutter test` — all pass (existing + new). Expect ALL pre-existing tests to keep passing; the only legitimate breakage is tests that hand-construct `GameState` and now need to pass `activeMissions`/`completedMissionIds`/`totalIntel` — fix them by relying on `initialSeed(content)` or the `GameStateBuilder` test helper if it exists.
+  - [x] 13.4 Update `Status` to `review` and append entries to Completion Notes / File List.
+
+### Review Findings
+
+- [x] [Review][Patch] Simultaneous mission completions interleave rotation before later completion events [lib/game/features/missions/missions_reducer.dart:161]
 
 ## Dev Notes
 
@@ -345,10 +349,37 @@ Extracted from `_bmad-output/project-context.md` — applies to this story:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented missions sim layer: `MissionState`, `seedActiveMissions` / `missionTargetFromDef`, pure `evaluateMissions` with deterministic catalog rotation, `MissionCompleted` / `MissionRotated` events.
+- Extended `GameState` with `activeMissions` and `completedMissionIds` (reused existing `totalIntel` from Story 5-2). `initialSeed` calls `seedActiveMissions`.
+- `GameWorld` batches non-mission events per `applyCommand` / `tick`, runs `evaluateMissions` sequentially, then appends mission events (AC #9 ordering). Skips `MissionCompleted` / `MissionRotated` in the mission pass. Tick-only path short-circuits via evaluator when no mission-relevant deltas.
+- Populated `assets/data/missions.json` with five Epic 10 placeholder entries (rewardIntel not balanced).
+- Tests: `missions_reducer_test.dart` (pure Dart), appended `game_world_test` (order, single completion counts, tick leaves mission list value-equal), `game_event_test` exhaustive switches, `game_state_test` seed/equality/copyWith + toString update.
+- Task 10.4 adjusted: `GameState.copyWith` re-wraps lists, so assertion uses `equals` on `activeMissions` rather than `identical` references.
+- Code review patch pass: separated mission completion and rotation event output so simultaneous completions emit all `MissionCompleted` events before `MissionRotated` events, with regression coverage.
+
 ### File List
+
+- `lib/game/features/missions/mission_state.dart` (new)
+- `lib/game/features/missions/missions_seed.dart` (new)
+- `lib/game/features/missions/missions_reducer.dart` (new)
+- `lib/game/game_state.dart`
+- `lib/game/game_event.dart`
+- `lib/game/game_world.dart`
+- `lib/game/config/balance.dart`
+- `assets/data/missions.json`
+- `test/game/features/missions/missions_reducer_test.dart` (new)
+- `test/game/game_world_test.dart`
+- `test/game/game_state_test.dart`
+- `test/game/game_event_test.dart`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Change Log
+
+- 2026-04-26: Story 5.3 implementation — missions cycle, intel rewards, event ordering, tests, sprint status → review.
+- 2026-04-26: Code review patch pass — fixed simultaneous mission completion/rotation event ordering; story → done.

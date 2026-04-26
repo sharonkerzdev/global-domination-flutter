@@ -1,1 +1,7 @@
-[]
+[
+  { "id": "tap_50_countries", "name": "Tap 50 countries", "conditionType": "tap_countries_n", "conditionParams": { "count": 50 }, "rewardIntel": "10" },
+  { "id": "purchase_5_upgrades", "name": "Purchase 5 upgrades", "conditionType": "purchase_upgrades_n", "conditionParams": { "count": 5 }, "rewardIntel": "15" },
+  { "id": "unlock_2_countries", "name": "Unlock 2 countries", "conditionType": "unlock_countries_n", "conditionParams": { "count": 2 }, "rewardIntel": "25" },
+  { "id": "hire_3_leaders", "name": "Hire 3 leaders", "conditionType": "hire_leaders_n", "conditionParams": { "count": 3 }, "rewardIntel": "40" },
+  { "id": "unlock_1_continent", "name": "Unlock a new continent", "conditionType": "unlock_continents_n", "conditionParams": { "count": 1 }, "rewardIntel": "100" }
+]
