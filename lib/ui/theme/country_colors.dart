@@ -9,6 +9,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
     required this.unlocked,
     required this.readyToCollect,
     required this.automated,
+    required this.conquered,
+    required this.golden,
     required this.continentFills,
   });
 
@@ -18,6 +20,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
   final Color unlocked;
   final Color readyToCollect;
   final Color automated;
+  final Color conquered;
+  final Color golden;
 
   /// Keyed by [ContinentId.value]: africa, europe, middle_east, asia,
   /// south_america, north_america, oceania.
@@ -30,6 +34,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
     unlocked: Color(0xFF4CAF50),
     readyToCollect: Color(0xFFFFC107),
     automated: Color(0xFF00BCD4),
+    conquered: Color(0xFF7B1FA2),
+    golden: Color(0xFFFFC400),
     continentFills: {
       'africa': Color(0x33C2793A),
       'europe': Color(0x334A7FA5),
@@ -49,6 +55,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
     Color? unlocked,
     Color? readyToCollect,
     Color? automated,
+    Color? conquered,
+    Color? golden,
     Map<String, Color>? continentFills,
   }) {
     return CountryColors(
@@ -58,6 +66,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
       unlocked: unlocked ?? this.unlocked,
       readyToCollect: readyToCollect ?? this.readyToCollect,
       automated: automated ?? this.automated,
+      conquered: conquered ?? this.conquered,
+      golden: golden ?? this.golden,
       continentFills: continentFills ?? this.continentFills,
     );
   }
@@ -72,6 +82,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
       unlocked: Color.lerp(unlocked, other.unlocked, t)!,
       readyToCollect: Color.lerp(readyToCollect, other.readyToCollect, t)!,
       automated: Color.lerp(automated, other.automated, t)!,
+      conquered: Color.lerp(conquered, other.conquered, t)!,
+      golden: Color.lerp(golden, other.golden, t)!,
       continentFills: {
         for (final key in continentFills.keys)
           key: Color.lerp(continentFills[key], other.continentFills[key], t)!,
@@ -89,6 +101,8 @@ class CountryColors extends ThemeExtension<CountryColors> {
           unlocked == other.unlocked &&
           readyToCollect == other.readyToCollect &&
           automated == other.automated &&
+          conquered == other.conquered &&
+          golden == other.golden &&
           _mapsEqual(continentFills, other.continentFills));
 
   @override
@@ -99,8 +113,11 @@ class CountryColors extends ThemeExtension<CountryColors> {
     unlocked,
     readyToCollect,
     automated,
+    conquered,
+    golden,
     Object.hashAll(
-      continentFills.entries.map((e) => Object.hash(e.key, e.value)),
+      continentFills.entries.map((e) => Object.hash(e.key, e.value)).toList()
+        ..sort(),
     ),
   );
 }

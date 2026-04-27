@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:global_domination/ui/theme/app_theme.dart';
+import 'package:global_domination/ui/theme/spacing.dart';
+
 class BootErrorScreen extends StatelessWidget {
   final String message;
 
@@ -8,36 +11,48 @@ class BootErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 24),
-                const Text(
-                  'Failed to Load Game Data',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+      theme: appTheme(),
+      home: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          final cs = theme.colorScheme;
+          final tt = theme.textTheme;
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: cs.error),
+                    SizedBox(height: Spacing.lg),
+                    Text(
+                      'Failed to Load Game Data',
+                      style: tt.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: Spacing.md),
+                    Text(
+                      message,
+                      style: tt.bodyMedium?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: Spacing.lg),
+                    Text(
+                      'Please reinstall the app to restore game data.',
+                      style: tt.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Please reinstall the app to restore game data.',
-                  style: TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

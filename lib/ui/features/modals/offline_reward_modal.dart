@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:global_domination/providers/modal_providers.dart';
+import 'package:global_domination/ui/theme/spacing.dart';
 
 /// Human-readable [Duration] for offline time away (not wall-clock; uses event [Duration] only).
 @visibleForTesting
@@ -45,7 +46,7 @@ class OfflineRewardModal extends StatelessWidget {
                   color: cs.onSurface,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.md),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -57,7 +58,7 @@ class OfflineRewardModal extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sm),
               Text(
                 'Time away: ${formatOfflineRewardElapsed(entry.elapsed)}',
                 style: theme.textTheme.bodyLarge?.copyWith(

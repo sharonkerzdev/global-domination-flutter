@@ -13,6 +13,8 @@ void main() {
       expect(d.unlocked, isNotNull);
       expect(d.readyToCollect, isNotNull);
       expect(d.automated, isNotNull);
+      expect(d.conquered, isNotNull);
+      expect(d.golden, isNotNull);
     });
 
     test('has entries for all 7 continents', () {
@@ -47,6 +49,8 @@ void main() {
       expect(result.unlocked, CountryColors.defaults.unlocked);
       expect(result.readyToCollect, CountryColors.defaults.readyToCollect);
       expect(result.automated, CountryColors.defaults.automated);
+      expect(result.conquered, CountryColors.defaults.conquered);
+      expect(result.golden, CountryColors.defaults.golden);
       expect(result.continentFills, CountryColors.defaults.continentFills);
     });
 
@@ -85,6 +89,8 @@ void main() {
         unlocked: Color(0xFF000000),
         readyToCollect: Color(0xFF000000),
         automated: Color(0xFF000000),
+        conquered: Color(0xFF000000),
+        golden: Color(0xFF000000),
         continentFills: {
           'africa': Color(0xFF000000),
           'europe': Color(0xFF000000),
@@ -102,6 +108,8 @@ void main() {
         unlocked: Color(0xFFFFFFFF),
         readyToCollect: Color(0xFFFFFFFF),
         automated: Color(0xFFFFFFFF),
+        conquered: Color(0xFFFFFFFF),
+        golden: Color(0xFFFFFFFF),
         continentFills: {
           'africa': Color(0xFFFFFFFF),
           'europe': Color(0xFFFFFFFF),
@@ -123,6 +131,7 @@ void main() {
   group('CountryColors equality', () {
     test('two defaults instances are equal', () {
       expect(CountryColors.defaults, CountryColors.defaults);
+      expect(CountryColors.defaults.hashCode, CountryColors.defaults.hashCode);
     });
 
     test('copyWith changed field breaks equality', () {
@@ -130,6 +139,24 @@ void main() {
         ocean: const Color(0xFFFF0000),
       );
       expect(CountryColors.defaults == modified, isFalse);
+    });
+
+    test('equal continent fill maps have stable hash regardless of order', () {
+      final a = CountryColors.defaults.copyWith(
+        continentFills: {
+          'africa': CountryColors.defaults.continentFills['africa']!,
+          'europe': CountryColors.defaults.continentFills['europe']!,
+        },
+      );
+      final b = CountryColors.defaults.copyWith(
+        continentFills: {
+          'europe': CountryColors.defaults.continentFills['europe']!,
+          'africa': CountryColors.defaults.continentFills['africa']!,
+        },
+      );
+
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
     });
   });
 }

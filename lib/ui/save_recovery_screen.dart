@@ -6,6 +6,8 @@ import 'package:global_domination/data/database/migrations/database_corruption_e
 import 'package:global_domination/data/database/migrations/migration_failure_exception.dart';
 import 'package:global_domination/data/database/migrations/save_recovery_actions.dart';
 import 'package:global_domination/providers/data_providers.dart';
+import 'package:global_domination/ui/theme/app_theme.dart';
+import 'package:global_domination/ui/theme/spacing.dart';
 
 typedef SaveRecoveryBackupExists = Future<bool> Function(int fromVersion);
 
@@ -296,6 +298,7 @@ class _SaveRecoveryScreenState extends State<SaveRecoveryScreen> {
     final corruption = _corruptionErr;
 
     return MaterialApp(
+      theme: appTheme(),
       themeAnimationDuration: Duration.zero,
       home: Scaffold(
         body: SafeArea(
@@ -303,140 +306,161 @@ class _SaveRecoveryScreenState extends State<SaveRecoveryScreen> {
             builder: (context, constraints) {
               return Scrollbar(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(Spacing.lg),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: constraints.maxWidth),
                     child: Builder(
-                      builder: (scaffoldContext) => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 56,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Save Recovery',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.error.toString(),
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          if (_loadingChoices)
-                            const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: SizedBox(
-                                  height: 28,
-                                  width: 28,
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            )
-                          else ...[
-                            if (_busy)
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8),
-                                child: Center(child: Text('Working…')),
-                              ),
-                            if (migration != null &&
-                                _migrationBackupExists == true)
-                              Semantics(
-                                label:
-                                    'Restore from backup version '
-                                    '${migration.fromVersion}',
-                                button: true,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: FilledButton(
-                                    key: const ValueKey('saveRecoveryRestore'),
-                                    onPressed: _busy
-                                        ? null
-                                        : _onRestoreMigration,
-                                    child: Text(
-                                      'Restore from backup '
-                                      'v${migration.fromVersion}',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            if (corruption != null &&
-                                _latestCorruptionBackup != null)
-                              Semantics(
-                                label:
-                                    'Restore latest schema backup '
-                                    'version ${_latestCorruptionBackup!.version}',
-                                button: true,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      FilledButton(
-                                        key: const ValueKey(
-                                          'saveRecoveryRestoreLatest',
-                                        ),
-                                        onPressed: _busy
-                                            ? null
-                                            : _onRestoreLatestCorruption,
-                                        child: const Text(
-                                          'Restore Latest Backup',
-                                        ),
-                                      ),
-                                      Text(
-                                        'Schema backup v'
-                                        '${_latestCorruptionBackup!.version}',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (_destructiveAllowed)
-                              Semantics(
-                                label: 'Start fresh',
-                                button: true,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: OutlinedButton(
-                                    key: const ValueKey(
-                                      'saveRecoveryStartFresh',
-                                    ),
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _confirmStartFresh(
-                                            scaffoldContext,
-                                          ),
-                                    child: const Text('Start Fresh'),
-                                  ),
-                                ),
-                              ),
-                            Semantics(
-                              label: 'Contact support copy diagnostics',
-                              button: true,
-                              child: OutlinedButton(
-                                key: const ValueKey('saveRecoveryContact'),
-                                onPressed: () =>
-                                    _onContactSupport(scaffoldContext),
-                                child: const Text('Contact Support'),
-                              ),
+                      builder: (scaffoldContext) {
+                        final theme = Theme.of(scaffoldContext);
+                        final cs = theme.colorScheme;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 56,
+                              color: cs.error,
                             ),
+                            SizedBox(height: Spacing.md),
+                            Text(
+                              'Save Recovery',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: Spacing.sm + Spacing.xs),
+                            Text(
+                              widget.error.toString(),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: Spacing.lg),
+                            if (_loadingChoices)
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(Spacing.md),
+                                  child: SizedBox(
+                                    height: 28,
+                                    width: 28,
+                                    child: CircularProgressIndicator(
+                                      color: cs.primary,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else ...[
+                              if (_busy)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: Spacing.sm,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Working…',
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ),
+                              if (migration != null &&
+                                  _migrationBackupExists == true)
+                                Semantics(
+                                  label:
+                                      'Restore from backup version '
+                                      '${migration.fromVersion}',
+                                  button: true,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: Spacing.sm,
+                                    ),
+                                    child: FilledButton(
+                                      key: const ValueKey(
+                                        'saveRecoveryRestore',
+                                      ),
+                                      onPressed: _busy
+                                          ? null
+                                          : _onRestoreMigration,
+                                      child: Text(
+                                        'Restore from backup '
+                                        'v${migration.fromVersion}',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (corruption != null &&
+                                  _latestCorruptionBackup != null)
+                                Semantics(
+                                  label:
+                                      'Restore latest schema backup '
+                                      'version ${_latestCorruptionBackup!.version}',
+                                  button: true,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: Spacing.xs,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        FilledButton(
+                                          key: const ValueKey(
+                                            'saveRecoveryRestoreLatest',
+                                          ),
+                                          onPressed: _busy
+                                              ? null
+                                              : _onRestoreLatestCorruption,
+                                          child: const Text(
+                                            'Restore Latest Backup',
+                                          ),
+                                        ),
+                                        Text(
+                                          'Schema backup v'
+                                          '${_latestCorruptionBackup!.version}',
+                                          style: theme.textTheme.labelSmall,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (_destructiveAllowed)
+                                Semantics(
+                                  label: 'Start fresh',
+                                  button: true,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: Spacing.sm,
+                                    ),
+                                    child: OutlinedButton(
+                                      key: const ValueKey(
+                                        'saveRecoveryStartFresh',
+                                      ),
+                                      onPressed: _busy
+                                          ? null
+                                          : () => _confirmStartFresh(
+                                              scaffoldContext,
+                                            ),
+                                      child: const Text('Start Fresh'),
+                                    ),
+                                  ),
+                                ),
+                              Semantics(
+                                label: 'Contact support copy diagnostics',
+                                button: true,
+                                child: OutlinedButton(
+                                  key: const ValueKey('saveRecoveryContact'),
+                                  onPressed: () =>
+                                      _onContactSupport(scaffoldContext),
+                                  child: const Text('Contact Support'),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),

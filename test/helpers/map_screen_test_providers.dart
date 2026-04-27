@@ -39,5 +39,7 @@ class MapWidgetTestGameWorldNotifier extends GameWorldNotifier {
   void tick(Duration dt) {}
 }
 
-Override mapWidgetTestGameWorldOverride() =>
-    gameWorldProvider.overrideWith((ref) => MapWidgetTestGameWorldNotifier());
+Override mapWidgetTestGameWorldOverride([GameState? initial]) =>
+    gameWorldProvider.overrideWith(
+      (ref) => MapWidgetTestGameWorldNotifier(initial),
+    );

@@ -1,6 +1,6 @@
 # Story 7.1: Theme Tokens and Design System Foundation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -69,56 +69,62 @@ so that every widget reads colors, spacing, and typography from one source.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Expand the theme foundation (AC: #1, #2, #4, #8)
-  - [ ] 1.1 Keep `lib/ui/theme/country_colors.dart` as the existing public import path unless there is a compelling reason to move it. If moving into `lib/ui/theme/extensions/`, leave a compatibility export at the old path.
-  - [ ] 1.2 Add `lib/ui/theme/spacing.dart` with the exact `Spacing.xs/sm/md/lg/xl/xxl` constants from AC #2. Do not use screaming-snake-case names.
-  - [ ] 1.3 Add `lib/ui/theme/hud_palette.dart` as a `ThemeExtension<HudPalette>` for shell/HUD/currency presentation. Include enough tokens for current temporary Influence UI and upcoming Story 7.3, such as badge background, badge foreground, influence accent, intel accent, icon foreground, and elevated surface.
-  - [ ] 1.4 Add `lib/ui/theme/milestone_colors.dart` as a `ThemeExtension<MilestoneColors>` for continent progress/milestone visuals needed by Stories 7.10 and Epic 8. Include track, tick, 25/50/75/100 milestone, and pulse/accent colors.
-  - [ ] 1.5 Update `CountryColors` rather than replacing it. Preserve existing fields used by `CountryPaints`; add only story-relevant missing fields such as `conquered` and `golden` if needed by the architecture/future stories.
-  - [ ] 1.6 Ensure every ThemeExtension has `const defaults`, `copyWith`, `lerp`, `==`, and `hashCode`. For map fields, keep continent fill keys stable for all seven continents.
-  - [ ] 1.7 Optionally add `lib/ui/theme/typography.dart` if it keeps `app_theme.dart` small. Typography must still flow into `ThemeData.textTheme`, not a parallel widget-only style registry.
-  - [ ] 1.8 Update `appTheme()` so it composes the color scheme, Fredoka text theme, and all extensions in one place. Do not add dark mode; architecture says single v1 theme.
+- [x] Task 1: Expand the theme foundation (AC: #1, #2, #4, #8)
+  - [x] 1.1 Keep `lib/ui/theme/country_colors.dart` as the existing public import path unless there is a compelling reason to move it. If moving into `lib/ui/theme/extensions/`, leave a compatibility export at the old path.
+  - [x] 1.2 Add `lib/ui/theme/spacing.dart` with the exact `Spacing.xs/sm/md/lg/xl/xxl` constants from AC #2. Do not use screaming-snake-case names.
+  - [x] 1.3 Add `lib/ui/theme/hud_palette.dart` as a `ThemeExtension<HudPalette>` for shell/HUD/currency presentation. Include enough tokens for current temporary Influence UI and upcoming Story 7.3, such as badge background, badge foreground, influence accent, intel accent, icon foreground, and elevated surface.
+  - [x] 1.4 Add `lib/ui/theme/milestone_colors.dart` as a `ThemeExtension<MilestoneColors>` for continent progress/milestone visuals needed by Stories 7.10 and Epic 8. Include track, tick, 25/50/75/100 milestone, and pulse/accent colors.
+  - [x] 1.5 Update `CountryColors` rather than replacing it. Preserve existing fields used by `CountryPaints`; add only story-relevant missing fields such as `conquered` and `golden` if needed by the architecture/future stories.
+  - [x] 1.6 Ensure every ThemeExtension has `const defaults`, `copyWith`, `lerp`, `==`, and `hashCode`. For map fields, keep continent fill keys stable for all seven continents.
+  - [x] 1.7 Optionally add `lib/ui/theme/typography.dart` if it keeps `app_theme.dart` small. Typography must still flow into `ThemeData.textTheme`, not a parallel widget-only style registry.
+  - [x] 1.8 Update `appTheme()` so it composes the color scheme, Fredoka text theme, and all extensions in one place. Do not add dark mode; architecture says single v1 theme.
 
-- [ ] Task 2: Apply the single theme consistently at app roots (AC: #1, #6)
-  - [ ] 2.1 Update every `MaterialApp` created in `lib/app.dart` to use the same cached `_theme = appTheme()`.
-  - [ ] 2.2 Ensure early loading and boot-error branches still have `Directionality`, `Material`, and theme context. If a branch currently returns a bare `Scaffold`/screen, wrap it in a `MaterialApp(theme: _theme, home: ...)` without changing bootstrap sequencing.
-  - [ ] 2.3 Preserve database bootstrap, content registry, persisted snapshot, offline catch-up, save repository bootstrap, and offline modal host ordering. This story should be visually foundational only.
-  - [ ] 2.4 Do not move global setup into `main.dart`.
+- [x] Task 2: Apply the single theme consistently at app roots (AC: #1, #6)
+  - [x] 2.1 Update every `MaterialApp` created in `lib/app.dart` to use the same cached `_theme = appTheme()`.
+  - [x] 2.2 Ensure early loading and boot-error branches still have `Directionality`, `Material`, and theme context. If a branch currently returns a bare `Scaffold`/screen, wrap it in a `MaterialApp(theme: _theme, home: ...)` without changing bootstrap sequencing.
+  - [x] 2.3 Preserve database bootstrap, content registry, persisted snapshot, offline catch-up, save repository bootstrap, and offline modal host ordering. This story should be visually foundational only.
+  - [x] 2.4 Do not move global setup into `main.dart`.
 
-- [ ] Task 3: Refactor existing non-debug UI to consume tokens (AC: #3, #5, #6)
-  - [ ] 3.1 Update `lib/ui/features/map/map_screen.dart` temporary Influence pill to use `HudPalette`, `Spacing`, `theme.textTheme`, and a tokenized border radius/shape. Do not implement Story 7.3's real HUD.
-  - [ ] 3.2 Update `lib/ui/features/modals/offline_reward_modal.dart` to replace raw spacing literals with `Spacing.*`. Keep `Influence.format()`, elapsed formatting, `Collect` behavior, non-overflow layout, and semantics unchanged.
-  - [ ] 3.3 Update `lib/ui/boot_error_screen.dart`, `lib/ui/save_recovery_screen.dart`, `lib/ui/fallback_error_widget.dart`, and `lib/ui/debug/support_screen.dart` to use `colorScheme`, `textTheme`, `HudPalette` when appropriate, and `Spacing.*`.
-  - [ ] 3.4 Exclude throwaway spike/debug painter files from required token refactors only if they are already excluded from analyzer or clearly marked debug-only. Do not use spike files as a pattern for production widgets.
-  - [ ] 3.5 Keep all existing semantics labels, recovery actions, clipboard behavior, and modal dismissal rules intact.
+- [x] Task 3: Refactor existing non-debug UI to consume tokens (AC: #3, #5, #6)
+  - [x] 3.1 Update `lib/ui/features/map/map_screen.dart` temporary Influence pill to use `HudPalette`, `Spacing`, `theme.textTheme`, and a tokenized border radius/shape. Do not implement Story 7.3's real HUD.
+  - [x] 3.2 Update `lib/ui/features/modals/offline_reward_modal.dart` to replace raw spacing literals with `Spacing.*`. Keep `Influence.format()`, elapsed formatting, `Collect` behavior, non-overflow layout, and semantics unchanged.
+  - [x] 3.3 Update `lib/ui/boot_error_screen.dart`, `lib/ui/save_recovery_screen.dart`, `lib/ui/fallback_error_widget.dart`, and `lib/ui/debug/support_screen.dart` to use `colorScheme`, `textTheme`, `HudPalette` when appropriate, and `Spacing.*`.
+  - [x] 3.4 Exclude throwaway spike/debug painter files from required token refactors only if they are already excluded from analyzer or clearly marked debug-only. Do not use spike files as a pattern for production widgets.
+  - [x] 3.5 Keep all existing semantics labels, recovery actions, clipboard behavior, and modal dismissal rules intact.
 
-- [ ] Task 4: Add token guardrails (AC: #3, #7)
-  - [ ] 4.1 Add `test/architecture/ui_design_tokens_test.dart` or equivalent.
-  - [ ] 4.2 The test must scan production widget files under `lib/ui/**` and fail if raw `Color(...)` or `Colors.*` appears outside allowlisted paths:
+- [x] Task 4: Add token guardrails (AC: #3, #7)
+  - [x] 4.1 Add `test/architecture/ui_design_tokens_test.dart` or equivalent.
+  - [x] 4.2 The test must scan production widget files under `lib/ui/**` and fail if raw `Color(...)` or `Colors.*` appears outside allowlisted paths:
     - `lib/ui/theme/**`
     - generated files if any
     - explicitly debug-only spike files such as `lib/ui/debug/spike_*`
-  - [ ] 4.3 Keep the allowlist narrow and documented in the test. Do not broadly allow all `lib/ui/debug/**` unless `support_screen.dart` has been tokenized or intentionally justified.
-  - [ ] 4.4 Add review guidance in the test failure message or a short comment: spacing and typography literals are also forbidden in widgets and must use `Spacing.*` / `textTheme`, even if the automated regex initially enforces only color literals.
-  - [ ] 4.5 Stretch goal only: add a `custom_lint` rule for color/spacing/text-style literals. If chosen, do not add new packages without checking the dependency impact.
+  - [x] 4.3 Keep the allowlist narrow and documented in the test. Do not broadly allow all `lib/ui/debug/**` unless `support_screen.dart` has been tokenized or intentionally justified.
+  - [x] 4.4 Add review guidance in the test failure message or a short comment: spacing and typography literals are also forbidden in widgets and must use `Spacing.*` / `textTheme`, even if the automated regex initially enforces only color literals.
+  - [x] 4.5 Stretch goal only: add a `custom_lint` rule for color/spacing/text-style literals. If chosen, do not add new packages without checking the dependency impact.
 
-- [ ] Task 5: Theme tests (AC: #1, #2, #4, #8)
-  - [ ] 5.1 Extend `test/ui/theme/country_colors_test.dart` for any new `CountryColors` fields and stable continent fill coverage.
-  - [ ] 5.2 Add `test/ui/theme/app_theme_test.dart` proving `appTheme().extension<CountryColors>()`, `HudPalette`, and `MilestoneColors` are non-null and `textTheme` uses Fredoka-derived styles.
-  - [ ] 5.3 Add `test/ui/theme/spacing_test.dart` covering the exact six values and type.
-  - [ ] 5.4 Add `test/ui/theme/hud_palette_test.dart` and `test/ui/theme/milestone_colors_test.dart` for defaults, `copyWith`, `lerp`, equality, and hash behavior.
-  - [ ] 5.5 Update impacted widget tests to pump `MaterialApp(theme: appTheme(), ...)` if they currently rely on default Material styling.
+- [x] Task 5: Theme tests (AC: #1, #2, #4, #8)
+  - [x] 5.1 Extend `test/ui/theme/country_colors_test.dart` for any new `CountryColors` fields and stable continent fill coverage.
+  - [x] 5.2 Add `test/ui/theme/app_theme_test.dart` proving `appTheme().extension<CountryColors>()`, `HudPalette`, and `MilestoneColors` are non-null and `textTheme` uses Fredoka-derived styles.
+  - [x] 5.3 Add `test/ui/theme/spacing_test.dart` covering the exact six values and type.
+  - [x] 5.4 Add `test/ui/theme/hud_palette_test.dart` and `test/ui/theme/milestone_colors_test.dart` for defaults, `copyWith`, `lerp`, equality, and hash behavior.
+  - [x] 5.5 Update impacted widget tests to pump `MaterialApp(theme: appTheme(), ...)` if they currently rely on default Material styling.
 
-- [ ] Task 6: Verification (AC: all)
-  - [ ] 6.1 Run `dart format --set-exit-if-changed` on changed Dart files.
-  - [ ] 6.2 Run:
+- [x] Task 6: Verification (AC: all)
+  - [x] 6.1 Run `dart format --set-exit-if-changed` on changed Dart files.
+  - [x] 6.2 Run:
     - `flutter test test/ui/theme`
     - `flutter test test/architecture`
     - `flutter test test/ui/features/map`
     - `flutter test test/ui/features/modals`
-  - [ ] 6.3 Run `flutter analyze`.
-  - [ ] 6.4 If Story 6.6 has landed before implementation, run its recovery-screen tests too because this story touches shared recovery UI styling.
-  - [ ] 6.5 Run full `flutter test` if time permits.
+  - [x] 6.3 Run `flutter analyze`.
+  - [x] 6.4 If Story 6.6 has landed before implementation, run its recovery-screen tests too because this story touches shared recovery UI styling.
+  - [x] 6.5 Run full `flutter test` if time permits.
+
+### Review Findings
+
+- [x] [Review][Patch] Remove or complete the partial Fredoka asset bundle; Story 7.1 marks font asset bundling out of scope unless a cold-start regression was measured, and bundling only `Fredoka-Regular.ttf` still leaves non-400 Fredoka variants to runtime fetching. [`pubspec.yaml`:100]
+- [x] [Review][Patch] Constrain the temporary Influence pill text so late-game abbreviated totals and larger text scales cannot overflow the map overlay. [`lib/ui/features/map/map_screen.dart`:214]
+- [x] [Review][Patch] Make `CountryColors.hashCode` consistent with `_mapsEqual` for equal `continentFills` maps inserted in different orders, and add the required hash-stability regression coverage. [`lib/ui/theme/country_colors.dart`:118]
 
 ## Dev Notes
 
@@ -242,11 +248,47 @@ Use `ColorScheme` for standard Material surfaces/errors and ThemeExtensions for 
 
 ### Agent Model Used
 
-TBD by dev agent.
+Composer (Cursor agent).
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `Spacing`, `HudPalette`, `MilestoneColors`, extended `CountryColors` (conquered/golden), `appTheme()` with Material 3 `ColorScheme` + Fredoka + all extensions.
+- Themed every `MaterialApp` bootstrap branch in `app.dart`; `BootErrorScreen`, `SaveRecoveryScreen`, `FallbackErrorWidget` use `appTheme()`; tokenized map Influence pill, offline reward spacing, support screen, map load states.
+- Added `lib/ui/theme/typography.dart` with `appTextTheme` (Fredoka) used by `appTheme()`.
+- Added `test/architecture/ui_design_tokens_test.dart` color literal guardrail (allowlist: `lib/ui/theme/**`, `lib/ui/debug/spike_*`).
+- Stretch `custom_lint` (Task 4.5): not implemented.
+- Review patches removed app-bundled Fredoka assets, added test-only Google Fonts fixture loading, capped the temporary Influence pill width, and stabilized `CountryColors.hashCode`.
+- `dart format`, `flutter analyze`, and full `flutter test` (832 passed).
+
 ### File List
 
+- `lib/ui/theme/spacing.dart`
+- `lib/ui/theme/hud_palette.dart`
+- `lib/ui/theme/milestone_colors.dart`
+- `lib/ui/theme/typography.dart`
+- `lib/ui/theme/app_theme.dart`
+- `lib/ui/theme/country_colors.dart`
+- `lib/app.dart`
+- `lib/ui/features/map/map_screen.dart`
+- `lib/ui/features/modals/offline_reward_modal.dart`
+- `lib/ui/boot_error_screen.dart`
+- `lib/ui/save_recovery_screen.dart`
+- `lib/ui/fallback_error_widget.dart`
+- `lib/ui/debug/support_screen.dart`
+- `test/architecture/ui_design_tokens_test.dart`
+- `test/flutter_test_config.dart`
+- `test/fixtures/google_fonts/4005e941354c2352a3570e1f7c54b10005633b5f2869eeb63867754c0c680e49.ttf`
+- `test/fixtures/google_fonts/125cc34039587d0926961da82659002e686518af02c0771f7224c40a63f2c144.ttf`
+- `test/fixtures/google_fonts/fa3c58dcf129a67237d2f4284691f0cb1455816149c446a873d29e3868dcc53a.ttf`
+- `test/fixtures/google_fonts/70d1c0745883e965e3ae80c61a32ee2e547f444e0804649d673a700989447a29.ttf`
+- `test/fixtures/google_fonts/e646f1ecd8e27d6468396ddecc96774207d41706edee7fd82d1a1385ba98d29f.ttf`
+- `test/ui/theme/app_theme_test.dart`
+- `test/ui/theme/spacing_test.dart`
+- `test/ui/theme/hud_palette_test.dart`
+- `test/ui/theme/milestone_colors_test.dart`
+- `test/ui/theme/country_colors_test.dart`
+- `test/helpers/map_screen_test_providers.dart`
+- `test/ui/features/map/world_map_painter_test.dart`
+- `test/providers/offline_catchup_boot_provider_test.dart` (dart format only)

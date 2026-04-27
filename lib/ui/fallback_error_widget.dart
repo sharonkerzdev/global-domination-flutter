@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:global_domination/ui/theme/app_theme.dart';
+import 'package:global_domination/ui/theme/spacing.dart';
+
 class FallbackErrorWidget extends StatelessWidget {
   const FallbackErrorWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Something went wrong',
-                style: TextStyle(color: Colors.white, fontSize: 20),
+      theme: appTheme(),
+      home: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          final cs = theme.colorScheme;
+          return Scaffold(
+            backgroundColor: cs.surface,
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Something went wrong',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: Spacing.md),
+                  FilledButton(
+                    onPressed: SystemNavigator.pop,
+                    child: const Text('Restart'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: SystemNavigator.pop,
-                child: const Text('Restart'),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

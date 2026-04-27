@@ -49,23 +49,28 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
   Widget build(BuildContext context) {
     final bootAsync = ref.watch(databaseBootstrapProvider);
     return bootAsync.when(
-      loading: () => const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => MaterialApp(
+        theme: _theme,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
       error: (error, stack) =>
           SaveRecoveryScreen(error: error, stackTrace: stack),
       data: (_) {
         final registryAsync = ref.watch(contentRegistryProvider);
         return registryAsync.when(
-          loading: () => const MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          loading: () => MaterialApp(
+            theme: _theme,
+            home: const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
           ),
           error: (error, stack) => BootErrorScreen(message: error.toString()),
           data: (_) {
             final persistedAsync = ref.watch(persistedGameSnapshotProvider);
             return persistedAsync.when(
-              loading: () => const MaterialApp(
-                home: Scaffold(
+              loading: () => MaterialApp(
+                theme: _theme,
+                home: const Scaffold(
                   body: Center(child: CircularProgressIndicator()),
                 ),
               ),
@@ -75,8 +80,9 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
                 ref.watch(offlineRewardModalControllerProvider.notifier);
                 final offlineBoot = ref.watch(offlineCatchupBootProvider);
                 return offlineBoot.when(
-                  loading: () => const MaterialApp(
-                    home: Scaffold(
+                  loading: () => MaterialApp(
+                    theme: _theme,
+                    home: const Scaffold(
                       body: Center(child: CircularProgressIndicator()),
                     ),
                   ),

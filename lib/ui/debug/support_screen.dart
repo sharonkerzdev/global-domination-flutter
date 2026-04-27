@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:global_domination/ui/theme/spacing.dart';
+
 import '../../data/repositories/crash_log_entry.dart';
 import '../../providers/data_providers.dart';
 
@@ -17,6 +19,7 @@ class SupportScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logsAsync = ref.watch(crashLogsProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -39,7 +42,18 @@ class SupportScreen extends ConsumerWidget {
       ),
       body: logsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading logs: $err')),
+        error: (err, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Text(
+              'Error loading logs: $err',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
         data: (logs) {
           if (logs.isEmpty) {
             return const Center(child: Text('No crash logs recorded.'));
@@ -87,6 +101,7 @@ class _CrashLogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final timestampText = entry.timestamp.toIso8601String();
     final levelLabel = entry.level.name.toUpperCase();
     final title = '[$levelLabel] ${entry.tag} — ${entry.message}';
@@ -96,24 +111,25 @@ class _CrashLogCard extends StatelessWidget {
         label: 'Crash log: $levelLabel from ${entry.tag}',
         child: ExpansionTile(
           title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(timestampText, style: const TextStyle(fontSize: 10)),
+          trailing: Text(timestampText, style: theme.textTheme.labelSmall),
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SelectableText(
                     entry.message,
-                    style: const TextStyle(fontFamily: 'monospace'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                    ),
                   ),
                   if (entry.stackTrace != null) ...[
-                    const SizedBox(height: 8),
+                    SizedBox(height: Spacing.sm),
                     SelectableText(
                       entry.stackTrace!,
-                      style: const TextStyle(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         fontFamily: 'monospace',
-                        fontSize: 11,
                       ),
                     ),
                   ],

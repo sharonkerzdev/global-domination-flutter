@@ -1,5 +1,10 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-27
+# 2026-04-27: Story 7-2 → in-progress (5-tab BottomNavigationBar + IndexedStack shell)
+# 2026-04-27: Story 7-1 code review patch pass -> done (removed app-bundled Fredoka asset, added test-only Google Fonts fixtures/config, capped temporary Influence pill, stabilized CountryColors hash; flutter analyze + flutter test 832 passed)
+# 2026-04-27: Story 7-1 → review (theme tokens: Spacing/HudPalette/MilestoneColors/CountryColors/typography, themed MaterialApp branches, tokenized map pill + boot/recovery/support/offline modal, ui_design_tokens_test, Fredoka in google_fonts/ assets; flutter analyze + flutter test 830 passed)
+# 2026-04-27: Story 7-3 created -> ready-for-dev (Global HUD with Influence/Intel badges, reusable CurrencyBadge/AnimatedCounter, totalInfluence/totalIntel providers, stats/settings placeholder hooks, removes MapScreen temporary Influence pill after Story 7-2 AppScaffold lands, preserves Epic 6 boot/offline modal order and excludes full stats/settings/modal queue/upgrades/leaders UI)
+# 2026-04-27: Story 7-2 created -> ready-for-dev (AppScaffold shell with 5-tab BottomNavigationBar + IndexedStack, placeholder tabs, map pan/zoom preservation, GeoJSON no-reparse guardrails, preserves Epic 6 boot/offline modal/save recovery ordering and excludes HUD/modal queue/settings/upgrades/leaders feature UI)
 # 2026-04-27: Story 6-6 code review passed -> done (0 findings; flutter analyze + flutter test 816 passed)
 # 2026-04-27: Story 6-6 → review (DatabaseCorruptionException + bootstrap wiring, SaveRecoveryActions latest backup/WAL-SHM quarantine/start fresh, SaveRecoveryScreen corruption+migration UX, Contact Support payload, PathProvider-backed widget tests; flutter analyze clean; flutter test 816 passed)
 # 2026-04-27: Story 7-1 created -> ready-for-dev (Theme tokens/design-system foundation: appTheme composition, Spacing constants, CountryColors/HudPalette/MilestoneColors extensions, tokenized existing UI, color-literal guardrail tests; preserves Epic 6 boot/offline modal/recovery ordering and excludes nav/HUD/modal queue implementation)
@@ -205,9 +210,9 @@ development_status:
 
   # Epic 7: Complete the Shell — Navigation, HUD, Stats, Settings, Upgrades & Leaders Screens
   epic-7: in-progress
-  7-1-theme-tokens-and-design-system-foundation: ready-for-dev
-  7-2-app-scaffold-with-5-tab-bottom-navigation-and-indexedstack: backlog
-  7-3-global-hud-with-influence-and-intel-currency-badges: backlog
+  7-1-theme-tokens-and-design-system-foundation: done
+  7-2-app-scaffold-with-5-tab-bottom-navigation-and-indexedstack: in-progress
+  7-3-global-hud-with-influence-and-intel-currency-badges: ready-for-dev
   7-4-sequential-modal-queue-with-priority: backlog
   7-5-stats-screen-reachable-from-hud: backlog
   7-6-settings-modal-overlay-from-hud-gear-icon: backlog

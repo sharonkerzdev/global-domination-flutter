@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:decimal/decimal.dart';
 
+import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
+import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/providers/geo_providers.dart';
 
 import '../../../helpers/map_screen_test_providers.dart';
@@ -240,6 +243,32 @@ void main() {
 
       expect(find.textContaining('Map load error'), findsOneWidget);
       expect(find.textContaining('boom'), findsOneWidget);
+    });
+
+    testWidgets('temporary Influence pill stays within narrow viewport', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(160, 320));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            geoProvider.overrideWith((ref) async => fakeCountries),
+            mapWidgetTestGameWorldOverride(
+              GameState(totalInfluence: Influence(Decimal.parse('1e38'))),
+            ),
+          ],
+          child: MaterialApp(theme: appTheme(), home: const MapScreen()),
+        ),
+      );
+      await tester.pump();
+
+      final badgeBox = tester.renderObject<RenderBox>(
+        find.byKey(const ValueKey('temporaryInfluencePill')),
+      );
+      expect(badgeBox.size.width, lessThanOrEqualTo(112));
+      expect(tester.takeException(), isNull);
     });
   });
 }

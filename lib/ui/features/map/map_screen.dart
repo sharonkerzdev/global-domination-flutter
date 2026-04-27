@@ -15,6 +15,8 @@ import 'package:global_domination/ui/features/map/country_visual_state.dart';
 import 'package:global_domination/ui/features/map/hit_test/polygon_hit_tester.dart';
 import 'package:global_domination/ui/features/map/world_map_painter.dart';
 import 'package:global_domination/ui/theme/country_colors.dart';
+import 'package:global_domination/ui/theme/hud_palette.dart';
+import 'package:global_domination/ui/theme/spacing.dart';
 
 class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
@@ -25,10 +27,31 @@ class MapScreen extends ConsumerWidget {
     final gameState = ref.watch(gameWorldProvider);
 
     return geoAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, _) =>
-          Scaffold(body: Center(child: Text('Map load error: $error'))),
+      loading: () {
+        final theme = Theme.of(context);
+        return Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: theme.colorScheme.primary),
+          ),
+        );
+      },
+      error: (error, _) {
+        final theme = Theme.of(context);
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Text(
+                'Map load error: $error',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        );
+      },
       data: (countries) => _MapView(countries: countries, gameState: gameState),
     );
   }
@@ -139,7 +162,9 @@ class _MapViewState extends ConsumerState<_MapView> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<CountryColors>()!;
+    final theme = Theme.of(context);
+    final colors = theme.extension<CountryColors>()!;
+    final hud = theme.extension<HudPalette>()!;
     final countryStates = _deriveVisualStates(widget.gameState);
     final totalInfluence = widget.gameState.totalInfluence;
 
@@ -182,22 +207,30 @@ class _MapViewState extends ConsumerState<_MapView> {
             },
           ),
           Positioned(
-            top: 48,
-            left: 0,
-            right: 0,
+            top: Spacing.xxl,
+            left: Spacing.lg,
+            right: Spacing.lg,
             child: Center(
               child: Container(
+                key: const ValueKey('temporaryInfluencePill'),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                  horizontal: Spacing.md,
+                  vertical: Spacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(20),
+                  color: hud.badgeBackground,
+                  borderRadius: BorderRadius.circular(hud.badgeBorderRadius),
                 ),
-                child: Text(
-                  'Influence: ${totalInfluence.format()}',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Influence: ${totalInfluence.format()}',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: hud.badgeForeground,
+                    ),
+                  ),
                 ),
               ),
             ),

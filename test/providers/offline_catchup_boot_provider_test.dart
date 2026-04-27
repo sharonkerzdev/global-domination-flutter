@@ -17,22 +17,25 @@ void main() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   });
 
-  test('offlineCatchupBootProvider completes with memory db and test content', () async {
-    final content = testMapperContentRegistry();
-    late AppDatabase db;
-    final container = ProviderContainer(
-      overrides: [
-        appDatabaseFactoryProvider.overrideWithValue(() {
-          db = AppDatabase(NativeDatabase.memory());
-          return db;
-        }),
-        contentRegistryProvider.overrideWith((ref) async => content),
-      ],
-    );
-    addTearDown(container.dispose);
-    addTearDown(() async => db.close());
+  test(
+    'offlineCatchupBootProvider completes with memory db and test content',
+    () async {
+      final content = testMapperContentRegistry();
+      late AppDatabase db;
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseFactoryProvider.overrideWithValue(() {
+            db = AppDatabase(NativeDatabase.memory());
+            return db;
+          }),
+          contentRegistryProvider.overrideWith((ref) async => content),
+        ],
+      );
+      addTearDown(container.dispose);
+      addTearDown(() async => db.close());
 
-    await container.read(databaseBootstrapProvider.future);
-    await container.read(offlineCatchupBootProvider.future);
-  });
+      await container.read(databaseBootstrapProvider.future);
+      await container.read(offlineCatchupBootProvider.future);
+    },
+  );
 }
