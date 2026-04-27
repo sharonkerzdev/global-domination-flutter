@@ -41,17 +41,28 @@ class SaveRepository {
   final Duration _debounceDuration;
   late final StreamSubscription<GameEvent> _subscription;
   Timer? _metaTimer;
+  Future<void>? _activeMetaWrite;
   bool _metaPending = false;
   bool _metaSeeded = false;
 
-  Future<void> flush() async {
+  Future<void> flush({bool forceMetaSnapshot = false}) async {
     _metaTimer?.cancel();
     _metaTimer = null;
-    if (!_metaPending) {
-      return;
+    if (forceMetaSnapshot) {
+      _metaPending = true;
     }
     try {
-      await _writeMetaSnapshot();
+      while (true) {
+        final activeWrite = _activeMetaWrite;
+        if (activeWrite != null) {
+          await activeWrite;
+          continue;
+        }
+        if (!_metaPending) {
+          return;
+        }
+        await _runMetaWriteIfPending();
+      }
     } on Object catch (e, s) {
       _log.warning('meta flush write failed', e, s);
     }
@@ -67,8 +78,26 @@ class SaveRepository {
     _metaTimer?.cancel();
     _metaTimer = Timer(_debounceDuration, () {
       _metaTimer = null;
-      unawaited(_writeMetaSnapshot());
+      unawaited(_runMetaWriteIfPending());
     });
+  }
+
+  Future<void> _runMetaWriteIfPending() {
+    final activeWrite = _activeMetaWrite;
+    if (activeWrite != null) {
+      return activeWrite;
+    }
+    if (!_metaPending) {
+      return Future<void>.value();
+    }
+    late final Future<void> trackedWrite;
+    trackedWrite = _writeMetaSnapshot().whenComplete(() {
+      if (identical(_activeMetaWrite, trackedWrite)) {
+        _activeMetaWrite = null;
+      }
+    });
+    _activeMetaWrite = trackedWrite;
+    return trackedWrite;
   }
 
   Future<void> _writeMetaSnapshot() async {

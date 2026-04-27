@@ -3,9 +3,11 @@ import 'package:test/test.dart';
 
 import 'package:global_domination/game/config/constants.dart';
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/economy/offline_catchup.dart';
+import 'package:global_domination/game/features/goldens/active_golden_effect.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
@@ -112,6 +114,8 @@ void main() {
     });
 
     test('active boost and golden effect do not change offline total', () {
+      final now = DateTime.utc(2026, 6, 1, 13);
+      final saved = DateTime.utc(2026, 6, 1, 12);
       final egypt = CountryState(
         id: const CountryId('egypt'),
         unlocked: true,
@@ -125,10 +129,21 @@ void main() {
         totalInfluence: Influence.zero,
         unlockedContinents: {const ContinentId('africa'): true},
         goldenOpportunityMultiplier: Decimal.parse('50'),
+        activeBoost: BoostState(
+          multiplier: Decimal.fromInt(2),
+          expiresAt: now.add(const Duration(seconds: 30)),
+        ),
+        activeGoldenEffect: ActiveGoldenEffect(
+          goldenId: 'golden-1',
+          multiplier: 99,
+          expiresAt: now.add(const Duration(seconds: 30)),
+        ),
       );
-      final plain = boosted.copyWith(goldenOpportunityMultiplier: Decimal.one);
-      final now = DateTime.utc(2026, 6, 1, 13);
-      final saved = DateTime.utc(2026, 6, 1, 12);
+      final plain = boosted.copyWith(
+        goldenOpportunityMultiplier: Decimal.one,
+        activeBoost: null,
+        activeGoldenEffect: null,
+      );
       final a = OfflineCatchup.apply(
         boosted,
         content,

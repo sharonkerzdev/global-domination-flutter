@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,14 +48,24 @@ class _SpyGameWorldNotifier extends GameWorldNotifier {
   void apply(GameCommand cmd) {}
 }
 
-Widget _buildApp(_SpyGameWorldNotifier notifier) {
+Widget _buildApp(
+  _SpyGameWorldNotifier notifier, {
+  Future<void> Function()? onResume,
+}) {
   return ProviderScope(
     overrides: [
       gameWorldProvider.overrideWith((ref) => notifier),
-      resumeOfflineCatchupProvider.overrideWithValue(() async {}),
+      resumeOfflineCatchupProvider.overrideWithValue(onResume ?? () async {}),
     ],
     child: const MaterialApp(home: GameLoop(child: SizedBox.expand())),
   );
+}
+
+bool _gameLoopAbsorbing(WidgetTester tester) {
+  return tester
+      .widgetList<AbsorbPointer>(find.byType(AbsorbPointer))
+      .firstWhere((widget) => widget.child is SizedBox)
+      .absorbing;
 }
 
 void main() {
@@ -131,6 +143,101 @@ void main() {
       // Resume
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(notifier.ticks.length, greaterThan(countAfterPause));
+    });
+
+    testWidgets(
+      'resume catch-up blocks input and completes before ticker restart',
+      (tester) async {
+        final notifier = _SpyGameWorldNotifier();
+        final resume = Completer<void>();
+        var resumeCalls = 0;
+        await tester.pumpWidget(
+          _buildApp(
+            notifier,
+            onResume: () {
+              resumeCalls++;
+              return resume.future;
+            },
+          ),
+        );
+
+        await tester.pump(const Duration(milliseconds: 16));
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pump();
+        final countAfterPause = notifier.ticks.length;
+
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+        expect(resumeCalls, 1);
+        expect(_gameLoopAbsorbing(tester), isTrue);
+
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump(const Duration(milliseconds: 32));
+        expect(resumeCalls, 1);
+        expect(notifier.ticks.length, countAfterPause);
+
+        resume.complete();
+        await tester.pump();
+        await tester.pump();
+        expect(_gameLoopAbsorbing(tester), isFalse);
+
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(notifier.ticks.length, greaterThan(countAfterPause));
+      },
+    );
+
+    testWidgets(
+      'resume catch-up does not restart ticker if lifecycle leaves resumed',
+      (tester) async {
+        final notifier = _SpyGameWorldNotifier();
+        final resume = Completer<void>();
+        await tester.pumpWidget(
+          _buildApp(notifier, onResume: () => resume.future),
+        );
+
+        await tester.pump(const Duration(milliseconds: 16));
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pump();
+        final countAfterPause = notifier.ticks.length;
+
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        resume.complete();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 16));
+
+        expect(notifier.ticks.length, countAfterPause);
+      },
+    );
+
+    testWidgets('resume catch-up error still restarts ticker', (tester) async {
+      final notifier = _SpyGameWorldNotifier();
+      await tester.pumpWidget(
+        _buildApp(
+          notifier,
+          onResume: () async {
+            throw StateError('forced');
+          },
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 16));
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      final countAfterPause = notifier.ticks.length;
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(notifier.ticks.length, greaterThan(countAfterPause));

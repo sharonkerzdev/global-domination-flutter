@@ -1,6 +1,6 @@
 # Story 6.4: Offline Earnings Calculation on Resume
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -235,6 +235,16 @@ so that returning to the game feels respectful of my time.
   - [x] 10.3 Run `flutter analyze`.
   - [x] 10.4 Run full `flutter test` if time permits, because this story touches boot, providers, lifecycle, and game event exhaustiveness.
 
+### Review Findings
+
+- [x] [Review][Patch] Pause/resume clock source can be stale or racing [lib/data/repositories/save_repository.dart:47]
+- [x] [Review][Patch] Resume catch-up is not single-flight and can double-apply [lib/ui/features/map/game_loop.dart:47]
+- [x] [Review][Patch] Resume catch-up can restart ticker after app leaves foreground [lib/ui/features/map/game_loop.dart:52]
+- [x] [Review][Patch] Resume catch-up errors can leave the ticker stopped [lib/ui/features/map/game_loop.dart:52]
+- [x] [Review][Patch] Map remains interactive during resume catch-up [lib/ui/features/map/game_loop.dart:71]
+- [x] [Review][Patch] OfflineCatchupController can emit before SaveRepository subscription [lib/providers/offline_catchup_providers.dart:21]
+- [x] [Review][Patch] Story-required ordering/transient tests do not cover delayed resume or activeBoost/activeGoldenEffect [test/ui/features/map/game_loop_test.dart:53]
+
 ## Dev Notes
 
 ### Implementation Scope
@@ -379,6 +389,7 @@ meta.lastSavedAt + Clock.now()
 ### Completion Notes List
 
 - Implemented `GameConstants.maxOfflineHours`, `OfflineEarningsApplied` event, pure `OfflineCatchup.apply` with stable `IncomeCalculator` path, `GameWorld.applyOfflineCatchup` + notifier, `PersistedGameSnapshot` + `persistedGameSnapshotProvider` (in `game_providers.dart`), `database_providers.dart` split to break import cycles, `offline_catchup_providers` (controller, boot gate, `resumeOfflineCatchupProvider`), `SaveRepository` meta case, `GlobalDominationApp` gates for snapshot + boot catch-up, `GameLoop` awaits resume catch-up before `Ticker.start`, optional `GameLifecycleObserver.onResume` (tests + error swallowing). Map UI tests use `mapWidgetTestGameWorldOverride` to avoid async content/DB. `flutter test` 777 passed, `dart analyze` clean (2026-04-27).
+- Review patch pass: forced lifecycle meta checkpoints on pause/inactive/hidden/detached, serialized resume catch-up with pending meta flushes and single-flight guards, blocked map input during resume catch-up, prevented background ticker restart, swallowed/logged resume failures with ticker recovery, instantiated `SaveRepository` before offline events, and expanded regression coverage. `flutter analyze` clean and full `flutter test` 781 passed (2026-04-27).
 
 ### File List
 

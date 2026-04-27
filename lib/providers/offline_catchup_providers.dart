@@ -11,10 +11,12 @@ class OfflineCatchupController {
   OfflineCatchupController(this._ref);
 
   final Ref _ref;
+  Future<void>? _resumeInFlight;
 
   Future<OfflineCatchupResult?> applyFromLastSavedAt(
     DateTime? lastSavedAt,
   ) async {
+    final saveRepository = _ref.read(saveRepositoryProvider);
     if (lastSavedAt == null) {
       return null;
     }
@@ -22,13 +24,29 @@ class OfflineCatchupController {
         .read(gameWorldProvider.notifier)
         .applyOfflineCatchup(lastSavedAt: lastSavedAt);
     if (result.emittedEvent) {
-      await _ref.read(saveRepositoryProvider).flush();
+      await saveRepository.flush();
     }
     return result;
   }
 
   /// Uses the latest [meta.lastSavedAt] from storage (post-flush pause time).
-  Future<void> applyResumeFromDatabase() async {
+  Future<void> applyResumeFromDatabase() {
+    final existing = _resumeInFlight;
+    if (existing != null) {
+      return existing;
+    }
+    late final Future<void> next;
+    next = _applyResumeFromDatabase().whenComplete(() {
+      if (identical(_resumeInFlight, next)) {
+        _resumeInFlight = null;
+      }
+    });
+    _resumeInFlight = next;
+    return next;
+  }
+
+  Future<void> _applyResumeFromDatabase() async {
+    await _ref.read(saveRepositoryProvider).flush();
     final rows = await _ref.read(appDatabaseProvider).loadAll();
     await applyFromLastSavedAt(rows.meta?.lastSavedAt.toUtc());
   }

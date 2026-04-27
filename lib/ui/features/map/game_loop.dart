@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/offline_catchup_providers.dart';
@@ -18,8 +19,13 @@ class GameLoop extends ConsumerStatefulWidget {
 
 class _GameLoopState extends ConsumerState<GameLoop>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  static final _log = Logger('GameLoop');
+
   late final Ticker _ticker;
   Duration _lastElapsed = Duration.zero;
+  AppLifecycleState _lifecycleState = AppLifecycleState.resumed;
+  Future<void>? _resumeFuture;
+  bool _resumeInProgress = false;
 
   @override
   void initState() {
@@ -41,21 +47,54 @@ class _GameLoopState extends ConsumerState<GameLoop>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleState = state;
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
       if (_ticker.isActive) _ticker.stop();
     } else if (state == AppLifecycleState.resumed) {
       unawaited(_resumeTickerAfterOfflineCatchup());
     }
   }
 
-  Future<void> _resumeTickerAfterOfflineCatchup() async {
-    final runResume = ref.read(resumeOfflineCatchupProvider);
-    await runResume();
-    if (!mounted) return;
-    if (!_ticker.isActive) {
-      _lastElapsed = Duration.zero;
-      await _ticker.start();
+  Future<void> _resumeTickerAfterOfflineCatchup() {
+    final existing = _resumeFuture;
+    if (existing != null) {
+      return existing;
+    }
+
+    late final Future<void> next;
+    next = _runResumeTickerAfterOfflineCatchup().whenComplete(() {
+      if (identical(_resumeFuture, next)) {
+        _resumeFuture = null;
+      }
+    });
+    _resumeFuture = next;
+    return next;
+  }
+
+  Future<void> _runResumeTickerAfterOfflineCatchup() async {
+    setState(() {
+      _resumeInProgress = true;
+    });
+    try {
+      final runResume = ref.read(resumeOfflineCatchupProvider);
+      await runResume();
+    } on Object catch (e, s) {
+      _log.warning('resume offline catch-up failed', e, s);
+    } finally {
+      if (mounted) {
+        final shouldRestart =
+            _lifecycleState == AppLifecycleState.resumed && !_ticker.isActive;
+        setState(() {
+          _resumeInProgress = false;
+        });
+        if (shouldRestart) {
+          _lastElapsed = Duration.zero;
+          unawaited(_ticker.start());
+        }
+      }
     }
   }
 
@@ -68,5 +107,7 @@ class _GameLoopState extends ConsumerState<GameLoop>
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    return AbsorbPointer(absorbing: _resumeInProgress, child: widget.child);
+  }
 }

@@ -646,6 +646,22 @@ void main() {
       await h.shutdown();
     });
 
+    test(
+      'forced flush writes lifecycle checkpoint without pending event',
+      () async {
+        final h = SaveRepositoryTestHarness()
+          ..start(
+            initial: egyptOnlyGameState(total: Influence(Decimal.fromInt(7))),
+          );
+        await h.repo.flush(forceMetaSnapshot: true);
+        final meta = await h.db.select(h.db.meta).getSingle();
+        expect(meta.totalInfluence, Decimal.fromInt(7));
+        expect(meta.lastSavedAt, equals(testRepoTimeUtc));
+        expect(h.clock.nowCalls, 1);
+        await h.shutdown();
+      },
+    );
+
     test('flush cancels future debounce', () async {
       final h = SaveRepositoryTestHarness()
         ..start(initial: egyptOnlyGameState(ip: 2));

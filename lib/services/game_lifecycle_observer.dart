@@ -44,7 +44,7 @@ class GameLifecycleObserver with WidgetsBindingObserver {
 
   Future<void> _flushAndLog() async {
     try {
-      await _save.flush();
+      await _save.flush(forceMetaSnapshot: true);
     } on Object catch (e, s) {
       _log.warning('lifecycle flush failed', e, s);
     }
