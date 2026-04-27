@@ -13,6 +13,7 @@ import 'package:global_domination/game/support/clock.dart';
 import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/providers/modal_providers.dart';
 import 'package:global_domination/ui/features/modals/offline_reward_modal_host.dart';
 
 // ---------------------------------------------------------------------------
@@ -58,7 +59,61 @@ OfflineEarningsApplied _positive42() => OfflineEarningsApplied(
 );
 
 void main() {
+  group('OfflineRewardModalQueue', () {
+    test('entries cannot be mutated through the public list', () {
+      final queue = OfflineRewardModalQueue([
+        OfflineRewardModalEntry(
+          totalEarned: Influence(Decimal.fromInt(1)),
+          elapsed: const Duration(minutes: 1),
+          at: DateTime.utc(2026, 4, 1),
+        ),
+      ]);
+
+      expect(
+        () => queue.entries.add(
+          OfflineRewardModalEntry(
+            totalEarned: Influence(Decimal.fromInt(2)),
+            elapsed: const Duration(minutes: 2),
+            at: DateTime.utc(2026, 4, 1, 0, 2),
+          ),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
   group('OfflineRewardModalHost', () {
+    testWidgets(
+      'event buffered before host mount shows modal when host starts',
+      (tester) async {
+        final bus = StreamController<GameEvent>.broadcast();
+        addTearDown(bus.close);
+        final container = ProviderContainer(
+          overrides: [
+            gameWorldEventsProvider.overrideWith((ref) => bus.stream),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        container.read(offlineRewardModalControllerProvider);
+        bus.add(_positive42());
+        await tester.pump();
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              home: OfflineRewardModalHost(
+                child: ColoredBox(color: Color(0xFF00FF00), child: Text('app')),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+      },
+    );
+
     testWidgets('positive OfflineEarningsApplied shows modal', (tester) async {
       final bus = StreamController<GameEvent>.broadcast();
       addTearDown(bus.close);
@@ -114,6 +169,36 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    testWidgets('negative-earned event does not show dialog', (tester) async {
+      final bus = StreamController<GameEvent>.broadcast();
+      addTearDown(bus.close);
+      final spy = _MapSpyNotifier();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gameWorldEventsProvider.overrideWith((ref) => bus.stream),
+            gameWorldProvider.overrideWith((ref) => spy),
+          ],
+          child: const MaterialApp(
+            home: OfflineRewardModalHost(
+              child: ColoredBox(color: Color(0xFF00FF00), child: Text('app')),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      bus.add(
+        OfflineEarningsApplied(
+          DateTime.utc(2026, 4, 1),
+          totalEarned: Influence(Decimal.fromInt(-1)),
+          elapsed: const Duration(hours: 1),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
     testWidgets('barrier tap does not dismiss the dialog', (tester) async {
       final bus = StreamController<GameEvent>.broadcast();
       addTearDown(bus.close);
@@ -138,6 +223,34 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
 
       await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('system back does not dismiss the dialog', (tester) async {
+      final bus = StreamController<GameEvent>.broadcast();
+      addTearDown(bus.close);
+      final spy = _MapSpyNotifier();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gameWorldEventsProvider.overrideWith((ref) => bus.stream),
+            gameWorldProvider.overrideWith((ref) => spy),
+          ],
+          child: const MaterialApp(
+            home: OfflineRewardModalHost(
+              child: ColoredBox(color: Color(0xFF00FF00), child: Text('app')),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      bus.add(_positive42());
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
     });

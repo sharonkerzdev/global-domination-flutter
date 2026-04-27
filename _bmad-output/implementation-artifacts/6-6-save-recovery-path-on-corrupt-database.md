@@ -1,6 +1,6 @@
 # Story 6.6: Save Recovery Path on Corrupt Database
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -70,33 +70,33 @@ so that I do not silently lose progress or get stuck in a crash loop.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add an explicit database corruption exception and classifier (AC: #1, #10)
-  - [ ] 1.1 Create `lib/data/database/migrations/database_corruption_exception.dart` or an equivalent adjacent recovery file near the existing 6.3 recovery helpers.
-  - [ ] 1.2 Define an immutable `DatabaseCorruptionException implements Exception` with fields:
+- [x] Task 1: Add an explicit database corruption exception and classifier (AC: #1, #10)
+  - [x] 1.1 Create `lib/data/database/migrations/database_corruption_exception.dart` or an equivalent adjacent recovery file near the existing 6.3 recovery helpers.
+  - [x] 1.2 Define an immutable `DatabaseCorruptionException implements Exception` with fields:
     - `Object cause`
     - `StackTrace? originalStackTrace`
     - `int? sqliteResultCode`
     - `int? sqliteExtendedResultCode`
     - `String? sqliteOperation`
-  - [ ] 1.3 Add a classifier helper, for example:
+  - [x] 1.3 Add a classifier helper, for example:
     ```dart
     static DatabaseCorruptionException? tryFrom(Object error, StackTrace stack)
     ```
     It must recognize direct `SqliteException`, `DriftWrappedException(cause: SqliteException)`, and, if reachable from the current Drift API, `DriftRemoteException(remoteCause: SqliteException)`.
-  - [ ] 1.4 Treat only SQLite primary result codes `SqlError.SQLITE_CORRUPT` and `SqlError.SQLITE_NOTADB` as corruption for this story. Do not classify `SQLITE_BUSY`, `SQLITE_LOCKED`, `SQLITE_CANTOPEN`, permission errors, or generic exceptions as corruption.
-  - [ ] 1.5 Use the existing project precedent for `package:sqlite3/sqlite3.dart` imports. If importing sqlite3 from a file that does not have a direct dependency lint exemption, add the same narrow `// ignore: depend_on_referenced_packages` comment used by `app_database.dart`; do not change `pubspec.yaml`.
+  - [x] 1.4 Treat only SQLite primary result codes `SqlError.SQLITE_CORRUPT` and `SqlError.SQLITE_NOTADB` as corruption for this story. Do not classify `SQLITE_BUSY`, `SQLITE_LOCKED`, `SQLITE_CANTOPEN`, permission errors, or generic exceptions as corruption.
+  - [x] 1.5 Use the existing project precedent for `package:sqlite3/sqlite3.dart` imports. If importing sqlite3 from a file that does not have a direct dependency lint exemption, add the same narrow `// ignore: depend_on_referenced_packages` comment used by `app_database.dart`; do not change `pubspec.yaml`.
 
-- [ ] Task 2: Wire corruption classification into database bootstrap (AC: #1, #10)
-  - [ ] 2.1 Modify `databaseBootstrapProvider` in `lib/providers/data_providers.dart`.
-  - [ ] 2.2 Preserve the existing first catch for `MigrationFailureException`.
-  - [ ] 2.3 In the generic `catch (e, s)`, call `DatabaseCorruptionException.tryFrom(e, s)`.
-  - [ ] 2.4 If it returns non-null, report that wrapped exception through `CrashReporter.instance.reportZonedError(corruption, s)`, close the failed DB handle via the existing `closeDb()` path, and rethrow it with `Error.throwWithStackTrace(corruption, s)`.
-  - [ ] 2.5 If it returns null, preserve current behavior: close the failed handle and rethrow the original error.
-  - [ ] 2.6 Do not make `appDatabaseProvider` nullable and do not let UI code read Drift directly.
+- [x] Task 2: Wire corruption classification into database bootstrap (AC: #1, #10)
+  - [x] 2.1 Modify `databaseBootstrapProvider` in `lib/providers/data_providers.dart`.
+  - [x] 2.2 Preserve the existing first catch for `MigrationFailureException`.
+  - [x] 2.3 In the generic `catch (e, s)`, call `DatabaseCorruptionException.tryFrom(e, s)`.
+  - [x] 2.4 If it returns non-null, report that wrapped exception through `CrashReporter.instance.reportZonedError(corruption, s)`, close the failed DB handle via the existing `closeDb()` path, and rethrow it with `Error.throwWithStackTrace(corruption, s)`.
+  - [x] 2.5 If it returns null, preserve current behavior: close the failed handle and rethrow the original error.
+  - [x] 2.6 Do not make `appDatabaseProvider` nullable and do not let UI code read Drift directly.
 
-- [ ] Task 3: Extend recovery actions for latest backup, sidecars, and start fresh (AC: #3, #4, #5, #7)
-  - [ ] 3.1 Extend `SaveRecoveryActions` rather than creating a parallel recovery helper.
-  - [ ] 3.2 Add a small immutable backup descriptor, for example:
+- [x] Task 3: Extend recovery actions for latest backup, sidecars, and start fresh (AC: #3, #4, #5, #7)
+  - [x] 3.1 Extend `SaveRecoveryActions` rather than creating a parallel recovery helper.
+  - [x] 3.2 Add a small immutable backup descriptor, for example:
     ```dart
     class SchemaBackup {
       const SchemaBackup({
@@ -110,34 +110,34 @@ so that I do not silently lose progress or get stuck in a crash loop.
       final DateTime modifiedAt;
     }
     ```
-  - [ ] 3.3 Add `latestBackup()` that scans `getApplicationDocumentsDirectory()`, filters exact filenames matching `^schema_backup_v(\d+)\.sqlite$`, parses the version, and returns the most recently modified backup. If modification times tie, use the higher version as the deterministic tie-break.
-  - [ ] 3.4 Add `restoreLatestBackup({required int currentSchemaVersion, DateTime Function()? now})` that delegates to a lower-level restore helper using the selected `SchemaBackup`.
-  - [ ] 3.5 Update existing `restoreFromBackup({fromVersion, toVersion})` so migration-failure restore also quarantines live WAL/SHM sidecars before copying the backup. Preserve its existing public signature and tests.
-  - [ ] 3.6 Add `startFresh({required int currentSchemaVersion, DateTime Function()? now})`.
-  - [ ] 3.7 Implement one shared private quarantine helper that:
+  - [x] 3.3 Add `latestBackup()` that scans `getApplicationDocumentsDirectory()`, filters exact filenames matching `^schema_backup_v(\d+)\.sqlite$`, parses the version, and returns the most recently modified backup. If modification times tie, use the higher version as the deterministic tie-break.
+  - [x] 3.4 Add `restoreLatestBackup({required int currentSchemaVersion, DateTime Function()? now})` that delegates to a lower-level restore helper using the selected `SchemaBackup`.
+  - [x] 3.5 Update existing `restoreFromBackup({fromVersion, toVersion})` so migration-failure restore also quarantines live WAL/SHM sidecars before copying the backup. Preserve its existing public signature and tests.
+  - [x] 3.6 Add `startFresh({required int currentSchemaVersion, DateTime Function()? now})`.
+  - [x] 3.7 Implement one shared private quarantine helper that:
     - uses one UTC timestamp for the main database and sidecars;
     - renames `global_domination.sqlite` to `app_v{currentSchemaVersion}_corrupt_{timestamp}.sqlite` when it exists;
     - renames `global_domination.sqlite-wal` and `global_domination.sqlite-shm` to the same stem plus `-wal` / `-shm` when they exist;
     - succeeds when the live DB file is already missing;
     - never touches `schema_backup_v*.sqlite`.
-  - [ ] 3.8 Keep `DateTime.now()` out of `lib/game/`; using an injectable clock in this data-layer helper is for deterministic tests, not a game-layer rule.
+  - [x] 3.8 Keep `DateTime.now()` out of `lib/game/`; using an injectable clock in this data-layer helper is for deterministic tests, not a game-layer rule.
 
-- [ ] Task 4: Update `SaveRecoveryScreen` UI and behavior (AC: #2, #5, #6, #7, #8, #9, #10, #11)
-  - [ ] 4.1 Rename the visible title from `Database Recovery` to `Save Recovery`.
-  - [ ] 4.2 Replace `Copy Crash Log` with `Contact Support`. The button still copies diagnostics to the clipboard; there is no network or email integration in v1.
-  - [ ] 4.3 For `DatabaseCorruptionException`, check `SaveRecoveryActions.latestBackup()` and show `Restore Latest Backup` only when a descriptor is present. Include the version in a tooltip/semantics label or visible secondary text; avoid a long button label that can overflow.
-  - [ ] 4.4 For `MigrationFailureException`, preserve the exact `schema_backup_v{fromVersion}.sqlite` check and button behavior from Story 6.3.
-  - [ ] 4.5 For `DatabaseCorruptionException` and `MigrationFailureException`, make `Start Fresh` real. It must show two sequential `AlertDialog`s or equivalent confirmations before file operations run.
-  - [ ] 4.6 The first confirmation explains that the existing save will be quarantined and the game will start from a fresh save. The second confirmation must be the final destructive action. Both dialogs should use `barrierDismissible: false`.
-  - [ ] 4.7 After restore or start fresh completes, call `ref.invalidate(databaseBootstrapProvider)`.
-  - [ ] 4.8 For unrecognized boot errors, hide destructive file actions and show only diagnostics/support copy.
-  - [ ] 4.9 Keep test seams. Add optional callbacks for `latestBackup`, `restoreLatestBackup`, and `startFresh` so widget tests do not touch real app documents.
-  - [ ] 4.10 Wrap the screen body in scrollable/constrained layout so long errors, large text scale, and narrow widths do not overflow.
-  - [ ] 4.11 Add `Semantics` labels for restore, start fresh, both confirmation buttons, and contact support.
+- [x] Task 4: Update `SaveRecoveryScreen` UI and behavior (AC: #2, #5, #6, #7, #8, #9, #10, #11)
+  - [x] 4.1 Rename the visible title from `Database Recovery` to `Save Recovery`.
+  - [x] 4.2 Replace `Copy Crash Log` with `Contact Support`. The button still copies diagnostics to the clipboard; there is no network or email integration in v1.
+  - [x] 4.3 For `DatabaseCorruptionException`, check `SaveRecoveryActions.latestBackup()` and show `Restore Latest Backup` only when a descriptor is present. Include the version in a tooltip/semantics label or visible secondary text; avoid a long button label that can overflow.
+  - [x] 4.4 For `MigrationFailureException`, preserve the exact `schema_backup_v{fromVersion}.sqlite` check and button behavior from Story 6.3.
+  - [x] 4.5 For `DatabaseCorruptionException` and `MigrationFailureException`, make `Start Fresh` real. It must show two sequential `AlertDialog`s or equivalent confirmations before file operations run.
+  - [x] 4.6 The first confirmation explains that the existing save will be quarantined and the game will start from a fresh save. The second confirmation must be the final destructive action. Both dialogs should use `barrierDismissible: false`.
+  - [x] 4.7 After restore or start fresh completes, call `ref.invalidate(databaseBootstrapProvider)`.
+  - [x] 4.8 For unrecognized boot errors, hide destructive file actions and show only diagnostics/support copy.
+  - [x] 4.9 Keep test seams. Add optional callbacks for `latestBackup`, `restoreLatestBackup`, and `startFresh` so widget tests do not touch real app documents.
+  - [x] 4.10 Wrap the screen body in scrollable/constrained layout so long errors, large text scale, and narrow widths do not overflow.
+  - [x] 4.11 Add `Semantics` labels for restore, start fresh, both confirmation buttons, and contact support.
 
-- [ ] Task 5: Improve support diagnostics payload (AC: #8)
-  - [ ] 5.1 Build the clipboard payload in one helper on `SaveRecoveryScreen`.
-  - [ ] 5.2 Include:
+- [x] Task 5: Improve support diagnostics payload (AC: #8)
+  - [x] 5.1 Build the clipboard payload in one helper on `SaveRecoveryScreen`.
+  - [x] 5.2 Include:
     - current local timestamp in UTC;
     - error runtime type and `toString()`;
     - stack trace or original stack trace when available;
@@ -145,45 +145,45 @@ so that I do not silently lose progress or get stuck in a crash loop.
     - migration from/to versions when the error is `MigrationFailureException`;
     - current app schema version;
     - discovered backup filenames and parsed versions when available.
-  - [ ] 5.3 Do not try to read `crash_logs` through `CrashLogRepository` while the database cannot open. The corrupt database is the problem; use the in-memory boot error details.
-  - [ ] 5.4 Continue to use `Clipboard.setData(ClipboardData(text: payload))` and show `Diagnostics copied` on success. Show a non-crashing `Copy failed` SnackBar on clipboard failure.
+  - [x] 5.3 Do not try to read `crash_logs` through `CrashLogRepository` while the database cannot open. The corrupt database is the problem; use the in-memory boot error details.
+  - [x] 5.4 Continue to use `Clipboard.setData(ClipboardData(text: payload))` and show `Diagnostics copied` on success. Show a non-crashing `Copy failed` SnackBar on clipboard failure.
 
-- [ ] Task 6: Add focused data/provider tests (AC: #1, #3, #4, #5, #7, #10)
-  - [ ] 6.1 Extend `test/providers/database_bootstrap_provider_test.dart`:
+- [x] Task 6: Add focused data/provider tests (AC: #1, #3, #4, #5, #7, #10)
+  - [x] 6.1 Extend `test/providers/database_bootstrap_provider_test.dart`:
     - `SqliteException(SQLITE_CORRUPT)` is wrapped as `DatabaseCorruptionException`;
     - `SqliteException(SQLITE_NOTADB)` is wrapped as `DatabaseCorruptionException`;
     - `SqliteException(SQLITE_BUSY)` is not wrapped as corruption;
     - failed DB handles are closed before the error is surfaced.
-  - [ ] 6.2 Add or extend tests for the classifier to cover `DriftWrappedException(cause: SqliteException(...))` if using that branch.
-  - [ ] 6.3 Extend `test/data/database/migrations/save_recovery_actions_test.dart`:
+  - [x] 6.2 Add or extend tests for the classifier to cover `DriftWrappedException(cause: SqliteException(...))` if using that branch.
+  - [x] 6.3 Extend `test/data/database/migrations/save_recovery_actions_test.dart`:
     - `latestBackup()` returns null with no backups;
     - ignores non-matching filenames;
     - picks most recent backup by mtime and higher version on ties;
     - `restoreLatestBackup` quarantines main DB and sidecars, copies backup into live path, and keeps the backup file;
     - `startFresh` quarantines main DB and sidecars, leaves backups untouched, and leaves no live DB file until bootstrap recreates it;
     - live-missing paths do not throw.
-  - [ ] 6.4 Use `PathProviderPlatform.instance = _FakePathProvider(tempDir)` as current recovery-action tests do. Restore the platform in teardown and delete temp dirs recursively.
+  - [x] 6.4 Use `PathProviderPlatform.instance = _FakePathProvider(tempDir)` as current recovery-action tests do. Restore the platform in teardown and delete temp dirs recursively.
 
-- [ ] Task 7: Add recovery screen widget tests (AC: #2, #5, #6, #7, #8, #9, #10, #11)
-  - [ ] 7.1 Extend `test/ui/save_recovery_screen_test.dart`.
-  - [ ] 7.2 Cover corruption with latest backup: shows `Save Recovery`, `Restore Latest Backup`, `Start Fresh`, and `Contact Support`.
-  - [ ] 7.3 Cover corruption with no backup: hides restore and keeps start fresh/support.
-  - [ ] 7.4 Cover restore tap calls the injected latest-backup restore action and invalidates/retries through existing provider behavior where practical.
-  - [ ] 7.5 Cover Start Fresh does not call the action after the first confirmation only.
-  - [ ] 7.6 Cover Start Fresh calls the injected action only after the second confirmation.
-  - [ ] 7.7 Cover Contact Support copies diagnostics including result codes and backup metadata.
-  - [ ] 7.8 Cover `MigrationFailureException` still shows exact-version restore from 6.3 and now uses real Start Fresh.
-  - [ ] 7.9 Cover an unrecognized `Exception('boot failure')` shows Contact Support but no destructive restore/start-fresh actions.
-  - [ ] 7.10 Add a narrow-width/text-scale smoke test and assert `tester.takeException()` is null after pump.
+- [x] Task 7: Add recovery screen widget tests (AC: #2, #5, #6, #7, #8, #9, #10, #11)
+  - [x] 7.1 Extend `test/ui/save_recovery_screen_test.dart`.
+  - [x] 7.2 Cover corruption with latest backup: shows `Save Recovery`, `Restore Latest Backup`, `Start Fresh`, and `Contact Support`.
+  - [x] 7.3 Cover corruption with no backup: hides restore and keeps start fresh/support.
+  - [x] 7.4 Cover restore tap calls the injected latest-backup restore action and invalidates/retries through existing provider behavior where practical.
+  - [x] 7.5 Cover Start Fresh does not call the action after the first confirmation only.
+  - [x] 7.6 Cover Start Fresh calls the injected action only after the second confirmation.
+  - [x] 7.7 Cover Contact Support copies diagnostics including result codes and backup metadata.
+  - [x] 7.8 Cover `MigrationFailureException` still shows exact-version restore from 6.3 and now uses real Start Fresh.
+  - [x] 7.9 Cover an unrecognized `Exception('boot failure')` shows Contact Support but no destructive restore/start-fresh actions.
+  - [x] 7.10 Add a narrow-width/text-scale smoke test and assert `tester.takeException()` is null after pump.
 
-- [ ] Task 8: Verification (AC: all)
-  - [ ] 8.1 Run `dart format --set-exit-if-changed` on every changed Dart file.
-  - [ ] 8.2 Run:
+- [x] Task 8: Verification (AC: all)
+  - [x] 8.1 Run `dart format --set-exit-if-changed` on every changed Dart file.
+  - [x] 8.2 Run:
     - `flutter test test/providers/database_bootstrap_provider_test.dart`
     - `flutter test test/data/database/migrations/save_recovery_actions_test.dart`
     - `flutter test test/ui/save_recovery_screen_test.dart`
-  - [ ] 8.3 Run `flutter analyze`.
-  - [ ] 8.4 Run full `flutter test` if time permits because this touches boot and recovery code.
+  - [x] 8.3 Run `flutter analyze`.
+  - [x] 8.4 Run full `flutter test` if time permits because this touches boot and recovery code.
 
 ## Dev Notes
 
@@ -310,10 +310,34 @@ databaseBootstrapProvider
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
+- Directory listing for backup scan switched from async `Directory.list()` stream to `listSync()` so `_supportPayload()` / `discoverBackups()` complete reliably under widget tests (Windows stream completion issue).
+- `SaveRecoveryScreen` converted from `ConsumerStatefulWidget` to `StatefulWidget`; bootstrap invalidation uses `ProviderScope.containerOf(context).invalidate(databaseBootstrapProvider)` (no `ref` requirement).
+- Widget tests: optional `copyDiagnostics` seam for clipboard; path_provider fake in `setUp` for `discoverBackups`.
+
 ### Completion Notes List
 
+- Implemented `DatabaseCorruptionException` with `tryFrom` (SqliteException primary CORRUPT/NOTADB; unwraps `DriftWrappedException` and runtime `DriftRemoteException`), wired into `databaseBootstrapProvider` after `MigrationFailureException` handling with `CrashReporter` + failed DB close + `Error.throwWithStackTrace`.
+- Extended `SaveRecoveryActions` with `SchemaBackup`, `latestBackup`, `restoreLatestBackup`, `startFresh`, shared `_quarantineCorruptLive` (single UTC stem for main + WAL + SHM); `restoreFromBackup` optional `now`; `discoverBackups()` for support payload.
+- Rebuilt `SaveRecoveryScreen`: title Save Recovery, migration vs corruption vs unknown flows, double-confirm Start Fresh, Contact Support payload + Clipboard + optional `copyDiagnostics`, scroll/layout, Semantics.
+- Tests: bootstrap corruption/wrapped-sqlite/busy; filesystem backup tests; expanded widget tests with path_provider fake.
+
 ### File List
+
+- lib/data/database/migrations/database_corruption_exception.dart
+- lib/data/database/migrations/save_recovery_actions.dart
+- lib/data/database/app_database.dart
+- lib/providers/database_providers.dart
+- lib/ui/save_recovery_screen.dart
+- test/providers/database_bootstrap_provider_test.dart
+- test/data/database/migrations/save_recovery_actions_test.dart
+- test/ui/save_recovery_screen_test.dart
+- _bmad-output/implementation-artifacts/6-6-save-recovery-path-on-corrupt-database.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+### Change Log
+
+- 2026-04-27: Story 6.6 Save Recovery — corrupt DB classification, WAL/SHM quarantine, latest-backup restore, double-confirm start fresh, Contact Support diagnostics; tests + analyze + full suite green (816 tests).

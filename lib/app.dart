@@ -6,6 +6,7 @@ import 'package:global_domination/data/database/migrations/backup_retention_poli
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/data_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/providers/modal_providers.dart';
 import 'package:global_domination/providers/offline_catchup_providers.dart';
 import 'package:global_domination/services/game_lifecycle_observer.dart';
 import 'package:global_domination/ui/boot_error_screen.dart';
@@ -71,6 +72,7 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
               error: (error, stack) =>
                   BootErrorScreen(message: error.toString()),
               data: (_) {
+                ref.watch(offlineRewardModalControllerProvider.notifier);
                 final offlineBoot = ref.watch(offlineCatchupBootProvider);
                 return offlineBoot.when(
                   loading: () => const MaterialApp(
@@ -83,9 +85,7 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
                   data: (_) => MaterialApp(
                     theme: _theme,
                     home: const OfflineRewardModalHost(
-                      child: _SaveRepositoryBootstrap(
-                        child: _GameScreen(),
-                      ),
+                      child: _SaveRepositoryBootstrap(child: _GameScreen()),
                     ),
                   ),
                 );

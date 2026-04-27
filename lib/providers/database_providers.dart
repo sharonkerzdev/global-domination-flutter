@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:global_domination/data/database/app_database.dart';
+import 'package:global_domination/data/database/migrations/database_corruption_exception.dart';
 import 'package:global_domination/data/database/migrations/migration_failure_exception.dart';
 import 'package:global_domination/data/mappers/game_state_mapper.dart';
 import 'package:global_domination/data/repositories/crash_log_entry.dart';
@@ -37,6 +38,16 @@ final databaseBootstrapProvider = FutureProvider<AppDatabase>((ref) async {
     }
     Error.throwWithStackTrace(e, s);
   } catch (e, s) {
+    final corruption = DatabaseCorruptionException.tryFrom(e, s);
+    if (corruption != null) {
+      CrashReporter.instance.reportZonedError(corruption, s);
+      try {
+        await closeDb();
+      } catch (_) {
+        // Preserve the corruption error as the user-visible boot error.
+      }
+      Error.throwWithStackTrace(corruption, s);
+    }
     try {
       await closeDb();
     } catch (_) {

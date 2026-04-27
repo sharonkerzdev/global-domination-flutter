@@ -51,8 +51,10 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
+  static const int currentSchemaVersion = 3;
+
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => currentSchemaVersion;
 
   @override
   MigrationStrategy get migration {

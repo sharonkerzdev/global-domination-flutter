@@ -1,5 +1,10 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-27
+# 2026-04-27: Story 6-6 code review passed -> done (0 findings; flutter analyze + flutter test 816 passed)
+# 2026-04-27: Story 6-6 → review (DatabaseCorruptionException + bootstrap wiring, SaveRecoveryActions latest backup/WAL-SHM quarantine/start fresh, SaveRecoveryScreen corruption+migration UX, Contact Support payload, PathProvider-backed widget tests; flutter analyze clean; flutter test 816 passed)
+# 2026-04-27: Story 7-1 created -> ready-for-dev (Theme tokens/design-system foundation: appTheme composition, Spacing constants, CountryColors/HudPalette/MilestoneColors extensions, tokenized existing UI, color-literal guardrail tests; preserves Epic 6 boot/offline modal/recovery ordering and excludes nav/HUD/modal queue implementation)
+# 2026-04-27: Epic 7 status backlog -> in-progress (first story created)
+# 2026-04-27: Story 6-5 review findings patched -> done (boot-time offline modal queue pre-subscription, positive-only filter, immutable queue entries, system-back regression; flutter analyze + flutter test 795 passed)
 # 2026-04-27: Story 6-5 → review (modal_providers FIFO, OfflineRewardModal+Host, app.dart after bootstrap, widget tests; flutter test 791, analyze clean)
 # 2026-04-27: Story 6-4 review patch pass -> done (forced lifecycle meta checkpoint, serialized/single-flight resume catch-up, map input absorb during resume, foreground-only ticker restart, resume error recovery, SaveRepository subscription-before-emit, delayed-resume + activeBoost/activeGoldenEffect tests; flutter analyze + flutter test 781 passed)
 # 2026-04-27: Story 6-4 → review (OfflineCatchup + OfflineEarningsApplied, persisted snapshot + offlineCatchupBoot gate, resume catch-up before GameLoop ticker restart, SaveRepository meta case + flush; database_providers split; map widget tests override game world; flutter test 777, dart analyze green)
@@ -194,13 +199,13 @@ development_status:
   6-2-persistence-write-strategy-event-driven-and-debounced-snapshot: done
   6-3-typed-migrations-and-schema-backup-v-n-sqlite: done
   6-4-offline-earnings-calculation-on-resume: done
-  6-5-offline-reward-modal-on-resume: review
-  6-6-save-recovery-path-on-corrupt-database: ready-for-dev
+  6-5-offline-reward-modal-on-resume: done
+  6-6-save-recovery-path-on-corrupt-database: done
   epic-6-retrospective: optional
 
   # Epic 7: Complete the Shell — Navigation, HUD, Stats, Settings, Upgrades & Leaders Screens
-  epic-7: backlog
-  7-1-theme-tokens-and-design-system-foundation: backlog
+  epic-7: in-progress
+  7-1-theme-tokens-and-design-system-foundation: ready-for-dev
   7-2-app-scaffold-with-5-tab-bottom-navigation-and-indexedstack: backlog
   7-3-global-hud-with-influence-and-intel-currency-badges: backlog
   7-4-sequential-modal-queue-with-priority: backlog

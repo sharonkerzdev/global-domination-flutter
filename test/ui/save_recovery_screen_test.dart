@@ -1,29 +1,43 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:global_domination/data/database/app_database.dart';
+import 'package:global_domination/data/database/migrations/database_corruption_exception.dart';
 import 'package:global_domination/data/database/migrations/migration_failure_exception.dart';
+import 'package:global_domination/data/database/migrations/save_recovery_actions.dart';
 import 'package:global_domination/ui/save_recovery_screen.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+// ignore: depend_on_referenced_packages
+import 'package:sqlite3/sqlite3.dart';
+
+class _FakePathProviderPlatform extends PathProviderPlatform {
+  _FakePathProviderPlatform(this.path);
+
+  final String path;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async => path;
+}
 
 void main() {
-  String? clipboardPayload;
+  late Directory docsTemp;
+  late PathProviderPlatform previousPath;
 
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    clipboardPayload = null;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-          if (call.method == 'Clipboard.setData') {
-            final args = call.arguments as Map<Object?, Object?>;
-            clipboardPayload = args['text'] as String?;
-          }
-          return null;
-        });
+    docsTemp = Directory.systemTemp.createTempSync('save_recovery_ui_docs_');
+    previousPath = PathProviderPlatform.instance;
+    PathProviderPlatform.instance = _FakePathProviderPlatform(docsTemp.path);
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null);
+    PathProviderPlatform.instance = previousPath;
+    if (docsTemp.existsSync()) {
+      docsTemp.deleteSync(recursive: true);
+    }
   });
 
   Future<void> pumpRecovery(
@@ -32,24 +46,45 @@ void main() {
     StackTrace? stackTrace,
     SaveRecoveryBackupExists? backupExists,
     SaveRecoveryRestoreFromBackup? restoreFromBackup,
+    SaveRecoveryLatestBackup? latestBackup,
+    SaveRecoveryRestoreLatestBackup? restoreLatestBackup,
+    SaveRecoveryStartFresh? startFresh,
+    SaveRecoveryCopyDiagnostics? copyDiagnostics,
+    List<Override> overrides = const [],
   }) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: overrides,
         child: SaveRecoveryScreen(
           error: error,
           stackTrace: stackTrace,
           backupExists: backupExists ?? (_) async => false,
           restoreFromBackup: restoreFromBackup,
+          latestBackup: latestBackup,
+          restoreLatestBackup: restoreLatestBackup,
+          startFresh: startFresh,
+          copyDiagnostics: copyDiagnostics,
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pumpAndSettle();
   }
 
-  testWidgets('renders error and hides restore when backup is missing', (
-    tester,
-  ) async {
+  final corruptSqlite = SqliteException(
+    extendedResultCode: SqlError.SQLITE_CORRUPT,
+    message: 'bad',
+    operation: 'opening',
+  );
+
+  final corruptionErr = DatabaseCorruptionException(
+    cause: corruptSqlite,
+    originalStackTrace: StackTrace.current,
+    sqliteResultCode: SqlError.SQLITE_CORRUPT,
+    sqliteExtendedResultCode: SqlError.SQLITE_CORRUPT,
+    sqliteOperation: 'opening',
+  );
+
+  testWidgets('migration: hides restore when backup missing', (tester) async {
     await pumpRecovery(
       tester,
       const MigrationFailureException(
@@ -59,14 +94,16 @@ void main() {
       ),
     );
 
-    expect(find.text('Database Recovery'), findsOneWidget);
+    expect(find.text('Save Recovery'), findsOneWidget);
     expect(find.textContaining('synthetic'), findsOneWidget);
     expect(find.byKey(const ValueKey('saveRecoveryRestore')), findsNothing);
     expect(find.text('Start Fresh'), findsOneWidget);
-    expect(find.text('Copy Crash Log'), findsOneWidget);
+    expect(find.text('Contact Support'), findsOneWidget);
   });
 
-  testWidgets('shows restore when schema backup exists', (tester) async {
+  testWidgets('migration: shows exact-version restore when backup exists', (
+    tester,
+  ) async {
     await pumpRecovery(
       tester,
       const MigrationFailureException(
@@ -78,10 +115,72 @@ void main() {
     );
 
     expect(find.byKey(const ValueKey('saveRecoveryRestore')), findsOneWidget);
-    expect(find.text('Restore from backup v2'), findsOneWidget);
+    expect(find.textContaining('Restore from backup v2'), findsOneWidget);
   });
 
-  testWidgets('restore button calls restore action with migration versions', (
+  testWidgets('corruption: shows latest restore when backup exists', (
+    tester,
+  ) async {
+    final dir = Directory.systemTemp.createTempSync('recovery_show_');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    final sf = File('${dir.path}/schema_backup_v3.sqlite')
+      ..writeAsStringSync('x');
+    final fake = SchemaBackup(
+      version: 3,
+      file: sf,
+      modifiedAt: DateTime.utc(2024),
+    );
+    await pumpRecovery(tester, corruptionErr, latestBackup: () async => fake);
+
+    expect(
+      find.byKey(const ValueKey('saveRecoveryRestoreLatest')),
+      findsOneWidget,
+    );
+    expect(find.text('Schema backup v3'), findsOneWidget);
+    expect(find.text('Contact Support'), findsOneWidget);
+  });
+
+  testWidgets('corruption: hides restore when no backup', (tester) async {
+    await pumpRecovery(tester, corruptionErr, latestBackup: () async => null);
+
+    expect(
+      find.byKey(const ValueKey('saveRecoveryRestoreLatest')),
+      findsNothing,
+    );
+    expect(find.text('Start Fresh'), findsOneWidget);
+  });
+
+  testWidgets('restore latest calls injected callback', (tester) async {
+    var calls = 0;
+    final dir = Directory.systemTemp.createTempSync('recovery_latest_');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    final f = File('${dir.path}/schema_backup_v2.sqlite')
+      ..writeAsStringSync('b');
+    final fake = SchemaBackup(
+      version: 2,
+      file: f,
+      modifiedAt: DateTime.utc(2022),
+    );
+    await pumpRecovery(
+      tester,
+      corruptionErr,
+      latestBackup: () async => fake,
+      restoreLatestBackup: () async {
+        calls++;
+      },
+    );
+
+    await tester.tap(find.byKey(const ValueKey('saveRecoveryRestoreLatest')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(calls, 1);
+  });
+
+  testWidgets('migration restore calls injected action with versions', (
     tester,
   ) async {
     var restoredFrom = 0;
@@ -103,40 +202,161 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('saveRecoveryRestore')));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(restoredFrom, 2);
     expect(restoredTo, 3);
   });
 
-  testWidgets('start fresh CTA shows Story 6-6 placeholder', (tester) async {
-    await pumpRecovery(tester, Exception('boot failure'));
-
-    await tester.tap(find.text('Start Fresh'));
-    await tester.pump();
-
-    expect(find.text('Start Fresh available in Story 6-6'), findsOneWidget);
-  });
-
-  testWidgets('copy crash log writes error and stack trace to clipboard', (
+  testWidgets('start fresh: first dialog cancel does not run action', (
     tester,
   ) async {
-    final stackTrace = StackTrace.fromString('stack-line');
+    var freshCalls = 0;
     await pumpRecovery(
       tester,
-      const MigrationFailureException(
-        fromVersion: 1,
-        toVersion: 3,
-        cause: 'copy me',
-      ),
-      stackTrace: stackTrace,
+      corruptionErr,
+      latestBackup: () async => null,
+      startFresh: () async {
+        freshCalls++;
+      },
     );
 
-    await tester.tap(find.text('Copy Crash Log'));
-    await tester.pump();
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(freshCalls, 0);
+  });
 
-    expect(clipboardPayload, contains('copy me'));
-    expect(clipboardPayload, contains('stack-line'));
-    expect(find.text('Copied'), findsOneWidget);
+  testWidgets('start fresh: second dialog cancel does not run action', (
+    tester,
+  ) async {
+    var freshCalls = 0;
+    await pumpRecovery(
+      tester,
+      corruptionErr,
+      latestBackup: () async => null,
+      startFresh: () async {
+        freshCalls++;
+      },
+    );
+
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Cancel'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(freshCalls, 0);
+  });
+
+  testWidgets('start fresh: confirms twice then runs action', (tester) async {
+    var freshCalls = 0;
+    await pumpRecovery(
+      tester,
+      corruptionErr,
+      latestBackup: () async => null,
+      startFresh: () async {
+        freshCalls++;
+      },
+    );
+
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Start fresh'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(freshCalls, 1);
+  });
+
+  testWidgets('contact support copies diagnostics for corruption', (
+    tester,
+  ) async {
+    String? copied;
+    await pumpRecovery(
+      tester,
+      corruptionErr,
+      latestBackup: () async => null,
+      copyDiagnostics: (payload) {
+        copied = payload;
+        return Future<void>.value();
+      },
+    );
+
+    await tester.tap(find.byKey(const ValueKey('saveRecoveryContact')));
+    await tester.pumpAndSettle();
+
+    expect(copied, isNotNull);
+    expect(copied, contains('App schema version'));
+    expect(copied, contains('${AppDatabase.currentSchemaVersion}'));
+    expect(copied, contains('opening'));
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+  });
+
+  testWidgets('migration uses real start fresh flow', (tester) async {
+    var freshCalls = 0;
+    await pumpRecovery(
+      tester,
+      const MigrationFailureException(fromVersion: 2, toVersion: 3, cause: 'm'),
+      backupExists: (_) async => true,
+      startFresh: () async {
+        freshCalls++;
+      },
+    );
+
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Start fresh'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(freshCalls, 1);
+  });
+
+  testWidgets('unrecognized error: support only, no destructive actions', (
+    tester,
+  ) async {
+    await pumpRecovery(tester, Exception('boot failure'));
+
+    expect(find.text('Contact Support'), findsOneWidget);
+    expect(find.text('Start Fresh'), findsNothing);
+    expect(find.byKey(const ValueKey('saveRecoveryRestore')), findsNothing);
+  });
+
+  testWidgets('narrow viewport and text scale: no overflow exceptions', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(280, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.6)),
+          child: SaveRecoveryScreen(
+            error: Exception(List.filled(40, 'long message ').join()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 10));
+    expect(tester.takeException(), isNull);
   });
 }

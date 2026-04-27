@@ -33,9 +33,12 @@ class OfflineRewardModalEntry {
 
 @immutable
 class OfflineRewardModalQueue {
-  const OfflineRewardModalQueue(this.entries);
+  factory OfflineRewardModalQueue(Iterable<OfflineRewardModalEntry> entries) =>
+      OfflineRewardModalQueue._(List.unmodifiable(entries));
 
-  const OfflineRewardModalQueue.empty() : this(const []);
+  const OfflineRewardModalQueue._(this.entries);
+
+  const OfflineRewardModalQueue.empty() : entries = const [];
 
   final List<OfflineRewardModalEntry> entries;
 
@@ -57,7 +60,7 @@ class OfflineRewardModalController
 
   void _onEvent(GameEvent event) {
     if (event case final OfflineEarningsApplied e) {
-      if (e.totalEarned.isZero) {
+      if (e.totalEarned <= Influence.zero) {
         return;
       }
       state = state.enqueue(

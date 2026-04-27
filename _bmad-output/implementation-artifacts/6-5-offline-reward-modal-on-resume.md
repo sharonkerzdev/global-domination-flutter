@@ -1,6 +1,6 @@
 # Story 6.5: Offline Reward Modal On Resume
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -148,6 +148,13 @@ so that the reward is celebrated instead of silently appearing in my total.
   - [x] 7.2 Run `flutter test test/ui/features/modals`.
   - [x] 7.3 Run `flutter analyze`.
   - [x] 7.4 If Story 6.4 added integration tests for offline catch-up, extend or run those targeted tests to confirm the event-to-modal path works on resume.
+
+### Review Findings
+
+- [x] [Review][Patch] Boot catch-up can emit before the modal queue subscribes [lib/app.dart:74] — `offlineCatchupBootProvider` is awaited before `OfflineRewardModalHost` is mounted, while `offlineCatchupBootProvider` applies catch-up and emits `OfflineEarningsApplied` through `gameWorldEventsProvider`; a positive returning-player boot reward can be persisted but never queued for the modal, violating AC #1 and the Dev Notes bootstrap-buffering constraint.
+- [x] [Review][Patch] Offline reward filtering accepts negative earnings [lib/providers/modal_providers.dart:58] — the story requires enqueueing only `OfflineEarningsApplied` events with `totalEarned > Influence.zero`, but the controller only excludes `isZero`; any negative event would still produce a reward modal instead of being ignored.
+- [x] [Review][Patch] Offline reward queue exposes mutable state [lib/providers/modal_providers.dart:36] — `OfflineRewardModalQueue` is marked immutable but stores a public mutable `List`, so callers can mutate provider state without a notifier state change; the task calls for an immutable FIFO list.
+- [x] [Review][Patch] System-back non-dismissal is checked off but untested [test/ui/features/modals/offline_reward_modal_host_test.dart:117] — Task 6.5 requires both outside-tap and system-back coverage, but the current host test only exercises the barrier tap path; AC #3 still needs an executable back/pop regression.
 
 ## Dev Notes
 
