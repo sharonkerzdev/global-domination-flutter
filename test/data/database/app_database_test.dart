@@ -1,14 +1,32 @@
 // Note: _backupDatabase cannot be exercised with NativeDatabase.memory() because
-// backup logic requires a real file path. This limitation is deferred to Story 6.5
-// (typed migrations and schema backup), matching the deferral pattern from Story 1.4.
+// backup logic requires a real file path. Deferred to Story 6-3 (typed migrations
+// and schema backup), matching the deferral pattern from Story 1.4.
+
+import 'dart:io';
 
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:global_domination/data/database/app_database.dart';
 import 'package:global_domination/data/database/converters/decimal_converter.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+class _FakePathProviderPlatform extends PathProviderPlatform {
+  _FakePathProviderPlatform(this.path);
+
+  final String path;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async => path;
+}
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
   group('AppDatabase', () {
     late AppDatabase db;
 
@@ -20,35 +38,310 @@ void main() {
       await db.close();
     });
 
-    test('opens at schema version 2', () {
-      expect(db.schemaVersion, equals(2));
-    });
+    group('AppDatabase v3 schema', () {
+      test('opens at schema version 3', () {
+        expect(db.schemaVersion, equals(3));
+      });
 
-    test(
-      'onCreate runs createAll without error on fresh in-memory database',
-      () async {
-        // Triggering a select forces the database to open and run onCreate
+      test(
+        'onCreate runs createAll without error on fresh in-memory database',
+        () async {
+          await db.customSelect('SELECT 1').get();
+        },
+      );
+
+      test('onCreate creates crash_logs table', () async {
+        final rows = await db.select(db.crashLogs).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates meta table', () async {
+        final rows = await db.select(db.meta).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates active_boost table', () async {
+        final rows = await db.select(db.activeBoost).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates countries table', () async {
+        final rows = await db.select(db.countries).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates continents table', () async {
+        final rows = await db.select(db.continents).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates continent_milestones table', () async {
+        final rows = await db.select(db.continentMilestones).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates earned_achievements table', () async {
+        final rows = await db.select(db.earnedAchievements).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates active_global_upgrades table', () async {
+        final rows = await db.select(db.activeGlobalUpgrades).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates active_goldens table', () async {
+        final rows = await db.select(db.activeGoldens).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates active_missions table', () async {
+        final rows = await db.select(db.activeMissions).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates completed_missions table', () async {
+        final rows = await db.select(db.completedMissions).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates daily_streaks table', () async {
+        final rows = await db.select(db.dailyStreaks).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates active_golden_effect table', () async {
+        final rows = await db.select(db.activeGoldenEffect).get();
+        expect(rows, isEmpty);
+      });
+
+      test('meta table enforces single-row CHECK constraint', () async {
+        await db
+            .into(db.meta)
+            .insert(
+              MetaCompanion.insert(
+                singletonId: const Value(0),
+                schemaVersion: 3,
+                lastSavedAt: DateTime.utc(2020, 1, 1),
+                totalInfluence: Decimal.zero,
+                totalIntel: Decimal.zero,
+                goldenOpportunityMultiplier: Decimal.one,
+                boostMultiplier: Decimal.one,
+              ),
+            );
+        expect(
+          () => db
+              .into(db.meta)
+              .insert(
+                MetaCompanion.insert(
+                  singletonId: const Value(1),
+                  schemaVersion: 3,
+                  lastSavedAt: DateTime.utc(2020, 1, 2),
+                  totalInfluence: Decimal.zero,
+                  totalIntel: Decimal.zero,
+                  goldenOpportunityMultiplier: Decimal.one,
+                  boostMultiplier: Decimal.one,
+                ),
+              ),
+          throwsA(isA<SqliteException>()),
+        );
+      });
+
+      test('active_boost table enforces single-row CHECK constraint', () async {
+        await db
+            .into(db.activeBoost)
+            .insert(
+              ActiveBoostCompanion.insert(
+                singletonId: const Value(0),
+                multiplier: Decimal.parse('2.0'),
+                expiresAt: DateTime.utc(2020, 1, 1),
+              ),
+            );
+        expect(
+          () => db
+              .into(db.activeBoost)
+              .insert(
+                ActiveBoostCompanion.insert(
+                  singletonId: const Value(1),
+                  multiplier: Decimal.parse('2.0'),
+                  expiresAt: DateTime.utc(2020, 1, 2),
+                ),
+              ),
+          throwsA(isA<SqliteException>()),
+        );
+      });
+
+      test(
+        'daily_streaks table enforces single-row CHECK constraint',
+        () async {
+          await db
+              .into(db.dailyStreaks)
+              .insert(
+                DailyStreaksCompanion.insert(
+                  singletonId: const Value(0),
+                  day: 1,
+                  lastClaimDate: Value(DateTime.utc(2020, 1, 1)),
+                ),
+              );
+          expect(
+            () => db
+                .into(db.dailyStreaks)
+                .insert(
+                  DailyStreaksCompanion.insert(
+                    singletonId: const Value(1),
+                    day: 2,
+                    lastClaimDate: Value(DateTime.utc(2020, 1, 2)),
+                  ),
+                ),
+            throwsA(isA<SqliteException>()),
+          );
+        },
+      );
+
+      test(
+        'active_golden_effect table enforces single-row CHECK constraint',
+        () async {
+          await db
+              .into(db.activeGoldenEffect)
+              .insert(
+                ActiveGoldenEffectCompanion.insert(
+                  singletonId: const Value(0),
+                  goldenId: 'g1',
+                  multiplier: 10,
+                  expiresAt: DateTime.utc(2020, 1, 1),
+                ),
+              );
+          expect(
+            () => db
+                .into(db.activeGoldenEffect)
+                .insert(
+                  ActiveGoldenEffectCompanion.insert(
+                    singletonId: const Value(1),
+                    goldenId: 'g2',
+                    multiplier: 20,
+                    expiresAt: DateTime.utc(2020, 1, 2),
+                  ),
+                ),
+            throwsA(isA<SqliteException>()),
+          );
+        },
+      );
+
+      test('onUpgrade v1→v2 creates crash_logs table without error', () async {
         await db.customSelect('SELECT 1').get();
-      },
-    );
+        expect(db.schemaVersion, equals(3));
+        final rows = await db.select(db.crashLogs).get();
+        expect(rows, isEmpty);
+      });
 
-    test('onCreate creates crash_logs table', () async {
-      // Verify the crash_logs table exists and is queryable
-      final rows = await db.select(db.crashLogs).get();
-      expect(rows, isEmpty);
-    });
+      test('onUpgrade v2→v3 path is covered on fresh in-memory database', () async {
+        // NativeDatabase.memory() cannot simulate a real v2 on-disk file; Story 6-3
+        // will add file-backed migration tests. Here we assert v3 schema is live.
+        await db.customSelect('SELECT 1').get();
+        expect(db.schemaVersion, equals(3));
+        expect(await db.select(db.meta).get(), isEmpty);
+        expect(await db.select(db.activeBoost).get(), isEmpty);
+        expect(await db.select(db.countries).get(), isEmpty);
+        expect(await db.select(db.continents).get(), isEmpty);
+        expect(await db.select(db.continentMilestones).get(), isEmpty);
+        expect(await db.select(db.earnedAchievements).get(), isEmpty);
+        expect(await db.select(db.activeGlobalUpgrades).get(), isEmpty);
+        expect(await db.select(db.activeGoldens).get(), isEmpty);
+        expect(await db.select(db.activeMissions).get(), isEmpty);
+        expect(await db.select(db.completedMissions).get(), isEmpty);
+        expect(await db.select(db.dailyStreaks).get(), isEmpty);
+        expect(await db.select(db.activeGoldenEffect).get(), isEmpty);
+      });
 
-    test('onUpgrade v1→v2 creates crash_logs table without error', () async {
-      // Open fresh in-memory DB (starts at onCreate which calls createAll,
-      // so crash_logs table is created). We verify migration path indirectly:
-      // the schema version is 2 and crash_logs is accessible.
-      //
-      // True v1→v2 migration testing would require opening an existing v1 DB file,
-      // which is not possible with NativeDatabase.memory(). Deferred to Story 6.5.
-      await db.customSelect('SELECT 1').get();
-      expect(db.schemaVersion, equals(2));
-      final rows = await db.select(db.crashLogs).get();
-      expect(rows, isEmpty);
+      test('onUpgrade v2 to v3 preserves crash_logs and seeds meta', () async {
+        final tempDir = await Directory.systemTemp.createTemp(
+          'global_domination_path_provider_',
+        );
+        addTearDown(() async {
+          if (await tempDir.exists()) {
+            await tempDir.delete(recursive: true);
+          }
+        });
+        final previousPlatform = PathProviderPlatform.instance;
+        PathProviderPlatform.instance = _FakePathProviderPlatform(tempDir.path);
+        addTearDown(() {
+          PathProviderPlatform.instance = previousPlatform;
+        });
+
+        final upgradedDb = AppDatabase(
+          NativeDatabase.memory(
+            setup: (rawDb) {
+              rawDb
+                ..execute('''
+                  CREATE TABLE crash_logs (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    level TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    stack_trace TEXT NULL
+                  );
+                ''')
+                ..execute(
+                  "INSERT INTO crash_logs "
+                  "(timestamp, level, tag, message, stack_trace) VALUES "
+                  "('2026-01-01T00:00:00.000Z', 'severe', 'MigrationTest', "
+                  "'kept', NULL);",
+                )
+                ..execute('PRAGMA user_version = 2');
+            },
+          ),
+        );
+        addTearDown(upgradedDb.close);
+
+        final crashRows = await upgradedDb.select(upgradedDb.crashLogs).get();
+        expect(crashRows, hasLength(1));
+        expect(crashRows.single.tag, equals('MigrationTest'));
+
+        final metaRows = await upgradedDb.select(upgradedDb.meta).get();
+        expect(metaRows, hasLength(1));
+        expect(metaRows.single.schemaVersion, equals(3));
+        expect(metaRows.single.totalInfluence, equals(Decimal.zero));
+        expect(metaRows.single.totalIntel, equals(Decimal.zero));
+        expect(
+          metaRows.single.goldenOpportunityMultiplier,
+          equals(Decimal.one),
+        );
+        expect(metaRows.single.boostMultiplier, equals(Decimal.one));
+
+        expect(await upgradedDb.select(upgradedDb.activeBoost).get(), isEmpty);
+        expect(await upgradedDb.select(upgradedDb.countries).get(), isEmpty);
+        expect(await upgradedDb.select(upgradedDb.continents).get(), isEmpty);
+        expect(
+          await upgradedDb.select(upgradedDb.continentMilestones).get(),
+          isEmpty,
+        );
+        expect(
+          await upgradedDb.select(upgradedDb.earnedAchievements).get(),
+          isEmpty,
+        );
+        expect(
+          await upgradedDb.select(upgradedDb.activeGlobalUpgrades).get(),
+          isEmpty,
+        );
+        expect(
+          await upgradedDb.select(upgradedDb.activeGoldens).get(),
+          isEmpty,
+        );
+        expect(
+          await upgradedDb.select(upgradedDb.activeMissions).get(),
+          isEmpty,
+        );
+        expect(
+          await upgradedDb.select(upgradedDb.completedMissions).get(),
+          isEmpty,
+        );
+        expect(await upgradedDb.select(upgradedDb.dailyStreaks).get(), isEmpty);
+        expect(
+          await upgradedDb.select(upgradedDb.activeGoldenEffect).get(),
+          isEmpty,
+        );
+      });
     });
   });
 

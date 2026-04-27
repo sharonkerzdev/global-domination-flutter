@@ -1,6 +1,6 @@
 # Story 6.1: Drift Schema and `GameStateMapper`
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -14,21 +14,21 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
 
 1. **Given** the project's `AppDatabase` after this story
    **When** `dart run build_runner build --delete-conflicting-outputs` runs
-   **Then** generated code in `lib/data/database/app_database.g.dart` compiles cleanly with `flutter analyze` returning zero warnings, AND `AppDatabase.schemaVersion` returns `3`, AND the `@DriftDatabase(tables: [...])` list includes (in this exact order, alphabetized after `CrashLogs`): `ActiveGlobalUpgrades`, `ActiveGoldenEffect`, `ActiveGoldens`, `Continents`, `ContinentMilestones`, `Countries`, `CrashLogs`, `EarnedAchievements`, `Meta`.
+   **Then** generated code in `lib/data/database/app_database.g.dart` compiles cleanly with `flutter analyze` returning zero warnings, AND `AppDatabase.schemaVersion` returns `3`, AND the `@DriftDatabase(tables: [...])` list includes: `ActiveBoost`, `ActiveGlobalUpgrades`, `ActiveGoldenEffect`, `ActiveGoldens`, `ActiveMissions`, `CompletedMissions`, `Continents`, `ContinentMilestones`, `Countries`, `CrashLogs`, `DailyStreaks`, `EarnedAchievements`, `Meta`.
 
 2. **Given** every newly-added table
    **When** examined
-   **Then** each has an explicit primary key, every `Decimal` field is a `TextColumn` with `.map(const DecimalConverter())`, every `DateTime` field is a `DateTimeColumn` (stored as TEXT per `build.yaml` `store_date_time_values_as_text: true`), every nullable column uses `.nullable()`, and FK relationships are declared via `references(...)`. **No raw SQL**: only typed Drift DSL.
+   **Then** each has an explicit primary key, every `Decimal` field is a `TextColumn` with `.map(const DecimalConverter())`, every `DateTime` field is a `DateTimeColumn` (stored as TEXT per `build.yaml` `store_date_time_values_as_text: true`), every nullable column uses `.nullable()`, and FK relationships are declared via `references(...)` where the schema owns the invariant. **No raw SQL**: only typed Drift DSL.
 
 3. **Given** the `Meta` table
    **When** any row exists in it
-   **Then** the schema enforces single-row semantics via a `singletonId` `IntColumn` constrained to `check(singletonId.equals(0))` with default `Constant(0)` as primary key, AND the columns are: `singletonId INT PK`, `schemaVersion INT`, `lastSavedAt DATETIME`, `totalInfluence TEXT (Decimal)`, `goldenOpportunityMultiplier TEXT (Decimal)`, `boostMultiplier TEXT (Decimal)`. (Forward-looking columns `totalIntel`, `dailyStreakJson`, `tutorialCompleted` are deliberately **deferred** — see Dev Notes.)
+   **Then** the schema enforces single-row semantics via a `singletonId` `IntColumn` constrained to `check(singletonId.equals(0))` with default `Constant(0)` as primary key, AND the columns are: `singletonId INT PK`, `schemaVersion INT`, `lastSavedAt DATETIME`, `totalInfluence TEXT (Decimal)`, `totalIntel TEXT (Decimal)`, `goldenOpportunityMultiplier TEXT (Decimal)`, `boostMultiplier TEXT (Decimal)`. Boost expiry, daily streak, and missions are persisted in their own normalized tables.
 
 4. **Given** a v2 database file (existing crash_logs only) on disk at app launch
    **When** `AppDatabase` opens
-   **Then** the typed `MigrationStrategy.onUpgrade(2 → 3)` runs in this exact sequence: (a) `_backupDatabase(2)` copies the file to `schema_backup_v2.sqlite`, (b) `m.createTable(meta)` then all other new tables, (c) seeds a single `meta` row with `schemaVersion: 3`, `lastSavedAt: clock.now()`, `totalInfluence: '0'`, `goldenOpportunityMultiplier: '1'`, `boostMultiplier: '1'`, AND the database reaches schema version 3 with the existing `crash_logs` data preserved.
+   **Then** the typed `MigrationStrategy.onUpgrade(2 → 3)` runs in this exact sequence: (a) `_backupDatabase(2)` copies the file to `schema_backup_v2.sqlite`, (b) `m.createTable(meta)` then all other new tables, (c) seeds a single `meta` row with `schemaVersion: 3`, `lastSavedAt: clock.now()`, `totalInfluence: '0'`, `totalIntel: '0'`, `goldenOpportunityMultiplier: '1'`, `boostMultiplier: '1'`, AND the database reaches schema version 3 with the existing `crash_logs` data preserved.
 
-5. **Given** a fully-populated `GameState` (every collection non-empty: countries, unlockedContinents, reachedMilestones, continentCompletions, earnedAchievementIds, activeGlobalUpgradeIds, activeGoldens, activeGoldenEffect != null, totalInfluence > 0, goldenOpportunityMultiplier ≠ 1, boostMultiplier ≠ 1)
+5. **Given** a fully-populated `GameState` (every collection non-empty: countries, unlockedContinents, reachedMilestones, continentCompletions, earnedAchievementIds, activeGlobalUpgradeIds, activeGoldens, activeMissions, completedMissionIds, activeGoldenEffect != null, activeBoost != null, dailyStreak != empty, totalInfluence > 0, totalIntel > 0, goldenOpportunityMultiplier ≠ 1)
    **When** `GameStateMapper.toCompanions(state, savedAt: <DateTime>)` is called
    **Then** it returns a `GameStateCompanions` record bundle (see Task 5) containing typed Drift companion objects for every table, with every `GameState` field represented (no field silently dropped).
 
@@ -50,12 +50,12 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
 
 10. **Given** all unit tests authored for this story
     **When** `flutter test test/data/` runs
-    **Then** every test uses `NativeDatabase.memory()` (NEVER touches the real filesystem), every `AppDatabase` instance is `await db.close()`'d in `tearDown`, AND new tests cover at minimum: schemaVersion is 3 (1 test); each new table is queryable post-`onCreate` (1 test per table = 8 tests); v2→v3 onUpgrade preserves crash_logs (1 test, deferred-pattern OK per Story 1.4 precedent); mapper round-trip with full state (1 test); empty-DB → `initialSeed` (1 test); per-field smoke tests for each persisted GameState field (≥ 8 tests).
+    **Then** every test uses `NativeDatabase.memory()` (NEVER touches the real app database file), every `AppDatabase` instance is `await db.close()`'d in `tearDown`, AND new tests cover at minimum: schemaVersion is 3 (1 test); each new table is queryable post-`onCreate` (1 test per table = 12 tests); v2-to-v3 onUpgrade preserves crash_logs and seeds meta (1 test using in-memory `PRAGMA user_version = 2` setup); mapper round-trip with full state (1 test); empty-DB to `initialSeed` (1 test); per-field smoke tests for each persisted GameState field (>= 8 tests).
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the new Drift table files under `lib/data/database/tables/` (AC: #1, #2, #3, #8)
-  - [ ] 1.1 Create `lib/data/database/tables/meta_table.dart`. Pattern: pure persistence types, NO imports from `lib/game/`. Use `import 'package:drift/drift.dart';` and `import '../converters/decimal_converter.dart';` only.
+- [x] Task 1: Create the new Drift table files under `lib/data/database/tables/` (AC: #1, #2, #3, #8)
+  - [x] 1.1 Create `lib/data/database/tables/meta_table.dart`. Pattern: pure persistence types, NO imports from `lib/game/`. Use `import 'package:drift/drift.dart';` and `import '../converters/decimal_converter.dart';` only.
     ```dart
     @DataClassName('MetaRow')
     class Meta extends Table {
@@ -73,7 +73,7 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
       List<String> get customConstraints => ['CHECK (singleton_id = 0)'];
     }
     ```
-  - [ ] 1.2 Create `lib/data/database/tables/countries_table.dart` mirroring current `CountryState` (id PK, unlocked BOOL, ipLevel INT, leaderTier TEXT [enum], bankedInfluence TEXT [Decimal], lastCollectedAt DATETIME nullable). Use `text()` for `id` (matches `CountryId.value`) and `text()` for `leaderTier` (store enum `name` — add a `LeaderTierConverter` in Task 2 OR persist `name` as raw text and convert in mapper; pick the latter — converter overhead not justified for one enum).
+  - [x] 1.2 Create `lib/data/database/tables/countries_table.dart` mirroring current `CountryState` (id PK, unlocked BOOL, ipLevel INT, leaderTier TEXT [enum], bankedInfluence TEXT [Decimal], lastCollectedAt DATETIME nullable). Use `text()` for `id` (matches `CountryId.value`) and `text()` for `leaderTier` (store enum `name` — add a `LeaderTierConverter` in Task 2 OR persist `name` as raw text and convert in mapper; pick the latter — converter overhead not justified for one enum).
     ```dart
     @DataClassName('CountryRow')
     class Countries extends Table {
@@ -88,8 +88,8 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
       Set<Column<Object>> get primaryKey => {id};
     }
     ```
-  - [ ] 1.3 Create `lib/data/database/tables/continents_table.dart` (id PK, unlocked BOOL, completed BOOL). Models the union of `state.unlockedContinents` and `state.continentCompletions` keyed by `ContinentId.value`. Both flags default to `false` for un-persisted continents (mapper supplies the missing-row interpretation).
-  - [ ] 1.4 Create `lib/data/database/tables/continent_milestones_table.dart` modeling `Map<ContinentId, Set<int>>` (the `reachedMilestones` field). Composite PK `(continentId, milestone)`; FK `continentId references continents(id)` (typed Drift FK syntax, `onDelete: KeyAction.cascade`).
+  - [x] 1.3 Create `lib/data/database/tables/continents_table.dart` (id PK, unlocked BOOL, completed BOOL). Models the union of `state.unlockedContinents` and `state.continentCompletions` keyed by `ContinentId.value`. Both flags default to `false` for un-persisted continents (mapper supplies the missing-row interpretation).
+  - [x] 1.4 Create `lib/data/database/tables/continent_milestones_table.dart` modeling `Map<ContinentId, Set<int>>` (the `reachedMilestones` field). Composite PK `(continentId, milestone)`; FK `continentId references continents(id)` (typed Drift FK syntax, `onDelete: KeyAction.cascade`).
     ```dart
     @DataClassName('ContinentMilestoneRow')
     class ContinentMilestones extends Table {
@@ -100,18 +100,18 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
       Set<Column<Object>> get primaryKey => {continentId, milestone};
     }
     ```
-  - [ ] 1.5 Create `lib/data/database/tables/earned_achievements_table.dart` (id TEXT PK — single column, no other state stored on the row; rewards are re-applied from content on load and are idempotent per Story 5-5's `earnedAchievementIds` ledger).
-  - [ ] 1.6 Create `lib/data/database/tables/active_global_upgrades_table.dart` (id TEXT PK — same shape as `earned_achievements`).
-  - [ ] 1.7 Create `lib/data/database/tables/active_goldens_table.dart` mirroring `ActiveGolden`: `id TEXT PK, countryId TEXT, multiplier INT, expiresAt DATETIME`. **No FK to countries** — the country may technically be re-locked between spawn and claim; the reducer's defensive guard (Story 5-1 AC #7c) is the contract, not the schema. Document this decision in a one-line `// ` comment in the file.
-  - [ ] 1.8 Create `lib/data/database/tables/active_golden_effect_table.dart`. Single-row pattern (same `singletonId` + `CHECK(singleton_id = 0)` trick as `meta`). Columns: `singletonId INT PK, goldenId TEXT, multiplier INT, expiresAt DATETIME`. **Empty table = no active effect** (this is how `state.activeGoldenEffect == null` round-trips: mapper writes 0 rows when null, 1 row when non-null; mapper reads `rows.activeGoldenEffect` as nullable).
-  - [ ] 1.9 Every new table file MUST have `@DataClassName('XxxRow')` matching the singular naming (`Meta` → `MetaRow`, `Countries` → `CountryRow`, `ContinentMilestones` → `ContinentMilestoneRow`, etc.) per Drift convention and the project's "Drift: plural table, singular row class" rule (project-context.md line 242).
+  - [x] 1.5 Create `lib/data/database/tables/earned_achievements_table.dart` (id TEXT PK — single column, no other state stored on the row; rewards are re-applied from content on load and are idempotent per Story 5-5's `earnedAchievementIds` ledger).
+  - [x] 1.6 Create `lib/data/database/tables/active_global_upgrades_table.dart` (id TEXT PK — same shape as `earned_achievements`).
+  - [x] 1.7 Create `lib/data/database/tables/active_goldens_table.dart` mirroring `ActiveGolden`: `id TEXT PK, countryId TEXT, multiplier INT, expiresAt DATETIME`. **No FK to countries** — the country may technically be re-locked between spawn and claim; the reducer's defensive guard (Story 5-1 AC #7c) is the contract, not the schema. Document this decision in a one-line `// ` comment in the file.
+  - [x] 1.8 Create `lib/data/database/tables/active_golden_effect_table.dart`. Single-row pattern (same `singletonId` + `CHECK(singleton_id = 0)` trick as `meta`). Columns: `singletonId INT PK, goldenId TEXT, multiplier INT, expiresAt DATETIME`. **Empty table = no active effect** (this is how `state.activeGoldenEffect == null` round-trips: mapper writes 0 rows when null, 1 row when non-null; mapper reads `rows.activeGoldenEffect` as nullable).
+  - [x] 1.9 Every new table file MUST have `@DataClassName('XxxRow')` matching the singular naming (`Meta` → `MetaRow`, `Countries` → `CountryRow`, `ContinentMilestones` → `ContinentMilestoneRow`, etc.) per Drift convention and the project's "Drift: plural table, singular row class" rule (project-context.md line 242).
 
-- [ ] Task 2: No new TypeConverters required (AC: #2)
-  - [ ] 2.1 Reuse the existing `lib/data/database/converters/decimal_converter.dart` for ALL `Decimal` columns. **Do NOT** create a `LeaderTierConverter` — store `LeaderTier.name` as raw `text()` and convert via a private helper in `GameStateMapper` (cheaper, avoids generated-code coupling between the data layer and `lib/game/features/leaders/leader_tier.dart`). Justify in a one-line code comment in the mapper.
-  - [ ] 2.2 No `BoolConverter` either — Drift's `boolean()` ships first-class.
+- [x] Task 2: No new TypeConverters required (AC: #2)
+  - [x] 2.1 Reuse the existing `lib/data/database/converters/decimal_converter.dart` for ALL `Decimal` columns. **Do NOT** create a `LeaderTierConverter` — store `LeaderTier.name` as raw `text()` and convert via a private helper in `GameStateMapper` (cheaper, avoids generated-code coupling between the data layer and `lib/game/features/leaders/leader_tier.dart`). Justify in a one-line code comment in the mapper.
+  - [x] 2.2 No `BoolConverter` either — Drift's `boolean()` ships first-class.
 
-- [ ] Task 3: Wire new tables + bump schema version + add `onUpgrade(2 → 3)` migration in `lib/data/database/app_database.dart` (AC: #1, #4, #9)
-  - [ ] 3.1 Update `@DriftDatabase(tables: [...])` to include all new tables in alphabetical order, keeping `CrashLogs` in the list. Final order:
+- [x] Task 3: Wire new tables + bump schema version + add `onUpgrade(2 → 3)` migration in `lib/data/database/app_database.dart` (AC: #1, #4, #9)
+  - [x] 3.1 Update `@DriftDatabase(tables: [...])` to include all new tables in alphabetical order, keeping `CrashLogs` in the list. Final order:
     ```dart
     @DriftDatabase(tables: [
       ActiveGlobalUpgrades,
@@ -125,8 +125,8 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
       Meta,
     ])
     ```
-  - [ ] 3.2 Bump `schemaVersion` from `2` to `3`.
-  - [ ] 3.3 Extend `MigrationStrategy.onUpgrade`: keep the existing `if (from == 1) await m.createTable(crashLogs);` branch untouched. Add (in the same callback, AFTER the existing `_backupDatabase(from)` call):
+  - [x] 3.2 Bump `schemaVersion` from `2` to `3`.
+  - [x] 3.3 Extend `MigrationStrategy.onUpgrade`: keep the existing `if (from == 1) await m.createTable(crashLogs);` branch untouched. Add (in the same callback, AFTER the existing `_backupDatabase(from)` call):
     ```dart
     if (from <= 2 && to >= 3) {
       await m.createTable(meta);
@@ -147,8 +147,8 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     }
     ```
     **Note:** `_backupDatabase(from)` is already called unconditionally at the top of `onUpgrade`; do NOT re-call it. The `_backupDatabase` no-op-on-memory limitation (existing comment) is preserved.
-  - [ ] 3.4 The `onCreate` callback (`m.createAll()`) needs no changes — Drift auto-creates every registered table. **However**, `onCreate` MUST also seed the singleton `meta` row, otherwise a fresh DB has no `meta` row and `loadAll()` returns `meta: null` — which the mapper interprets as "first launch" and seeds from `ContentRegistry`. This is the **intended** behavior per AC #7 (no surprise meta row on cold launch). **Decision: do NOT seed meta in onCreate; let the empty-DB → `initialSeed` flow drive the first save's INSERT in Story 6-2.** Add a one-line code comment documenting this choice.
-  - [ ] 3.5 Add a typed `loadAll()` method to `AppDatabase`:
+  - [x] 3.4 The `onCreate` callback (`m.createAll()`) needs no changes — Drift auto-creates every registered table. **However**, `onCreate` MUST also seed the singleton `meta` row, otherwise a fresh DB has no `meta` row and `loadAll()` returns `meta: null` — which the mapper interprets as "first launch" and seeds from `ContentRegistry`. This is the **intended** behavior per AC #7 (no surprise meta row on cold launch). **Decision: do NOT seed meta in onCreate; let the empty-DB → `initialSeed` flow drive the first save's INSERT in Story 6-2.** Add a one-line code comment documenting this choice.
+  - [x] 3.5 Add a typed `loadAll()` method to `AppDatabase`:
     ```dart
     Future<GameStateRows> loadAll() async {
       return transaction(() async {
@@ -175,8 +175,8 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     ```
     `GameStateRows` is a Dart `class` (immutable) defined in `lib/data/mappers/game_state_rows.dart` — see Task 4. **Do not return a `Map<String, dynamic>`** — typed bundle only.
 
-- [ ] Task 4: Define the `GameStateRows` and `GameStateCompanions` bundle classes (AC: #5, #6, #7)
-  - [ ] 4.1 Create `lib/data/mappers/game_state_rows.dart`:
+- [x] Task 4: Define the `GameStateRows` and `GameStateCompanions` bundle classes (AC: #5, #6, #7)
+  - [x] 4.1 Create `lib/data/mappers/game_state_rows.dart`:
     ```dart
     @immutable
     class GameStateRows {
@@ -202,7 +202,7 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     }
     ```
     No `==`/`hashCode` needed (consumed once per load; not stored, not compared).
-  - [ ] 4.2 Create `lib/data/mappers/game_state_companions.dart` with the parallel write-side bundle. Each list is the full set of `Insert`-shape companions Story 6-2 will batch-write on first save:
+  - [x] 4.2 Create `lib/data/mappers/game_state_companions.dart` with the parallel write-side bundle. Each list is the full set of `Insert`-shape companions Story 6-2 will batch-write on first save:
     ```dart
     @immutable
     class GameStateCompanions {
@@ -218,11 +218,11 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
       const GameStateCompanions({...});
     }
     ```
-  - [ ] 4.3 Both files MAY import from `package:global_domination/data/database/app_database.dart` (for the generated row/companion types) and `package:meta/meta.dart`. They MUST NOT import `package:flutter/...`.
+  - [x] 4.3 Both files MAY import from `package:global_domination/data/database/app_database.dart` (for the generated row/companion types) and `package:meta/meta.dart`. They MUST NOT import `package:flutter/...`.
 
-- [ ] Task 5: Implement `GameStateMapper` (AC: #5, #6, #7, #8)
-  - [ ] 5.1 Create `lib/data/mappers/game_state_mapper.dart`. This is **the only file in `lib/data/` that imports `lib/game/`**. Static `flutter analyze` test from Task 8.3 enforces this.
-  - [ ] 5.2 Public API:
+- [x] Task 5: Implement `GameStateMapper` (AC: #5, #6, #7, #8)
+  - [x] 5.1 Create `lib/data/mappers/game_state_mapper.dart`. This is **the only file in `lib/data/` that imports `lib/game/`**. Static `flutter analyze` test from Task 8.3 enforces this.
+  - [x] 5.2 Public API:
     ```dart
     class GameStateMapper {
       const GameStateMapper();
@@ -233,7 +233,7 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     }
     ```
     Stateless, no fields. Inject as a Riverpod `Provider` in Story 6-2 (`gameStateMapperProvider`). No provider in this story.
-  - [ ] 5.3 `toCompanions` per-field mapping:
+  - [x] 5.3 `toCompanions` per-field mapping:
     - `state.totalInfluence.value` → `meta.totalInfluence` (Decimal)
     - `state.goldenOpportunityMultiplier` → `meta.goldenOpportunityMultiplier`
     - `state.boostMultiplier` → `meta.boostMultiplier`
@@ -246,7 +246,7 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     - For each `id in state.activeGlobalUpgradeIds`: `ActiveGlobalUpgradesCompanion.insert(id: id)`.
     - For each `g in state.activeGoldens.values`: `ActiveGoldensCompanion.insert(id: g.id, countryId: g.countryId.value, multiplier: g.multiplier, expiresAt: g.expiresAt)`.
     - If `state.activeGoldenEffect != null`: one `ActiveGoldenEffectCompanion.insert(goldenId: ..., multiplier: ..., expiresAt: ...)` (with `singletonId: Value(0)` to satisfy the CHECK constraint). If `null`: the companion field is `null` (write 0 rows).
-  - [ ] 5.4 `fromRows` reconstruction:
+  - [x] 5.4 `fromRows` reconstruction:
     - `if (rows.meta == null) return GameState.initialSeed(content);` — single explicit branch (AC #7).
     - Reconstruct `countries` map: start from `content.countries.keys` (so every content-defined country exists in state — required by `tickCountries` and the existing `initialSeed` invariant). For each id: lookup the corresponding `CountryRow` (build a `Map<String, CountryRow>` once, lookup is O(1)); if found, build a `CountryState` from the row; if missing (content has a country the saved DB doesn't — i.e. content was extended after the save), use the same defaults as `initialSeed`'s non-egypt branch (`unlocked: false, ipLevel: 0, leaderTier: LeaderTier.none, bankedInfluence: Influence.zero, lastCollectedAt: null`).
     - Convert `leaderTier` string → enum: `LeaderTier.values.byName(row.leaderTier)`. If a row has an unknown name (impossible unless DB is hand-edited), throw `ContentLoadException`-style internal error — schema invariant violation.
@@ -256,48 +256,48 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     - Reconstruct `activeGoldens`: `{ for (final r in rows.activeGoldens) r.id: ActiveGolden(id: r.id, countryId: CountryId(r.countryId), multiplier: r.multiplier, expiresAt: r.expiresAt) }`.
     - Reconstruct `activeGoldenEffect`: `rows.activeGoldenEffect == null ? null : ActiveGoldenEffect(goldenId: row.goldenId, multiplier: row.multiplier, expiresAt: row.expiresAt)`.
     - Final `GameState(...)` constructor call with all reconstructed fields. **Read `totalInfluence` from `rows.meta!.totalInfluence` (Decimal) and wrap with `Influence(...)`.**
-  - [ ] 5.5 Time discipline: `savedAt` parameter MUST be UTC. Add `assert(savedAt.isUtc, 'savedAt must be UTC');` at the top of `toCompanions`. The architecture's `meta.lastSavedAt` contract is "UTC ISO8601" (project-context.md line 122; architecture line 233). Drift's `store_date_time_values_as_text: true` gives ISO8601 automatically.
-  - [ ] 5.6 Determinism in iteration order: when emitting companions for round-trip-test stability, sort `state.countries`, `state.unlockedContinents`, `state.reachedMilestones`, `state.earnedAchievementIds`, `state.activeGlobalUpgradeIds`, `state.activeGoldens` by their `String` key/id ASC before producing companions. This is **not** a correctness requirement (DB has no order) but tests benefit from deterministic companion lists when comparing equality.
-  - [ ] 5.7 NO Flutter imports, NO logging, NO clock reads, NO RNG reads. The mapper is pure Dart utility code — every input is a parameter. (`DateTime.now()` is forbidden inside `toCompanions`/`fromRows`; the caller in Story 6-2 supplies `savedAt`.)
-  - [ ] 5.8 NO Drift queries inside the mapper. The mapper consumes typed rows/companions; it does NOT call `select(...)` or `into(...)`. Story 6-2's `SaveRepository` orchestrates DB I/O.
+  - [x] 5.5 Time discipline: `savedAt` parameter MUST be UTC. Add `assert(savedAt.isUtc, 'savedAt must be UTC');` at the top of `toCompanions`. The architecture's `meta.lastSavedAt` contract is "UTC ISO8601" (project-context.md line 122; architecture line 233). Drift's `store_date_time_values_as_text: true` gives ISO8601 automatically.
+  - [x] 5.6 Determinism in iteration order: when emitting companions for round-trip-test stability, sort `state.countries`, `state.unlockedContinents`, `state.reachedMilestones`, `state.earnedAchievementIds`, `state.activeGlobalUpgradeIds`, `state.activeGoldens` by their `String` key/id ASC before producing companions. This is **not** a correctness requirement (DB has no order) but tests benefit from deterministic companion lists when comparing equality.
+  - [x] 5.7 NO Flutter imports, NO logging, NO clock reads, NO RNG reads. The mapper is pure Dart utility code — every input is a parameter. (`DateTime.now()` is forbidden inside `toCompanions`/`fromRows`; the caller in Story 6-2 supplies `savedAt`.)
+  - [x] 5.8 NO Drift queries inside the mapper. The mapper consumes typed rows/companions; it does NOT call `select(...)` or `into(...)`. Story 6-2's `SaveRepository` orchestrates DB I/O.
 
-- [ ] Task 6: Architecture boundary tests (AC: #8)
-  - [ ] 6.1 If `test/architecture/data_boundary_test.dart` does not yet exist, create it. Mirror the structure of `test/architecture/game_boundary_test.dart` (read static-analysis-friendly imports via `Directory(...).list(recursive: true)` + `File.readAsStringSync()` + `RegExp` matching). Two assertions:
+- [x] Task 6: Architecture boundary tests (AC: #8)
+  - [x] 6.1 If `test/architecture/data_boundary_test.dart` does not yet exist, create it. Mirror the structure of `test/architecture/game_boundary_test.dart` (read static-analysis-friendly imports via `Directory(...).list(recursive: true)` + `File.readAsStringSync()` + `RegExp` matching). Two assertions:
     - **(a) Tables and converters are pure persistence.** For every `.dart` file under `lib/data/database/tables/` and `lib/data/database/converters/`, assert there is no `import 'package:global_domination/game/...'` line. Failure message: `"<path> imports lib/game/ — tables/converters must be pure persistence types; mapping logic belongs in lib/data/mappers/game_state_mapper.dart"`.
     - **(b) Mapper is the SOLE bridge.** For every `.dart` file under `lib/data/`, count files that import BOTH `package:global_domination/data/database/...` AND `package:global_domination/game/...`. Assert that the only file matching is `lib/data/mappers/game_state_mapper.dart`. (`game_state_companions.dart` and `game_state_rows.dart` import `data/database/` only — they don't bridge.) **Note:** `crash_log_repository.dart` and `crash_log_entry.dart` import `data/database/` but NOT `game/` — they do not match the dual-import predicate; they're allowed.
-  - [ ] 6.2 Run `flutter test test/architecture/` to confirm both `game_boundary_test.dart` (already exists) and the new `data_boundary_test.dart` pass.
+  - [x] 6.2 Run `flutter test test/architecture/` to confirm both `game_boundary_test.dart` (already exists) and the new `data_boundary_test.dart` pass.
 
-- [ ] Task 7: Database tests in `test/data/database/app_database_test.dart` (AC: #4, #10)
-  - [ ] 7.1 Add a top-level group `'AppDatabase v3 schema'`:
+- [x] Task 7: Database tests in `test/data/database/app_database_test.dart` (AC: #4, #10)
+  - [x] 7.1 Add a top-level group `'AppDatabase v3 schema'`:
     - `'opens at schema version 3'` — `expect(db.schemaVersion, equals(3));`
     - `'onCreate creates meta table'` — `final rows = await db.select(db.meta).get(); expect(rows, isEmpty);` (empty per Task 3.4 decision)
     - One `'onCreate creates <table>'` test per new table (8 tests total, all asserting empty after fresh `NativeDatabase.memory()`). Pattern: `await db.select(db.<table>).get(); expect(..., isEmpty);`
     - `'meta table enforces single-row CHECK constraint'` — insert a row with `singletonId: Value(0)`; expect success. Insert a second with `singletonId: Value(1)`; expect a SQLite `CHECK constraint failed` error (`expectLater(..., throwsA(isA<SqliteException>()))`). **Note:** `package:sqlite3/sqlite3.dart` is already a transitive dep (used by `app_database.dart` already at line 8 — see existing source); add the import in the test file.
     - `'active_golden_effect table enforces single-row CHECK constraint'` — same pattern.
-  - [ ] 7.2 Add `'onUpgrade v2→v3'` test, deferred-pattern per the existing `'onUpgrade v1→v2 ...'` comment (lines 41–53 of current `app_database_test.dart`). Body: open in-memory DB, assert `schemaVersion == 3`, assert each new table is queryable. **Do NOT attempt a real v2-on-disk upgrade** — same `NativeDatabase.memory()` limitation; defer real-file upgrade testing to Story 6-3.
-  - [ ] 7.3 Update the existing `'opens at schema version 2'` test to assert `equals(3)`. Update the comment block at lines 1–3 of the file (currently mentions Story 6.5) — change to reference Story 6-3 (the typed-migrations story) since `_backupDatabase` testing is deferred there.
+  - [x] 7.2 Add `'onUpgrade v2→v3'` test, deferred-pattern per the existing `'onUpgrade v1→v2 ...'` comment (lines 41–53 of current `app_database_test.dart`). Body: open in-memory DB, assert `schemaVersion == 3`, assert each new table is queryable. **Do NOT attempt a real v2-on-disk upgrade** — same `NativeDatabase.memory()` limitation; defer real-file upgrade testing to Story 6-3.
+  - [x] 7.3 Update the existing `'opens at schema version 2'` test to assert `equals(3)`. Update the comment block at lines 1–3 of the file (currently mentions Story 6.5) — change to reference Story 6-3 (the typed-migrations story) since `_backupDatabase` testing is deferred there.
 
-- [ ] Task 8: GameStateMapper tests in `test/data/mappers/game_state_mapper_test.dart` (NEW) (AC: #5, #6, #7, #10)
-  - [ ] 8.1 Use `package:flutter_test/flutter_test.dart` (not `package:test/test.dart`) — the round-trip tests touch Drift, which requires `TestWidgetsFlutterBinding` for `NativeDatabase.memory()`. **Reference**: `test/data/database/app_database_test.dart` already uses `flutter_test` — match the convention.
-  - [ ] 8.2 Build a `ContentRegistry` fixture (copy the helper from `test/game/features/economy/income_calculator_test.dart` lines 17–67 into a shared `test/helpers/test_content_registry.dart` if a similar helper does not yet exist; otherwise inline it). Need at least 2 continents (`africa`, `europe`), 3 countries (`egypt`, `nigeria`, `france`).
-  - [ ] 8.3 Test `'fromRows on empty rows returns initialSeed'` (AC #7):
+- [x] Task 8: GameStateMapper tests in `test/data/mappers/game_state_mapper_test.dart` (NEW) (AC: #5, #6, #7, #10)
+  - [x] 8.1 Use `package:flutter_test/flutter_test.dart` (not `package:test/test.dart`) — the round-trip tests touch Drift, which requires `TestWidgetsFlutterBinding` for `NativeDatabase.memory()`. **Reference**: `test/data/database/app_database_test.dart` already uses `flutter_test` — match the convention.
+  - [x] 8.2 Build a `ContentRegistry` fixture (copy the helper from `test/game/features/economy/income_calculator_test.dart` lines 17–67 into a shared `test/helpers/test_content_registry.dart` if a similar helper does not yet exist; otherwise inline it). Need at least 2 continents (`africa`, `europe`), 3 countries (`egypt`, `nigeria`, `france`).
+  - [x] 8.3 Test `'fromRows on empty rows returns initialSeed'` (AC #7):
     ```dart
     final mapper = const GameStateMapper();
     final rows = GameStateRows(meta: null, countries: [], continents: [], continentMilestones: [], earnedAchievements: [], activeGlobalUpgrades: [], activeGoldens: [], activeGoldenEffect: null);
     expect(mapper.fromRows(rows, content), equals(GameState.initialSeed(content)));
     ```
-  - [ ] 8.4 Test `'toCompanions then fromRows is lossless for trivial state'` (AC #6 base case):
+  - [x] 8.4 Test `'toCompanions then fromRows is lossless for trivial state'` (AC #6 base case):
     - Construct `state1 = GameState.initialSeed(content)`.
     - `final companions = mapper.toCompanions(state1, savedAt: DateTime.utc(2026, 1, 1));`
     - Open `AppDatabase(NativeDatabase.memory())`. Write all companions via `into(table).insert(companion)` in a transaction. Read back via `loadAll()`.
     - `final state2 = mapper.fromRows(rows, content);`
     - `expect(state2, equals(state1));`
-  - [ ] 8.5 Test `'toCompanions then fromRows is lossless for fully-populated state'` (AC #6 main case): build a non-trivial `GameState` via `GameStateBuilder` (test helper — see 8.10) covering every field listed in AC #5. Same write→read→compare flow. **This is the headline round-trip test.**
-  - [ ] 8.6 Per-field smoke tests (AC #10): one test per `GameState` field, each varying just that field from `initialSeed` and asserting round-trip. Fields: `totalInfluence` (use `Decimal.parse('1.234e38')` to test large numbers), `unlockedContinents`, `continentCompletions`, `reachedMilestones` (mix of empty set, single milestone, all four milestones), `earnedAchievementIds`, `activeGlobalUpgradeIds`, `activeGoldens` (1 entry, 3 entries), `activeGoldenEffect` (null and non-null), `goldenOpportunityMultiplier`, `boostMultiplier`. Per-country fields: `unlocked`, `ipLevel`, `leaderTier` (cycle through all 4 enum values), `bankedInfluence`, `lastCollectedAt` (null and non-null).
-  - [ ] 8.7 Test `'savedAt non-UTC throws'` (AC #5 / Task 5.5): `expect(() => mapper.toCompanions(state, savedAt: DateTime(2026, 1, 1)), throwsA(isA<AssertionError>()));`. Run only in debug (asserts).
-  - [ ] 8.8 Test `'leader_tier enum.name round-trips for every variant'`: parameterized over `LeaderTier.values`.
-  - [ ] 8.9 Test `'meta single-row CHECK survives mapper write'`: write companions twice (round 1: full state; round 2: state mutated → re-write meta). Use `into(meta).insertOnConflictUpdate(...)`. Assert exactly one `meta` row exists. **Story 6-2 will own the upsert strategy**, but we test the schema constraint is compatible with upsert here.
-  - [ ] 8.10 If `test/helpers/game_state_builder.dart` (mentioned in project-context.md line 289) does not yet exist, **create it now** as part of this story:
+  - [x] 8.5 Test `'toCompanions then fromRows is lossless for fully-populated state'` (AC #6 main case): build a non-trivial `GameState` via `GameStateBuilder` (test helper — see 8.10) covering every field listed in AC #5. Same write→read→compare flow. **This is the headline round-trip test.**
+  - [x] 8.6 Per-field smoke tests (AC #10): one test per `GameState` field, each varying just that field from `initialSeed` and asserting round-trip. Fields: `totalInfluence` (use `Decimal.parse('1.234e38')` to test large numbers), `unlockedContinents`, `continentCompletions`, `reachedMilestones` (mix of empty set, single milestone, all four milestones), `earnedAchievementIds`, `activeGlobalUpgradeIds`, `activeGoldens` (1 entry, 3 entries), `activeGoldenEffect` (null and non-null), `goldenOpportunityMultiplier`, `boostMultiplier`. Per-country fields: `unlocked`, `ipLevel`, `leaderTier` (cycle through all 4 enum values), `bankedInfluence`, `lastCollectedAt` (null and non-null).
+  - [x] 8.7 Test `'savedAt non-UTC throws'` (AC #5 / Task 5.5): `expect(() => mapper.toCompanions(state, savedAt: DateTime(2026, 1, 1)), throwsA(isA<AssertionError>()));`. Run only in debug (asserts).
+  - [x] 8.8 Test `'leader_tier enum.name round-trips for every variant'`: parameterized over `LeaderTier.values`.
+  - [x] 8.9 Test `'meta single-row CHECK survives mapper write'`: write companions twice (round 1: full state; round 2: state mutated → re-write meta). Use `into(meta).insertOnConflictUpdate(...)`. Assert exactly one `meta` row exists. **Story 6-2 will own the upsert strategy**, but we test the schema constraint is compatible with upsert here.
+  - [x] 8.10 If `test/helpers/game_state_builder.dart` (mentioned in project-context.md line 289) does not yet exist, **create it now** as part of this story:
     ```dart
     class GameStateBuilder {
       static GameState fullyPopulated({required ContentRegistry content, DateTime? now}) {
@@ -308,12 +308,19 @@ So that Story 6-2's `SaveRepository` can persist event-driven row updates and St
     ```
     Place under `test/helpers/`, exporting `fullyPopulated`. **Audit existing tests** for hand-built `GameState(...)` calls; this story's surface is wide enough to justify centralizing.
 
-- [ ] Task 9: Run code generation, format, analyze, full test suite (AC: #1, all)
-  - [ ] 9.1 Run `dart run build_runner build --delete-conflicting-outputs`. Expect a single output: `lib/data/database/app_database.g.dart` regenerated with new table classes. **Commit** the regenerated `.g.dart` (per project-context.md "Drift-generated `*.g.dart` files must be excluded from lint and committed").
-  - [ ] 9.2 `flutter analyze` — 0 warnings, 0 errors.
-  - [ ] 9.3 `dart format --set-exit-if-changed .`.
-  - [ ] 9.4 `flutter test` — full suite green. Expected new tests: ≈ 30–40 (8 table-creation + 2 CHECK + 1 schemaVersion + 1 onUpgrade + 1 trivial round-trip + 1 fully-populated round-trip + ≈ 14 per-field smoke + 1 savedAt-utc + 4 leader-tier + 1 upsert + 2 architecture). Full suite should land at ≈ 580–595 tests (currently ~551 per Story 5-1's notes).
-  - [ ] 9.5 Update `Status` to `review`. Append a Change Log entry and File List.
+- [x] Task 9: Run code generation, format, analyze, full test suite (AC: #1, all)
+  - [x] 9.1 Run `dart run build_runner build --delete-conflicting-outputs`. Expect a single output: `lib/data/database/app_database.g.dart` regenerated with new table classes. **Commit** the regenerated `.g.dart` (per project-context.md "Drift-generated `*.g.dart` files must be excluded from lint and committed").
+  - [x] 9.2 `flutter analyze` — 0 warnings, 0 errors.
+  - [x] 9.3 `dart format --set-exit-if-changed .`.
+  - [x] 9.4 `flutter test` — full suite green. Expected new tests: ≈ 30–40 (8 table-creation + 2 CHECK + 1 schemaVersion + 1 onUpgrade + 1 trivial round-trip + 1 fully-populated round-trip + ≈ 14 per-field smoke + 1 savedAt-utc + 4 leader-tier + 1 upsert + 2 architecture). Full suite should land at ≈ 580–595 tests (currently ~551 per Story 5-1's notes).
+  - [x] 9.5 Update `Status` to `review`. Append a Change Log entry and File List.
+
+### Review Findings
+
+- [x] [Review][Decision] Persist current Story 5.2+ state in v3 — resolved by adding `totalIntel`, `active_boost`, `active_missions`, `completed_missions`, and `daily_streaks` persistence so the mapper is lossless for current `GameState`.
+- [x] [Review][Patch] `flutter analyze` fails on unused/unnecessary imports — fixed; `flutter analyze` is clean.
+- [x] [Review][Patch] Generated Drift file is ignored instead of commit-ready — fixed via `.gitignore` exception for `lib/data/database/app_database.g.dart`.
+- [x] [Review][Patch] Migration preservation test does not exercise v2-to-v3 upgrade — fixed with an in-memory `PRAGMA user_version = 2` migration test preserving `crash_logs` and seeding `meta`.
 
 ## Dev Notes
 
@@ -323,7 +330,8 @@ This is the FIRST story in Epic 6 (Persistence). It establishes the **schema con
 
 | Decision locked here | Used by |
 |---|---|
-| `MetaRow` columns: `totalInfluence`, `goldenOpportunityMultiplier`, `boostMultiplier`, `lastSavedAt` | Story 6-2 (debounced snapshot writes only `totalInfluence` + `lastSavedAt`); Story 6-4 (offline catch-up reads `lastSavedAt`); Story 5-2 will ADD `totalIntel` + `activeBoostJson` columns via a v3→v4 migration when it lands. |
+| `MetaRow` columns: `totalInfluence`, `totalIntel`, `goldenOpportunityMultiplier`, `boostMultiplier`, `lastSavedAt` | Story 6-2 (debounced snapshot writes meta state); Story 6-4 (offline catch-up reads `lastSavedAt`); review patch folded current Epic 5 state into v3 because Stories 5-2 through 5-4 are already done. |
+| Normalized `active_boost`, `active_missions`, `completed_missions`, `daily_streaks` tables | Story 6-2 targeted writes for boost, mission, and daily-reward events; `GameStateMapper` can now round-trip the current full progress state. |
 | **`GameStateRows` / `GameStateCompanions` bundle pattern** (Tasks 4 + 5) | Story 6-2's `SaveRepository.flush()` writes companions in a single transaction; Story 6-4's `OfflineCatchup.apply()` calls `mapper.fromRows(rows, content)` after `AppDatabase.loadAll()`. |
 | **`fromRows(rows: empty, content) == GameState.initialSeed(content)` invariant** (AC #7) | Story 6-2 first-launch path; Story 6-6 save-recovery "start fresh" branch. |
 | **One mapper file is the ONLY place importing both `data/` and `game/`** (AC #8) | Architecture boundary discipline; protects refactor safety as schema grows. Future stories ADD column mappings to this same file — never split. |
@@ -332,9 +340,7 @@ This is the FIRST story in Epic 6 (Persistence). It establishes the **schema con
 ### Out of scope (do NOT expand)
 
 - **`SaveRepository`, event-driven row updates, debounced 2s snapshot writes.** Story 6-2 owns those. This story's mapper is **stateless**; it does not touch the DB itself. The `loadAll()` method on `AppDatabase` (Task 3.5) is the only DB-touching addition, and it is read-only.
-- **Tables for `boosts`, `missions`, `daily_rewards`, `settings`, `tutorial_state`, `leaders`-as-table, `upgrades`-as-table.** Per architecture Section 4 line 229, those are part of the eventual schema. **However**, their corresponding `GameState` fields do not yet exist (Story 5-2 adds `totalIntel`, `activeBoost`; Story 5-3 adds `activeMissions`/`completedMissionIds`; Story 5-4 adds `dailyStreak`; Story 5-5 reuses existing `earnedAchievementIds`; tutorial/settings have no Story yet). Adding empty placeholder tables now means **redefining** them when those stories land — wasteful churn. Per the project rule "backward compatibility is out of scope," each upcoming feature story will ship its OWN typed `vN → vN+1` migration that adds its table(s). This story scopes to **what `GameState` currently models**.
-  - **NOTE for Story 5-2 dev:** when 5-2 introduces `totalIntel` + `activeBoost`, its migration v3→v4 must `addColumn(meta, totalIntel)` + `addColumn(meta, activeBoostJson)` (or equivalent normalized table). The `GameStateMapper` extends; it does not get rewritten.
-  - **NOTE for Story 5-3 dev:** missions have a `MissionState` value class; map via two new tables (`active_missions`, `completed_mission_ids`) in v4→v5. **Reuse the singleton-row pattern from `meta` and `active_golden_effect` for any new singletons.** Prefer normalized tables over JSON blobs (per project rule "Never raw SQL — always typed Drift DSL"; JSON-in-TEXT is a degenerate raw-SQL anti-pattern).
+- **Tables for `settings`, `tutorial_state`, `leaders`-as-table, and `upgrades`-as-table.** These remain out of scope because they are not current `GameState` progress fields for this story. Review patch folded already-shipped Epic 5 state into v3: `totalIntel`, `activeBoost`, `activeMissions`/`completedMissionIds`, and `dailyStreak` now persist here rather than waiting for future schema bumps.
 - **Per-row `lastModifiedAt` audit columns.** Architecture does not require them; do not add.
 - **`event_log` table** (mentioned in architecture line 594). Not required by any current story; deferred to a future epic. Do not add.
 - **Schema-backup file copy testing.** `_backupDatabase` is uncovered because `NativeDatabase.memory()` does not have a backing file. Story 1.4 set the deferred-test pattern (see existing `app_database_test.dart` lines 1–3 comment); Story 6-3 will add real-file integration tests when typed migrations land.
@@ -443,7 +449,7 @@ This is the FIRST story in Epic 6 (Persistence). It establishes the **schema con
 
 Direct guidance from the most recent `done` stories — **read these patterns into your implementation**:
 
-- **Singleton-row CHECK pattern (NEW for Epic 6)**: `meta` and `active_golden_effect` use `IntColumn singletonId` with `customConstraints: ['CHECK (singleton_id = 0)']`. This is **the** pattern for at-most-one-row tables. Story 5-2 (`activeBoost`), Story 5-4 (`dailyStreak`), and Story 9-1 (`tutorialState`) will reuse it. **Do not invent a "single-row enforcement helper" abstraction now** — three sites is not enough to justify abstraction.
+- **Singleton-row CHECK pattern (NEW for Epic 6)**: `meta`, `active_boost`, `daily_streaks`, and `active_golden_effect` use `IntColumn singletonId` with `customConstraints: ['CHECK (singleton_id = 0)']`. This is **the** pattern for at-most-one-row tables. **Do not invent a "single-row enforcement helper" abstraction now** — the inline table definitions are still clearer here.
 
 - **`copyWith` explicit-null sentinel pattern (from Story 4-1 Review Patch + Story 5-1)**: any nullable field that needs to be explicitly clearable uses an `Object _xxxUnchanged` sentinel. This is **purely a `GameState` concern** — the mapper never calls `copyWith`; it builds `GameState` directly via the constructor. **No sentinel work in this story.**
 
@@ -494,7 +500,7 @@ Extracted from `_bmad-output/project-context.md` — applies to this story:
 
 Per the project rule: **"backward compatibility is out of scope unless explicitly requested. Do not add migrations, versioning, or default-fallback logic to keep older saved games loading; it's acceptable for old saves to break and require a reset during development."**
 
-The v2→v3 migration in this story creates new tables on top of the existing crash_logs schema. It does NOT preserve any user-side game state (there is none yet — pre-Epic-6 users had no game-state persistence). Future schema bumps (v3→v4 for Story 5-2's `totalIntel`, etc.) MAY break old saves; the player will get a fresh `initialSeed` via the `meta == null` branch (AC #7) on first launch after a clean install, OR via Story 6-6's "Start Fresh" path on a corrupted-but-recovered DB.
+The v2→v3 migration in this story creates new tables on top of the existing crash_logs schema. It does NOT preserve any user-side game state from pre-Epic-6 builds (there is none yet), but the v3 schema now covers the current Epic 5 progress fields: Intel, active boost, missions, daily streak, achievements, goldens, continents, and countries. Future schema bumps MAY break old saves; the player will get a fresh `initialSeed` via the `meta == null` branch (AC #7) on first launch after a clean install, OR via Story 6-6's "Start Fresh" path on a corrupted-but-recovered DB.
 
 The `fromRows` "missing country in DB" defensive branch (Task 5.4 sub-bullet 2) is **NOT** a backwards-compatibility fallback — it's a defensive guard for content additions (e.g. Story 10-2 retunes content and adds a new country); the saved DB legitimately won't have that country yet, and we want the new country to appear locked rather than crash. This is forward-compatible content, not backward-compatible save format.
 
@@ -528,11 +534,45 @@ The `fromRows` "missing country in DB" defensive branch (Task 5.4 sub-bullet 2) 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented Drift schema v3 (meta singleton with `totalIntel`, countries, continents, continent_milestones, earned_achievements, active_global_upgrades, active_goldens, active_golden_effect, active_boost, active_missions, completed_missions, daily_streaks), `AppDatabase.loadAll()`, migration `from <= 2 && to >= 3` with seeded meta row, singleton companions include explicit `singletonId: Value(0)` so CHECK passes on insert.
+- `GameStateMapper`: `toCompanions` / `fromRows` now round-trip current `GameState` progress fields losslessly, including `totalIntel`, exact `activeBoost.expiresAt`, daily streak, active mission slot order/progress, and completed mission ids. Continent maps omit false entries so round-trip matches canonical `GameState` maps.
+- Tests: `data_boundary_test.dart`, expanded `app_database_test.dart`, `game_state_mapper_test.dart`, `test_content_registry.dart`, `game_state_builder.dart`. `dart run build_runner build`, `dart format --set-exit-if-changed .`, `flutter analyze`, `flutter test` — 702 tests green.
+
 ### File List
+
+- lib/data/database/app_database.dart
+- lib/data/database/app_database.g.dart
+- lib/data/database/tables/meta_table.dart
+- lib/data/database/tables/countries_table.dart
+- lib/data/database/tables/continents_table.dart
+- lib/data/database/tables/continent_milestones_table.dart
+- lib/data/database/tables/earned_achievements_table.dart
+- lib/data/database/tables/active_boost_table.dart
+- lib/data/database/tables/active_global_upgrades_table.dart
+- lib/data/database/tables/active_goldens_table.dart
+- lib/data/database/tables/active_missions_table.dart
+- lib/data/database/tables/completed_missions_table.dart
+- lib/data/database/tables/daily_streaks_table.dart
+- lib/data/database/tables/active_golden_effect_table.dart
+- lib/data/mappers/game_state_rows.dart
+- lib/data/mappers/game_state_companions.dart
+- lib/data/mappers/game_state_mapper.dart
+- test/architecture/data_boundary_test.dart
+- test/data/database/app_database_test.dart
+- test/data/mappers/game_state_mapper_test.dart
+- test/helpers/test_content_registry.dart
+- test/helpers/game_state_builder.dart
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/6-1-drift-schema-and-gamestatemapper.md
+
+### Change Log
+
+- 2026-04-27: Review findings patched — v3 now persists current Epic 5 progress fields (`totalIntel`, active boost, missions, daily streak), `app_database.g.dart` is unignored, v2-to-v3 migration preservation is tested, analyze/format/full suite green.
+- 2026-04-27: Story 6.1 complete — Drift v3 schema, `GameStateMapper`, `loadAll`, architecture + persistence + mapper tests; sprint status → done.
 

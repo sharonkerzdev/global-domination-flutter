@@ -34,6 +34,9 @@ class GameWorldNotifier extends StateNotifier<GameState> {
     _world.tick(dt);
   }
 
+  /// Exposes the event stream without leaking [GameWorld] internals.
+  Stream<GameEvent> get events => _world.events;
+
   @override
   void dispose() {
     _subscription.cancel();
@@ -66,3 +69,7 @@ final gameWorldProvider = StateNotifierProvider<GameWorldNotifier, GameState>((
       : GameWorld(content: content, clock: clock, rng: rng);
   return GameWorldNotifier(world);
 });
+
+final gameWorldEventsProvider = Provider<Stream<GameEvent>>(
+  (ref) => ref.watch(gameWorldProvider.notifier).events,
+);
