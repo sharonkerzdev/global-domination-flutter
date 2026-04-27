@@ -8,6 +8,8 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/services/content_registry_loader.dart';
 
+import '../helpers/achievements_fixture.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -38,7 +40,7 @@ void main() {
         'tierMultipliers': ['1.0', '1.5', '2.0', '3.0'],
       },
     ]),
-    'assets/data/achievements.json': '[]',
+    'assets/data/achievements.json': trivial27AchievementsJson(),
     'assets/data/missions.json': '[]',
     'assets/data/global_upgrades.json': '[]',
     'assets/data/daily_rewards.json': jsonEncode([
@@ -88,7 +90,7 @@ void main() {
       expect(registry.continents, hasLength(1));
       expect(registry.continents[const ContinentId('africa')], isNotNull);
       expect(registry.leaders, hasLength(1));
-      expect(registry.achievements, isEmpty);
+      expect(registry.achievements, hasLength(27));
       expect(registry.missions, isEmpty);
       expect(registry.globalUpgrades, isEmpty);
       expect(registry.dailyRewards, hasLength(7));

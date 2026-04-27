@@ -10,6 +10,7 @@ import 'package:global_domination/game/features/leaders/leaders_reducer.dart';
 import 'package:global_domination/game/features/boosts/boosts_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
+import 'package:global_domination/game/features/achievements/achievements_reducer.dart';
 import 'package:global_domination/game/features/daily_rewards/daily_rewards_reducer.dart';
 import 'package:global_domination/game/features/missions/missions_reducer.dart';
 import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
@@ -115,6 +116,13 @@ class GameWorld {
     batch.addAll(events);
   }
 
+  void _appendAchievementsToBatch(List<GameEvent> batch, DateTime now) {
+    final (next, events) = evaluateAchievements(_state, _content, now);
+    if (events.isEmpty) return;
+    _state = next;
+    batch.addAll(events);
+  }
+
   /// Emits [batch] (command / continent / milestone / tick / …) then mission
   /// events derived from them, preserving causal ordering (AC 5-3 #9).
   void _emitBatchWithMissions(List<GameEvent> batch, DateTime now) {
@@ -156,6 +164,7 @@ class GameWorld {
       if (unlockResult.isSuccess && _state != stateBeforeCommand) {
         _appendContinentUnlocksToBatch(batch, now);
         _appendMilestonesToBatch(batch, now);
+        _appendAchievementsToBatch(batch, now);
       }
       _emitBatchWithMissions(batch, now);
       return unlockResult;
@@ -184,6 +193,7 @@ class GameWorld {
     if (result.isSuccess && _state != stateBeforeCommand) {
       _appendContinentUnlocksToBatch(batch, now);
       _appendMilestonesToBatch(batch, now);
+      _appendAchievementsToBatch(batch, now);
     }
     _emitBatchWithMissions(batch, now);
     return result;

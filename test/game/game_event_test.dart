@@ -61,6 +61,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('tick'));
@@ -95,6 +96,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('upgrade'));
@@ -133,6 +135,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       final ru = switch (upgraded) {
@@ -152,6 +155,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(rh, equals('h'));
@@ -205,6 +209,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('country_unlocked'));
@@ -244,6 +249,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('continent_unlocked'));
@@ -301,6 +307,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('milestone_reached'));
@@ -340,6 +347,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('continent_completed'));

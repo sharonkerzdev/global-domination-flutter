@@ -14,6 +14,7 @@ import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../../../helpers/achievements_fixture.dart';
 import '../../../helpers/daily_rewards_test_json.dart';
 
 ContentRegistry _fixture() {
@@ -23,7 +24,7 @@ ContentRegistry _fixture() {
     continentsJson:
         '[{"id":"africa","name":"Africa","unlockThreshold":"0","completionBonus":"0","milestoneRewards":[]}]',
     leadersJson: '[]',
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -227,7 +228,7 @@ void main() {
           countriesJson: countriesJson,
           continentsJson: continentsJson,
           leadersJson: '[]',
-          achievementsJson: '[]',
+          achievementsJson: trivial27AchievementsJson(),
           missionsJson: '[]',
           globalUpgradesJson: '[]',
           dailyRewardsJson: bad6,
@@ -257,7 +258,7 @@ void main() {
           countriesJson: countriesJson,
           continentsJson: continentsJson,
           leadersJson: '[]',
-          achievementsJson: '[]',
+          achievementsJson: trivial27AchievementsJson(),
           missionsJson: '[]',
           globalUpgradesJson: '[]',
           dailyRewardsJson: ooo,
@@ -276,7 +277,7 @@ void main() {
           countriesJson: countriesJson,
           continentsJson: continentsJson,
           leadersJson: '[]',
-          achievementsJson: '[]',
+          achievementsJson: trivial27AchievementsJson(),
           missionsJson: '[]',
           globalUpgradesJson: '[]',
           dailyRewardsJson: dup,
@@ -296,7 +297,7 @@ void main() {
           countriesJson: countriesJson,
           continentsJson: continentsJson,
           leadersJson: '[]',
-          achievementsJson: '[]',
+          achievementsJson: trivial27AchievementsJson(),
           missionsJson: '[]',
           globalUpgradesJson: '[]',
           dailyRewardsJson: bad,

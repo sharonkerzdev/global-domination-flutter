@@ -17,6 +17,7 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/achievements_fixture.dart';
 import '../../../helpers/daily_rewards_test_json.dart';
 
 /// Africa @0, egypt / nigeria / south_africa — mirrors income_calculator_test.
@@ -60,7 +61,7 @@ ContentRegistry _fixture3() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: '[]',
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),

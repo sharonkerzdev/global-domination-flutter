@@ -1,6 +1,7 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-27
-# 2026-04-27: Story 5-5-27 → in-progress (achievements evaluator + events + content)
+# 2026-04-27: Story 5-5 code review patch pass -> done (achievement condition param shape validation moved to ContentRegistry parse time; guardrail tests + production achievement asset parse coverage; dart format, flutter analyze, full flutter test green)
+# 2026-04-27: Story 5-5-27 → review (AchievementEarned, evaluateAchievements + condition eval, ContentRegistry 27-entry validation, assets 27 achievements, GameWorld wire after milestones, trivial27 + achievementsJson27 fixtures, reducer + GameWorld tests; flutter test + analyze green)
 # 2026-04-27: Story 5-4 code review patch pass -> done (fixed future lastClaimDate availability, DST-safe calendar-day delta, and loading-placeholder daily reward availability; added reducer/provider regressions; full flutter test + analyze green)
 # 2026-04-26: Story 5-4 → review (7-day daily streak: missions_reducer_test import fix, game_state_test DailyStreak.empty, UI ContentRegistry dailyRewards: [], loader mock 7 files + dailyRewards assert, duplicate-day parse test; flutter test + analyze green)
 # 2026-04-26: Story 5-3 code review patch pass → done (fixed simultaneous mission completion ordering so all MissionCompleted events precede MissionRotated events; added reducer regression test; targeted tests + analyze pass)
@@ -171,7 +172,7 @@ development_status:
   5-2-activate-boost-2x-30s-using-intel: done
   5-3-missions-cycle-rotating-objectives-rewarding-intel: done
   5-4-7-day-daily-reward-streak: done
-  5-5-27-achievements-granting-permanent-multipliers: in-progress
+  5-5-27-achievements-granting-permanent-multipliers: done
   epic-5-retrospective: optional
 
   # Epic 6: Never Lose Progress — Persistence and Offline Earnings

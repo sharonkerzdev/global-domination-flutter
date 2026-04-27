@@ -22,6 +22,7 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../helpers/achievements_fixture.dart';
 import '../helpers/daily_rewards_test_json.dart';
 import '../helpers/fake_clock.dart';
 
@@ -62,7 +63,7 @@ ContentRegistry _buildSingleCountryContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: leaders,
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -124,7 +125,7 @@ ContentRegistry _buildEuropeUnlockMissionContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: leaders,
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: missions,
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -178,7 +179,7 @@ ContentRegistry _buildEuropeThresholdOneContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: leaders,
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -225,7 +226,7 @@ ContentRegistry _buildMissionOneTapContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: leaders,
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: missions,
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -272,7 +273,7 @@ ContentRegistry _buildThreeCountryContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -318,7 +319,7 @@ ContentRegistry _buildAfricaEuropeStory42Content() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -379,7 +380,7 @@ ContentRegistry _buildThreeContinentStory42Content() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -410,7 +411,7 @@ ContentRegistry _buildEuropeUnlockSpendEdgeContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -448,7 +449,7 @@ ContentRegistry _buildFourCountryAfricaMilestoneContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -486,7 +487,54 @@ ContentRegistry _buildThreeCountryAfricaMilestoneContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
+    missionsJson: '[]',
+    globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
+  );
+}
+
+ContentRegistry _buildThreeCountryAfricaMilestoneAchievementContent() {
+  final milestones = [
+    {'percent': 25, 'rewardType': 'influence', 'rewardValue': '5'},
+    {'percent': 50, 'rewardType': 'influence', 'rewardValue': '6'},
+    {'percent': 75, 'rewardType': 'influence', 'rewardValue': '7'},
+    {'percent': 100, 'rewardType': 'influence', 'rewardValue': '8'},
+  ];
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': milestones,
+    },
+  ]);
+  final countries = jsonEncode([
+    for (var i = 0; i < 3; i++)
+      {
+        'id': 'c$i',
+        'continent': 'africa',
+        'baseInfluence': '1',
+        'unlockCost': '0',
+        'tier': 1,
+        'generationSeconds': 1,
+      },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: jsonEncode([]),
+    achievementsJson: achievementsJson27([
+      {
+        'id': 'ach_gw_africa_done',
+        'name': 'GW Africa',
+        'conditionType': 'continentCompleted',
+        'conditionParams': {'continentId': 'africa'},
+        'rewardType': 'influenceMultiplier',
+        'rewardValue': '0.11',
+      },
+    ]),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -2098,6 +2146,230 @@ void main() {
         expect(d, greaterThanOrEqualTo(0));
         expect(u, greaterThan(d));
         expect(w.state.unlockedContinents[const ContinentId('europe')], isTrue);
+        await sub.cancel();
+      },
+    );
+  });
+
+  group('Story 5-5-27 achievements', () {
+    test('UnlockCountry 0→1 emits AchievementEarned on stream', () async {
+      final continents = jsonEncode([
+        {
+          'id': 'africa',
+          'name': 'Africa',
+          'unlockThreshold': '0',
+          'completionBonus': '0.25',
+          'milestoneRewards': <dynamic>[],
+        },
+      ]);
+      final countries = jsonEncode([
+        {
+          'id': 'egypt',
+          'continent': 'africa',
+          'baseInfluence': '1',
+          'unlockCost': '0',
+          'tier': 1,
+          'generationSeconds': 1,
+        },
+      ]);
+      final c = ContentRegistry.fromJsonStrings(
+        countriesJson: countries,
+        continentsJson: continents,
+        leadersJson: '[]',
+        achievementsJson: achievementsJson27([
+          {
+            'id': 'ach_gw_first_unlock',
+            'name': 'First',
+            'conditionType': 'countriesUnlockedAtLeast',
+            'conditionParams': {'count': 1},
+            'rewardType': 'influenceMultiplier',
+            'rewardValue': '0.05',
+          },
+        ]),
+        missionsJson: '[]',
+        globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
+      );
+      final initial = GameState(
+        countries: {
+          const CountryId('egypt'): CountryState(
+            id: const CountryId('egypt'),
+            unlocked: false,
+            ipLevel: 0,
+            leaderTier: LeaderTier.none,
+            bankedInfluence: Influence.zero,
+            lastCollectedAt: null,
+          ),
+        },
+        totalInfluence: Influence.zero,
+        unlockedContinents: _seedAfricaUnlocked,
+      );
+      final w = GameWorld(
+        content: c,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      expect(
+        w
+            .applyCommand(const UnlockCountry(countryId: CountryId('egypt')))
+            .isSuccess,
+        isTrue,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(w.state.earnedAchievementIds, contains('ach_gw_first_unlock'));
+      expect(log.whereType<AchievementEarned>(), hasLength(1));
+      await sub.cancel();
+    });
+
+    test(
+      'continent completion emits AchievementEarned after ContinentCompleted',
+      () async {
+        final c = _buildThreeCountryAfricaMilestoneAchievementContent();
+        final initial = GameState(
+          countries: {
+            for (var i = 0; i < 3; i++)
+              CountryId('c$i'): CountryState(
+                id: CountryId('c$i'),
+                unlocked: i < 2,
+                ipLevel: i < 2 ? 1 : 0,
+                leaderTier: LeaderTier.none,
+                bankedInfluence: Influence.zero,
+                lastCollectedAt: null,
+              ),
+          },
+          totalInfluence: Influence.zero,
+          unlockedContinents: _seedAfricaUnlocked,
+        );
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        expect(
+          w
+              .applyCommand(const UnlockCountry(countryId: CountryId('c2')))
+              .isSuccess,
+          isTrue,
+        );
+        await Future<void>.delayed(Duration.zero);
+        final idx100 = log.indexWhere(
+          (e) => e is MilestoneReached && e.percent == 100,
+        );
+        expect(idx100, greaterThanOrEqualTo(0));
+        expect(log[idx100 + 1], isA<ContinentCompleted>());
+        expect(log[idx100 + 2], isA<AchievementEarned>());
+        expect(
+          (log[idx100 + 2] as AchievementEarned).achievementId,
+          'ach_gw_africa_done',
+        );
+        await sub.cancel();
+      },
+    );
+
+    test('failed UnlockCountry does not emit AchievementEarned', () async {
+      final three = _buildThreeCountryContent();
+      final initial = GameState.initialSeed(three);
+      final w = GameWorld(
+        content: three,
+        clock: clock,
+        rng: SeededRng(0),
+        initialState: initial,
+      );
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      expect(
+        w
+            .applyCommand(
+              const UnlockCountry(countryId: CountryId('south_africa')),
+            )
+            .isFailure,
+        isTrue,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(log.whereType<AchievementEarned>(), isEmpty);
+      await sub.cancel();
+    });
+
+    test(
+      'earnedAchievementIds ledger prevents duplicate AchievementEarned',
+      () async {
+        final continents = jsonEncode([
+          {
+            'id': 'africa',
+            'name': 'Africa',
+            'unlockThreshold': '0',
+            'completionBonus': '0.25',
+            'milestoneRewards': <dynamic>[],
+          },
+        ]);
+        final countries = jsonEncode([
+          {
+            'id': 'egypt',
+            'continent': 'africa',
+            'baseInfluence': '1',
+            'unlockCost': '0',
+            'tier': 1,
+            'generationSeconds': 1,
+          },
+        ]);
+        final c = ContentRegistry.fromJsonStrings(
+          countriesJson: countries,
+          continentsJson: continents,
+          leadersJson: '[]',
+          achievementsJson: achievementsJson27([
+            {
+              'id': 'ach_gw_idem',
+              'name': 'Idem',
+              'conditionType': 'countriesUnlockedAtLeast',
+              'conditionParams': {'count': 1},
+              'rewardType': 'influenceMultiplier',
+              'rewardValue': '0.05',
+            },
+          ]),
+          missionsJson: '[]',
+          globalUpgradesJson: '[]',
+          dailyRewardsJson: testDailyRewardsJson(),
+        );
+        final initial = GameState(
+          countries: {
+            const CountryId('egypt'): CountryState(
+              id: const CountryId('egypt'),
+              unlocked: true,
+              ipLevel: 1,
+              leaderTier: LeaderTier.none,
+              bankedInfluence: Influence(Decimal.one),
+              lastCollectedAt: null,
+            ),
+          },
+          unlockedContinents: _seedAfricaUnlocked,
+          earnedAchievementIds: {'ach_gw_idem'},
+        );
+        final w = GameWorld(
+          content: c,
+          clock: clock,
+          rng: SeededRng(0),
+          initialState: initial,
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        expect(
+          w
+              .applyCommand(const TapCountry(countryId: CountryId('egypt')))
+              .isSuccess,
+          isTrue,
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(log.whereType<AchievementEarned>(), isEmpty);
         await sub.cancel();
       },
     );

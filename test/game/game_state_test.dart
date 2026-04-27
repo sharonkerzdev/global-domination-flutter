@@ -12,6 +12,7 @@ import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../helpers/achievements_fixture.dart';
 import '../helpers/daily_rewards_test_json.dart';
 
 void main() {
@@ -159,7 +160,7 @@ void main() {
         continentsJson:
             '[{"id":"africa","name":"Africa","unlockThreshold":"0","completionBonus":"0","milestoneRewards":[]}]',
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: missionsJson,
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),

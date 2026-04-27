@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
@@ -8,6 +9,7 @@ import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 
+import '../../helpers/achievements_fixture.dart';
 import '../../helpers/daily_rewards_test_json.dart';
 
 void main() {
@@ -40,8 +42,6 @@ void main() {
     },
   ]);
 
-  const emptyArray = '[]';
-
   ContentRegistry buildRegistry({
     String? countriesJson,
     String? continentsJson,
@@ -55,11 +55,28 @@ void main() {
       countriesJson: countriesJson ?? validCountries,
       continentsJson: continentsJson ?? validContinents,
       leadersJson: leadersJson ?? validLeaders,
-      achievementsJson: achievementsJson ?? emptyArray,
-      missionsJson: missionsJson ?? emptyArray,
-      globalUpgradesJson: globalUpgradesJson ?? emptyArray,
+      achievementsJson: achievementsJson ?? trivial27AchievementsJson(),
+      missionsJson: missionsJson ?? '[]',
+      globalUpgradesJson: globalUpgradesJson ?? '[]',
       dailyRewardsJson: dailyRewardsJson ?? testDailyRewardsJson(),
     );
+  }
+
+  Map<String, dynamic> achievement({
+    String id = 'ach_guardrail',
+    String conditionType = 'countriesUnlockedAtLeast',
+    Map<String, dynamic>? conditionParams,
+    String rewardType = 'influenceMultiplier',
+    String rewardValue = '0.05',
+  }) {
+    return {
+      'id': id,
+      'name': 'Guardrail',
+      'conditionType': conditionType,
+      'conditionParams': conditionParams ?? {'count': 1},
+      'rewardType': rewardType,
+      'rewardValue': rewardValue,
+    };
   }
 
   group('ContentRegistry.fromJsonStrings', () {
@@ -69,7 +86,7 @@ void main() {
       expect(registry.countries, hasLength(1));
       expect(registry.continents, hasLength(1));
       expect(registry.leaders, hasLength(1));
-      expect(registry.achievements, isEmpty);
+      expect(registry.achievements, hasLength(27));
       expect(registry.missions, isEmpty);
       expect(registry.globalUpgrades, isEmpty);
       expect(registry.dailyRewards, hasLength(7));
@@ -104,11 +121,171 @@ void main() {
       expect(africa.completionBonus, Decimal.parse('0.25'));
     });
 
-    test('empty achievements/missions arrays parse to empty lists', () {
+    test('achievements fixture has 27 entries; missions may be empty', () {
       final registry = buildRegistry();
 
-      expect(registry.achievements, isEmpty);
+      expect(registry.achievements, hasLength(27));
       expect(registry.missions, isEmpty);
+    });
+
+    test('throws when achievements count is not 27', () {
+      expect(
+        () => buildRegistry(achievementsJson: jsonEncode([])),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('27'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when achievement rewardType is unknown', () {
+      expect(
+        () => buildRegistry(
+          achievementsJson: achievementsJson27([
+            achievement(rewardType: 'mysteryReward'),
+          ]),
+        ),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('unknown rewardType'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when achievement conditionType is unknown', () {
+      expect(
+        () => buildRegistry(
+          achievementsJson: achievementsJson27([
+            achievement(conditionType: 'surpriseCondition'),
+          ]),
+        ),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('unknown conditionType'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when achievement ids are duplicated', () {
+      expect(
+        () => buildRegistry(
+          achievementsJson: achievementsJson27([
+            achievement(id: 'ach_duplicate'),
+            achievement(id: 'ach_duplicate', conditionParams: {'count': 2}),
+          ]),
+        ),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('Duplicate achievement id'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when continent achievement references unknown continent', () {
+      expect(
+        () => buildRegistry(
+          achievementsJson: achievementsJson27([
+            achievement(
+              conditionType: 'continentCompleted',
+              conditionParams: {'continentId': 'europe'},
+            ),
+          ]),
+        ),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('unknown continentId'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when achievement condition params have wrong shape', () {
+      final cases = [
+        achievement(
+          id: 'ach_bad_total',
+          conditionType: 'totalInfluenceAtLeast',
+          conditionParams: {'value': 1000},
+        ),
+        achievement(
+          id: 'ach_bad_decimal',
+          conditionType: 'totalInfluenceAtLeast',
+          conditionParams: {'value': 'not-a-decimal'},
+        ),
+        achievement(
+          id: 'ach_bad_countries',
+          conditionType: 'countriesUnlockedAtLeast',
+          conditionParams: {'count': '1'},
+        ),
+        achievement(
+          id: 'ach_bad_continent',
+          conditionType: 'continentCompleted',
+          conditionParams: {'continentId': 7},
+        ),
+        achievement(
+          id: 'ach_bad_leaders',
+          conditionType: 'leadersHiredAtLeast',
+          conditionParams: {'count': '1'},
+        ),
+        achievement(
+          id: 'ach_bad_ip',
+          conditionType: 'maxIpLevelAtLeast',
+          conditionParams: {'level': '50'},
+        ),
+      ];
+
+      for (final item in cases) {
+        expect(
+          () => buildRegistry(achievementsJson: achievementsJson27([item])),
+          throwsA(isA<ContentLoadException>()),
+          reason: item['id'] as String,
+        );
+      }
+    });
+
+    test('production content assets parse with achievement guardrails', () {
+      final registry = ContentRegistry.fromJsonStrings(
+        countriesJson: File('assets/data/countries.json').readAsStringSync(),
+        continentsJson: File('assets/data/continents.json').readAsStringSync(),
+        leadersJson: File('assets/data/leaders.json').readAsStringSync(),
+        achievementsJson: File(
+          'assets/data/achievements.json',
+        ).readAsStringSync(),
+        missionsJson: File('assets/data/missions.json').readAsStringSync(),
+        globalUpgradesJson: File(
+          'assets/data/global_upgrades.json',
+        ).readAsStringSync(),
+        dailyRewardsJson: File(
+          'assets/data/daily_rewards.json',
+        ).readAsStringSync(),
+      );
+
+      expect(registry.achievements, hasLength(27));
+      expect(
+        registry.achievements.where(
+          (a) => a.conditionType == 'continentCompleted',
+        ),
+        hasLength(7),
+      );
+      expect(
+        registry.achievements.where(
+          (a) => a.conditionType == 'totalInfluenceAtLeast',
+        ),
+        hasLength(8),
+      );
     });
 
     test('throws ContentLoadException on malformed JSON', () {
@@ -147,7 +324,7 @@ void main() {
 
     test('throws ContentLoadException on empty countries array', () {
       expect(
-        () => buildRegistry(countriesJson: emptyArray),
+        () => buildRegistry(countriesJson: '[]'),
         throwsA(
           isA<ContentLoadException>().having(
             (e) => e.message,
@@ -211,6 +388,11 @@ void main() {
       expect(() => registry.continents.clear(), throwsUnsupportedError);
 
       expect(() => (registry.leaders as List).clear(), throwsUnsupportedError);
+
+      expect(
+        () => (registry.achievements as List).clear(),
+        throwsUnsupportedError,
+      );
     });
   });
 }

@@ -13,6 +13,7 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../helpers/achievements_fixture.dart';
 import '../helpers/daily_rewards_test_json.dart';
 import '../helpers/fake_clock.dart';
 
@@ -60,7 +61,7 @@ ContentRegistry _buildContent({bool includeNonEgypt = true}) {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: jsonEncode([]),
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: jsonEncode([]),
     globalUpgradesJson: jsonEncode([]),
     dailyRewardsJson: testDailyRewardsJson(),
@@ -106,7 +107,7 @@ ContentRegistry _buildAfricaAndEuropeContent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: jsonEncode([]),
-    achievementsJson: jsonEncode([]),
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: jsonEncode([]),
     globalUpgradesJson: jsonEncode([]),
     dailyRewardsJson: testDailyRewardsJson(),

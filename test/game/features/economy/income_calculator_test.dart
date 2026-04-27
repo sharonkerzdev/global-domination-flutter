@@ -16,6 +16,7 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/achievements_fixture.dart';
 import '../../../helpers/daily_rewards_test_json.dart';
 
 ContentRegistry _fixtureRegistry() {
@@ -76,29 +77,29 @@ ContentRegistry _fixtureRegistry() {
       'generationSeconds': 1,
     },
   ]);
-  final achievements = jsonEncode([
+  final achievements = achievementsJson27([
     {
       'id': 'ach_mult_small',
       'name': 'Small',
-      'conditionType': 'none',
-      'conditionParams': {},
+      'conditionType': 'countriesUnlockedAtLeast',
+      'conditionParams': {'count': 999999},
       'rewardType': 'influenceMultiplier',
       'rewardValue': '0.10',
     },
     {
       'id': 'ach_mult_big',
       'name': 'Big',
-      'conditionType': 'none',
-      'conditionParams': {},
+      'conditionType': 'countriesUnlockedAtLeast',
+      'conditionParams': {'count': 999999},
       'rewardType': 'influenceMultiplier',
       'rewardValue': '0.25',
     },
     {
       'id': 'ach_intel',
       'name': 'Intel',
-      'conditionType': 'none',
-      'conditionParams': {},
-      'rewardType': 'intelBoost',
+      'conditionType': 'countriesUnlockedAtLeast',
+      'conditionParams': {'count': 999999},
+      'rewardType': 'intel',
       'rewardValue': '5.0',
     },
   ]);
@@ -271,7 +272,7 @@ void main() {
       ]),
       continentsJson: _liveContinentsJson(),
       leadersJson: '[]',
-      achievementsJson: '[]',
+      achievementsJson: trivial27AchievementsJson(),
       missionsJson: '[]',
       globalUpgradesJson: '[]',
       dailyRewardsJson: testDailyRewardsJson(),
@@ -454,13 +455,13 @@ void main() {
 
   test('5.15 precision stress — finite exact Decimal', () {
     final achIds = <String>{for (var i = 0; i < 20; i++) 'ach10_$i'};
-    final achievements = jsonEncode([
+    final achievements = achievementsJson27([
       for (var i = 0; i < 20; i++)
         {
           'id': 'ach10_$i',
           'name': 'a',
-          'conditionType': 'none',
-          'conditionParams': {},
+          'conditionType': 'countriesUnlockedAtLeast',
+          'conditionParams': {'count': 999999},
           'rewardType': 'influenceMultiplier',
           'rewardValue': '0.10',
         },

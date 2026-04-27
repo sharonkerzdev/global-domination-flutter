@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:decimal/decimal.dart';
 import 'package:meta/meta.dart';
 
 import 'package:global_domination/game/content/achievement_def.dart';
@@ -46,7 +47,7 @@ class ContentRegistry {
       final continents = _parseContinents(continentsJson);
       final countries = _parseCountries(countriesJson, continents);
       final leaders = _parseLeaders(leadersJson);
-      final achievements = _parseAchievements(achievementsJson);
+      final achievements = _parseAchievements(achievementsJson, continents);
       final missions = _parseMissions(missionsJson);
       final globalUpgrades = _parseGlobalUpgrades(globalUpgradesJson);
       final dailyRewards = _parseDailyRewards(dailyRewardsJson);
@@ -108,11 +109,111 @@ class ContentRegistry {
         .toList();
   }
 
-  static List<AchievementDef> _parseAchievements(String json) {
+  static const _allowedRewardTypes = {'influenceMultiplier', 'intel'};
+  static const _allowedConditionTypes = {
+    'totalInfluenceAtLeast',
+    'countriesUnlockedAtLeast',
+    'continentCompleted',
+    'leadersHiredAtLeast',
+    'maxIpLevelAtLeast',
+  };
+
+  static List<AchievementDef> _parseAchievements(
+    String json,
+    Map<ContinentId, ContinentDef> continents,
+  ) {
     final list = jsonDecode(json) as List<dynamic>;
-    return list
-        .map((e) => AchievementDef.fromJson(e as Map<String, dynamic>))
-        .toList();
+    if (list.length != 27) {
+      throw ContentLoadException(
+        'Expected exactly 27 achievements, got ${list.length}',
+      );
+    }
+    final out = <AchievementDef>[];
+    final seenIds = <String>{};
+    for (final item in list) {
+      final def = AchievementDef.fromJson(item as Map<String, dynamic>);
+      if (!_allowedRewardTypes.contains(def.rewardType)) {
+        throw ContentLoadException(
+          'AchievementDef ${def.id} has unknown rewardType: ${def.rewardType}',
+        );
+      }
+      if (!_allowedConditionTypes.contains(def.conditionType)) {
+        throw ContentLoadException(
+          'AchievementDef ${def.id} has unknown conditionType: '
+          '${def.conditionType}',
+        );
+      }
+      _validateAchievementConditionParams(def, continents);
+      if (!seenIds.add(def.id)) {
+        throw ContentLoadException('Duplicate achievement id: ${def.id}');
+      }
+      out.add(def);
+    }
+    return out;
+  }
+
+  static void _validateAchievementConditionParams(
+    AchievementDef def,
+    Map<ContinentId, ContinentDef> continents,
+  ) {
+    final params = def.conditionParams;
+    switch (def.conditionType) {
+      case 'totalInfluenceAtLeast':
+        final raw = params['value'];
+        if (raw is! String) {
+          throw ContentLoadException(
+            'AchievementDef ${def.id} totalInfluenceAtLeast expects string '
+            'conditionParams.value',
+          );
+        }
+        try {
+          Decimal.parse(raw);
+        } catch (_) {
+          throw ContentLoadException(
+            'AchievementDef ${def.id} totalInfluenceAtLeast has invalid '
+            'conditionParams.value: $raw',
+          );
+        }
+        return;
+      case 'countriesUnlockedAtLeast':
+        _requireAchievementIntParam(def, 'count');
+        return;
+      case 'continentCompleted':
+        final raw = params['continentId'];
+        if (raw is! String) {
+          throw ContentLoadException(
+            'AchievementDef ${def.id} continentCompleted expects string '
+            'conditionParams.continentId',
+          );
+        }
+        if (!continents.containsKey(ContinentId(raw))) {
+          throw ContentLoadException(
+            'AchievementDef ${def.id} continentCompleted references unknown '
+            'continentId: $raw',
+          );
+        }
+        return;
+      case 'leadersHiredAtLeast':
+        _requireAchievementIntParam(def, 'count');
+        return;
+      case 'maxIpLevelAtLeast':
+        _requireAchievementIntParam(def, 'level');
+        return;
+      default:
+        throw ContentLoadException(
+          'AchievementDef ${def.id} has unknown conditionType: '
+          '${def.conditionType}',
+        );
+    }
+  }
+
+  static void _requireAchievementIntParam(AchievementDef def, String key) {
+    if (def.conditionParams[key] is! int) {
+      throw ContentLoadException(
+        'AchievementDef ${def.id} ${def.conditionType} expects int '
+        'conditionParams.$key',
+      );
+    }
   }
 
   static List<MissionDef> _parseMissions(String json) {

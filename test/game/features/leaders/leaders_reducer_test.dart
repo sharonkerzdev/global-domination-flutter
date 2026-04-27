@@ -16,6 +16,7 @@ import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/achievements_fixture.dart';
 import '../../../helpers/daily_rewards_test_json.dart';
 
 ContentRegistry _content({String baseInfluence = '1'}) {
@@ -42,7 +43,7 @@ ContentRegistry _content({String baseInfluence = '1'}) {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: '[]',
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),

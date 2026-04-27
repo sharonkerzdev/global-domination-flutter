@@ -247,6 +247,36 @@ final class ContinentCompleted extends GameEvent {
   String toString() => 'ContinentCompleted(at: $at, continentId: $continentId)';
 }
 
+final class AchievementEarned extends GameEvent {
+  final String achievementId;
+  final String rewardType;
+  final Decimal rewardValue;
+
+  const AchievementEarned(
+    super.at, {
+    required this.achievementId,
+    required this.rewardType,
+    required this.rewardValue,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AchievementEarned &&
+          at == other.at &&
+          achievementId == other.achievementId &&
+          rewardType == other.rewardType &&
+          rewardValue == other.rewardValue);
+
+  @override
+  int get hashCode => Object.hash(at, achievementId, rewardType, rewardValue);
+
+  @override
+  String toString() =>
+      'AchievementEarned(at: $at, achievementId: $achievementId, '
+      'rewardType: $rewardType, rewardValue: $rewardValue)';
+}
+
 final class GoldenSpawned extends GameEvent {
   const GoldenSpawned(
     super.at, {

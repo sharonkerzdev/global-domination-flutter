@@ -13,6 +13,7 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/achievements_fixture.dart';
 import '../../../helpers/daily_rewards_test_json.dart';
 
 List<Map<String, Object?>> _fourInfluenceRewards() => [
@@ -47,7 +48,7 @@ ContentRegistry _contentFourCountryContinent() {
     countriesJson: countries,
     continentsJson: continents,
     leadersJson: '[]',
-    achievementsJson: '[]',
+    achievementsJson: trivial27AchievementsJson(),
     missionsJson: '[]',
     globalUpgradesJson: '[]',
     dailyRewardsJson: testDailyRewardsJson(),
@@ -187,7 +188,7 @@ void main() {
         countriesJson: countries,
         continentsJson: continents,
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: '[]',
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),
@@ -225,7 +226,7 @@ void main() {
           },
         ]),
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: '[]',
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),
@@ -273,7 +274,7 @@ void main() {
           },
         ]),
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: '[]',
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),
@@ -321,7 +322,7 @@ void main() {
           },
         ]),
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: '[]',
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),
@@ -365,7 +366,7 @@ void main() {
         },
       ]),
       leadersJson: '[]',
-      achievementsJson: '[]',
+      achievementsJson: trivial27AchievementsJson(),
       missionsJson: '[]',
       globalUpgradesJson: '[]',
       dailyRewardsJson: testDailyRewardsJson(),
@@ -402,7 +403,7 @@ void main() {
       countriesJson: countries,
       continentsJson: continents,
       leadersJson: '[]',
-      achievementsJson: '[]',
+      achievementsJson: trivial27AchievementsJson(),
       missionsJson: '[]',
       globalUpgradesJson: '[]',
       dailyRewardsJson: testDailyRewardsJson(),
@@ -443,7 +444,7 @@ void main() {
       countriesJson: countries,
       continentsJson: continents,
       leadersJson: '[]',
-      achievementsJson: '[]',
+      achievementsJson: trivial27AchievementsJson(),
       missionsJson: '[]',
       globalUpgradesJson: '[]',
       dailyRewardsJson: testDailyRewardsJson(),
@@ -498,7 +499,7 @@ void main() {
         countriesJson: countries,
         continentsJson: continents,
         leadersJson: '[]',
-        achievementsJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
         missionsJson: '[]',
         globalUpgradesJson: '[]',
         dailyRewardsJson: testDailyRewardsJson(),
