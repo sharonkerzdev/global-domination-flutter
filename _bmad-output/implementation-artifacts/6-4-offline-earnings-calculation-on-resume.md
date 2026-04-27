@@ -1,6 +1,6 @@
 # Story 6.4: Offline Earnings Calculation on Resume
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -378,4 +378,36 @@ meta.lastSavedAt + Clock.now()
 
 ### Completion Notes List
 
+- Implemented `GameConstants.maxOfflineHours`, `OfflineEarningsApplied` event, pure `OfflineCatchup.apply` with stable `IncomeCalculator` path, `GameWorld.applyOfflineCatchup` + notifier, `PersistedGameSnapshot` + `persistedGameSnapshotProvider` (in `game_providers.dart`), `database_providers.dart` split to break import cycles, `offline_catchup_providers` (controller, boot gate, `resumeOfflineCatchupProvider`), `SaveRepository` meta case, `GlobalDominationApp` gates for snapshot + boot catch-up, `GameLoop` awaits resume catch-up before `Ticker.start`, optional `GameLifecycleObserver.onResume` (tests + error swallowing). Map UI tests use `mapWidgetTestGameWorldOverride` to avoid async content/DB. `flutter test` 777 passed, `dart analyze` clean (2026-04-27).
+
 ### File List
+
+- lib/app.dart
+- lib/data/repositories/save_repository.dart
+- lib/game/config/constants.dart
+- lib/game/features/economy/offline_catchup.dart
+- lib/game/game_event.dart
+- lib/game/game_world.dart
+- lib/providers/data_providers.dart
+- lib/providers/database_providers.dart
+- lib/providers/game_providers.dart
+- lib/providers/offline_catchup_providers.dart
+- lib/services/game_lifecycle_observer.dart
+- lib/ui/features/map/game_loop.dart
+- test/data/repositories/save_repository_test.dart
+- test/game/features/economy/offline_catchup_test.dart
+- test/game/game_event_test.dart
+- test/game/game_world_test.dart
+- test/helpers/map_screen_test_providers.dart
+- test/providers/offline_catchup_boot_provider_test.dart
+- test/providers/persisted_snapshot_provider_test.dart
+- test/services/game_lifecycle_observer_test.dart
+- test/ui/features/map/game_loop_test.dart
+- test/ui/features/map/map_screen_gesture_test.dart
+- test/ui/features/map/world_map_painter_test.dart
+- _bmad-output/implementation-artifacts/6-4-offline-earnings-calculation-on-resume.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-04-27: Story 6.4 — offline catch-up (8h cap, stable multipliers), `OfflineEarningsApplied` + meta snapshot, boot + resume ordering, tests and map widget test harness
