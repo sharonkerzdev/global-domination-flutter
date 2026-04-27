@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/providers/offline_catchup_providers.dart';
 
 class GameLoop extends ConsumerStatefulWidget {
   const GameLoop({required this.child, super.key});
@@ -42,10 +45,17 @@ class _GameLoopState extends ConsumerState<GameLoop>
         state == AppLifecycleState.inactive) {
       if (_ticker.isActive) _ticker.stop();
     } else if (state == AppLifecycleState.resumed) {
-      if (!_ticker.isActive) {
-        _lastElapsed = Duration.zero;
-        _ticker.start();
-      }
+      unawaited(_resumeTickerAfterOfflineCatchup());
+    }
+  }
+
+  Future<void> _resumeTickerAfterOfflineCatchup() async {
+    final runResume = ref.read(resumeOfflineCatchupProvider);
+    await runResume();
+    if (!mounted) return;
+    if (!_ticker.isActive) {
+      _lastElapsed = Duration.zero;
+      await _ticker.start();
     }
   }
 

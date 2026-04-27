@@ -63,6 +63,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('tick'));
     });
@@ -98,6 +99,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('upgrade'));
     });
@@ -137,6 +139,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -157,6 +160,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -211,6 +215,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -251,6 +256,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('continent_unlocked'));
     });
@@ -309,6 +315,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('milestone_reached'));
     });
@@ -349,6 +356,7 @@ void main() {
         MissionRotated() => 'mission_rotated',
         AchievementEarned() => 'achievement_earned',
         DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
       };
       expect(result, equals('continent_completed'));
     });
@@ -413,6 +421,64 @@ void main() {
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
       expect(a.toString(), contains('DailyRewardClaimed'));
+    });
+  });
+
+  group('OfflineEarningsApplied', () {
+    final at = DateTime.utc(2026, 4, 27, 12, 0, 0);
+    const elapsed = Duration(hours: 1);
+    final earned = Influence(Decimal.parse('100'));
+
+    test('equality, hashCode, toString', () {
+      final a = OfflineEarningsApplied(
+        at,
+        totalEarned: earned,
+        elapsed: elapsed,
+      );
+      final b = OfflineEarningsApplied(
+        at,
+        totalEarned: earned,
+        elapsed: elapsed,
+      );
+      final c = OfflineEarningsApplied(
+        at,
+        totalEarned: Influence.zero,
+        elapsed: elapsed,
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a, isNot(equals(c)));
+      expect(a.toString(), contains('OfflineEarningsApplied'));
+    });
+
+    test('exhaustive switch routes OfflineEarningsApplied', () {
+      final GameEvent event = OfflineEarningsApplied(
+        at,
+        totalEarned: earned,
+        elapsed: elapsed,
+      );
+      final result = switch (event) {
+        Tick() => 'tick',
+        CountryTapped() => 'country_tapped',
+        UpgradePurchased() => 'upgrade',
+        LeaderHired() => 'leader_hired',
+        LeaderUpgraded() => 'leader_upgraded',
+        ContinentUnlocked() => 'continent_unlocked',
+        CountryUnlocked() => 'country_unlocked',
+        MilestoneReached() => 'milestone_reached',
+        ContinentCompleted() => 'continent_completed',
+        GoldenSpawned() => 'golden_spawned',
+        GoldenClaimed() => 'golden_claimed',
+        GoldenExpired() => 'golden_expired',
+        BoostActivated() => 'boost_activated',
+        BoostExpired() => 'boost_expired',
+        MissionCompleted() => 'mission_completed',
+        MissionRotated() => 'mission_rotated',
+        AchievementEarned() => 'achievement_earned',
+        DailyRewardClaimed() => 'daily_reward_claimed',
+        OfflineEarningsApplied() => 'offline_earnings',
+      };
+      expect(result, equals('offline_earnings'));
     });
   });
 }

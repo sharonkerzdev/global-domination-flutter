@@ -26,6 +26,9 @@ import 'tables/daily_streaks_table.dart';
 import 'tables/earned_achievements_table.dart';
 import 'tables/meta_table.dart';
 
+import 'migrations/migration_failure_exception.dart';
+import 'migrations/migration_registry.dart';
+
 part 'app_database.g.dart';
 
 @DriftDatabase(
@@ -59,33 +62,15 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        await _backupDatabase(from);
-        if (from == 1) {
-          await m.createTable(crashLogs);
-        }
-        if (from <= 2 && to >= 3) {
-          await m.createTable(meta);
-          await m.createTable(activeBoost);
-          await m.createTable(activeGlobalUpgrades);
-          await m.createTable(activeGoldenEffect);
-          await m.createTable(activeGoldens);
-          await m.createTable(activeMissions);
-          await m.createTable(completedMissions);
-          await m.createTable(countries);
-          await m.createTable(continents);
-          await m.createTable(continentMilestones);
-          await m.createTable(dailyStreaks);
-          await m.createTable(earnedAchievements);
-          await into(meta).insert(
-            MetaCompanion.insert(
-              singletonId: const Value(0),
-              schemaVersion: 3,
-              lastSavedAt: DateTime.now().toUtc(),
-              totalInfluence: Decimal.zero,
-              totalIntel: Decimal.zero,
-              goldenOpportunityMultiplier: Decimal.one,
-              boostMultiplier: Decimal.one,
-            ),
+        try {
+          await _backupDatabase(from);
+          await MigrationRegistry.run(m, this, from: from, to: to);
+        } catch (e, s) {
+          throw MigrationFailureException(
+            fromVersion: from,
+            toVersion: to,
+            cause: e.toString(),
+            originalStackTrace: s,
           );
         }
       },

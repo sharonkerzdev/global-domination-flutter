@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/geo_providers.dart';
+
+import '../../../helpers/map_screen_test_providers.dart';
 import 'package:global_domination/ui/features/map/country_paints.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
 import 'package:global_domination/ui/features/map/country_visual_state.dart';
@@ -158,7 +160,10 @@ void main() {
       final completer = Completer<List<CountryPath>>();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [geoProvider.overrideWith((ref) => completer.future)],
+          overrides: [
+            geoProvider.overrideWith((ref) => completer.future),
+            mapWidgetTestGameWorldOverride(),
+          ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
         ),
       );
@@ -171,7 +176,10 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [geoProvider.overrideWith((ref) async => fakeCountries)],
+            overrides: [
+              geoProvider.overrideWith((ref) async => fakeCountries),
+              mapWidgetTestGameWorldOverride(),
+            ],
             child: MaterialApp(theme: appTheme(), home: const MapScreen()),
           ),
         );
@@ -191,7 +199,10 @@ void main() {
     ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [geoProvider.overrideWith((ref) async => fakeCountries)],
+          overrides: [
+            geoProvider.overrideWith((ref) async => fakeCountries),
+            mapWidgetTestGameWorldOverride(),
+          ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
         ),
       );
@@ -219,6 +230,7 @@ void main() {
             geoProvider.overrideWith(
               (ref) => Future<List<CountryPath>>.error('boom'),
             ),
+            mapWidgetTestGameWorldOverride(),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
         ),

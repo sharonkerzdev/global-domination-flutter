@@ -30,7 +30,8 @@ class SaveRepository {
     _subscription = events.listen(_handleEvent, onError: _handleError);
   }
 
-  // ignore: unused_field — reserved for Story 6-4 OfflineCatchup
+  // Reserved for row-level snapshots; meta-only events use readState().
+  // ignore: unused_field
   final GameStateMapper _mapper;
   static final _log = Logger('SaveRepository');
 
@@ -181,6 +182,8 @@ class SaveRepository {
         unawaited(_replaceActiveMissions());
       case DailyRewardClaimed():
         unawaited(_writeDailyStreak());
+        _scheduleMetaSnapshot();
+      case OfflineEarningsApplied():
         _scheduleMetaSnapshot();
     }
   }

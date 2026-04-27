@@ -497,3 +497,30 @@ final class DailyRewardClaimed extends GameEvent {
       'DailyRewardClaimed(at: $at, day: $day, influenceReward: '
       '$influenceReward, intelReward: $intelReward)';
 }
+
+final class OfflineEarningsApplied extends GameEvent {
+  const OfflineEarningsApplied(
+    super.at, {
+    required this.totalEarned,
+    required this.elapsed,
+  });
+
+  final Influence totalEarned;
+  final Duration elapsed;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OfflineEarningsApplied &&
+          at == other.at &&
+          totalEarned == other.totalEarned &&
+          elapsed == other.elapsed);
+
+  @override
+  int get hashCode => Object.hash(at, totalEarned, elapsed);
+
+  @override
+  String toString() =>
+      'OfflineEarningsApplied(at: $at, totalEarned: $totalEarned, elapsed: '
+      '$elapsed)';
+}

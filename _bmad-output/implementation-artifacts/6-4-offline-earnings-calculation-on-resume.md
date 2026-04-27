@@ -75,15 +75,15 @@ so that returning to the game feels respectful of my time.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Re-check prerequisites and current branch shape (AC: #1, #9, #10)
-  - [ ] 1.1 Confirm 6.1 is `done` and `GameStateMapper.fromRows(rows, content)` round-trips current state.
-  - [ ] 1.2 Confirm 6.2's `SaveRepository` exists and subscribes to `gameWorld.events` through `gameWorldEventsProvider`.
-  - [ ] 1.3 Confirm `GameLifecycleObserver` currently handles paused/inactive/detached/hidden and no-ops on resumed; this story owns the resumed branch.
-  - [ ] 1.4 If 6.3 has changed `appDatabaseProvider` to `databaseBootstrapProvider.requireValue`, adapt to that provider rather than restoring the older direct `AppDatabase()` provider.
+- [x] Task 1: Re-check prerequisites and current branch shape (AC: #1, #9, #10)
+  - [x] 1.1 Confirm 6.1 is `done` and `GameStateMapper.fromRows(rows, content)` round-trips current state.
+  - [x] 1.2 Confirm 6.2's `SaveRepository` exists and subscribes to `gameWorld.events` through `gameWorldEventsProvider`.
+  - [x] 1.3 Confirm `GameLifecycleObserver` currently handles paused/inactive/detached/hidden and no-ops on resumed; this story owns the resumed branch.
+  - [x] 1.4 If 6.3 has changed `appDatabaseProvider` to `databaseBootstrapProvider.requireValue`, adapt to that provider rather than restoring the older direct `AppDatabase()` provider.
 
-- [ ] Task 2: Add offline constants and event contract (AC: #3, #7, #11)
-  - [ ] 2.1 Create `lib/game/config/constants.dart` if still missing, with `abstract final class GameConstants { static const int maxOfflineHours = 8; }`. Do not hardcode `8` in reducer logic.
-  - [ ] 2.2 Add `OfflineEarningsApplied` to `lib/game/game_event.dart`:
+- [x] Task 2: Add offline constants and event contract (AC: #3, #7, #11)
+  - [x] 2.1 Create `lib/game/config/constants.dart` if still missing, with `abstract final class GameConstants { static const int maxOfflineHours = 8; }`. Do not hardcode `8` in reducer logic.
+  - [x] 2.2 Add `OfflineEarningsApplied` to `lib/game/game_event.dart`:
     ```dart
     final class OfflineEarningsApplied extends GameEvent {
       const OfflineEarningsApplied(
@@ -96,12 +96,12 @@ so that returning to the game feels respectful of my time.
       final Duration elapsed;
     }
     ```
-  - [ ] 2.3 Implement equality, `hashCode`, and `toString()` matching existing event classes. Add tests in `test/game/game_event_test.dart`.
-  - [ ] 2.4 Do not add a `GameCommand`; offline catch-up is lifecycle/system time, not player intent.
+  - [x] 2.3 Implement equality, `hashCode`, and `toString()` matching existing event classes. Add tests in `test/game/game_event_test.dart`.
+  - [x] 2.4 Do not add a `GameCommand`; offline catch-up is lifecycle/system time, not player intent.
 
-- [ ] Task 3: Implement pure offline catch-up math in the game layer (AC: #3-#8)
-  - [ ] 3.1 Create `lib/game/features/economy/offline_catchup.dart`.
-  - [ ] 3.2 Add an immutable result type, for example:
+- [x] Task 3: Implement pure offline catch-up math in the game layer (AC: #3-#8)
+  - [x] 3.1 Create `lib/game/features/economy/offline_catchup.dart`.
+  - [x] 3.2 Add an immutable result type, for example:
     ```dart
     class OfflineCatchupResult {
       const OfflineCatchupResult({
@@ -118,7 +118,7 @@ so that returning to the game feels respectful of my time.
       bool get emittedEvent => event != null;
     }
     ```
-  - [ ] 3.3 Public API:
+  - [x] 3.3 Public API:
     ```dart
     abstract final class OfflineCatchup {
       static OfflineCatchupResult apply(
@@ -132,11 +132,11 @@ so that returning to the game feels respectful of my time.
     }
     ```
     Normalize both dates with `.toUtc()` inside the function. No `DateTime.now()` inside `lib/game/`.
-  - [ ] 3.4 Clamp elapsed:
+  - [x] 3.4 Clamp elapsed:
     - `rawElapsed = nowUtc.difference(savedAtUtc)`
     - if `rawElapsed <= Duration.zero`, return the original state, zero earned, and `event: null`
     - if `rawElapsed > Duration(hours: GameConstants.maxOfflineHours)`, use the max duration
-  - [ ] 3.5 Build a stable multiplier state for math by reusing the current state but clearing transient multipliers:
+  - [x] 3.5 Build a stable multiplier state for math by reusing the current state but clearing transient multipliers:
     ```dart
     final stableState = state.copyWith(
       goldenOpportunityMultiplier: Decimal.one,
@@ -145,24 +145,24 @@ so that returning to the game feels respectful of my time.
     );
     ```
     Do not clear ledgers, `activeGlobalUpgradeIds`, `earnedAchievementIds`, `continentCompletions`, or leader tiers.
-  - [ ] 3.6 For each country, skip unless `country.unlocked` and `country.leaderTier != LeaderTier.none`. For eligible countries, call the existing `IncomeCalculator.compute(country, stableState, content)` and multiply by `Decimal.fromInt(elapsed.inSeconds)`. This preserves the single source of truth for IP, Leader, continent, achievement, and global upgrade math.
-  - [ ] 3.7 Sum into `totalEarned`. Return `state.copyWith(totalInfluence: state.totalInfluence + totalEarned)` when elapsed is positive, even if the sum is zero.
-  - [ ] 3.8 Emit exactly one `OfflineEarningsApplied(nowUtc, totalEarned: totalEarned, elapsed: elapsed)` when elapsed is positive. Do not emit `Tick`, `ContinentUnlocked`, `AchievementEarned`, `MissionCompleted`, or any modal/UI event from this reducer.
+  - [x] 3.6 For each country, skip unless `country.unlocked` and `country.leaderTier != LeaderTier.none`. For eligible countries, call the existing `IncomeCalculator.compute(country, stableState, content)` and multiply by `Decimal.fromInt(elapsed.inSeconds)`. This preserves the single source of truth for IP, Leader, continent, achievement, and global upgrade math.
+  - [x] 3.7 Sum into `totalEarned`. Return `state.copyWith(totalInfluence: state.totalInfluence + totalEarned)` when elapsed is positive, even if the sum is zero.
+  - [x] 3.8 Emit exactly one `OfflineEarningsApplied(nowUtc, totalEarned: totalEarned, elapsed: elapsed)` when elapsed is positive. Do not emit `Tick`, `ContinentUnlocked`, `AchievementEarned`, `MissionCompleted`, or any modal/UI event from this reducer.
 
-- [ ] Task 4: Add a GameWorld keyhole for lifecycle catch-up (AC: #7, #10, #11)
-  - [ ] 4.1 Import `offline_catchup.dart` into `lib/game/game_world.dart`.
-  - [ ] 4.2 Add a public method on `GameWorld`, for example:
+- [x] Task 4: Add a GameWorld keyhole for lifecycle catch-up (AC: #7, #10, #11)
+  - [x] 4.1 Import `offline_catchup.dart` into `lib/game/game_world.dart`.
+  - [x] 4.2 Add a public method on `GameWorld`, for example:
     ```dart
     OfflineCatchupResult applyOfflineCatchup({required DateTime lastSavedAt})
     ```
     It calls the pure reducer with `_state`, `_content`, `now: _clock.now()`, and the provided `lastSavedAt`.
-  - [ ] 4.3 If the returned event is non-null, assign `_state = result.state` before `_events.add(result.event!)`. The event stream must remain `StreamController.broadcast(sync: true)`.
-  - [ ] 4.4 If the event is null, leave `_state` unchanged and emit nothing.
-  - [ ] 4.5 Do not route this through `_emitBatchWithMissions`; offline earnings must not complete missions or trigger achievements in the same microtask. Future foreground ticks can evaluate normal progression.
-  - [ ] 4.6 Add a matching method on `GameWorldNotifier`, e.g. `OfflineCatchupResult applyOfflineCatchup({required DateTime lastSavedAt})`, and set `state = _world.state` after invoking it.
+  - [x] 4.3 If the returned event is non-null, assign `_state = result.state` before `_events.add(result.event!)`. The event stream must remain `StreamController.broadcast(sync: true)`.
+  - [x] 4.4 If the event is null, leave `_state` unchanged and emit nothing.
+  - [x] 4.5 Do not route this through `_emitBatchWithMissions`; offline earnings must not complete missions or trigger achievements in the same microtask. Future foreground ticks can evaluate normal progression.
+  - [x] 4.6 Add a matching method on `GameWorldNotifier`, e.g. `OfflineCatchupResult applyOfflineCatchup({required DateTime lastSavedAt})`, and set `state = _world.state` after invoking it.
 
-- [ ] Task 5: Add persisted snapshot loading for boot (AC: #1, #2, #3)
-  - [ ] 5.1 Add a provider-layer snapshot type, preferably in `lib/providers/offline_catchup_providers.dart`:
+- [x] Task 5: Add persisted snapshot loading for boot (AC: #1, #2, #3)
+  - [x] 5.1 Add a provider-layer snapshot type, preferably in `lib/providers/offline_catchup_providers.dart`:
     ```dart
     class PersistedGameSnapshot {
       const PersistedGameSnapshot({
@@ -174,66 +174,66 @@ so that returning to the game feels respectful of my time.
       final DateTime? lastSavedAt;
     }
     ```
-  - [ ] 5.2 Add `persistedGameSnapshotProvider = FutureProvider<PersistedGameSnapshot>(...)` that awaits `contentRegistryProvider.future`, reads `AppDatabase.loadAll()`, maps rows through `GameStateMapper.fromRows(rows, content)`, and returns `lastSavedAt: rows.meta?.lastSavedAt.toUtc()`.
-  - [ ] 5.3 Modify `gameWorldProvider` so the production path uses `persistedGameSnapshotProvider.requireValue.state` as `GameWorld.initialState` once the app boot gate has resolved. Keep tests ergonomic by allowing provider overrides; do not boot real Drift in widget tests.
-  - [ ] 5.4 Update `GlobalDominationApp.build` so the normal game surface is shown only after content, database bootstrap if present, and persisted snapshot have all resolved. Loading and error branches should remain simple boot screens.
-  - [ ] 5.5 If `rows.meta == null`, the snapshot provider returns `GameState.initialSeed(content)` and `lastSavedAt: null`; boot catch-up must no-op.
+  - [x] 5.2 Add `persistedGameSnapshotProvider = FutureProvider<PersistedGameSnapshot>(...)` that awaits `contentRegistryProvider.future`, reads `AppDatabase.loadAll()`, maps rows through `GameStateMapper.fromRows(rows, content)`, and returns `lastSavedAt: rows.meta?.lastSavedAt.toUtc()`.
+  - [x] 5.3 Modify `gameWorldProvider` so the production path uses `persistedGameSnapshotProvider.requireValue.state` as `GameWorld.initialState` once the app boot gate has resolved. Keep tests ergonomic by allowing provider overrides; do not boot real Drift in widget tests.
+  - [x] 5.4 Update `GlobalDominationApp.build` so the normal game surface is shown only after content, database bootstrap if present, and persisted snapshot have all resolved. Loading and error branches should remain simple boot screens.
+  - [x] 5.5 If `rows.meta == null`, the snapshot provider returns `GameState.initialSeed(content)` and `lastSavedAt: null`; boot catch-up must no-op.
 
-- [ ] Task 6: Add boot and resume catch-up orchestration (AC: #3, #7, #9, #10)
-  - [ ] 6.1 Add an `offlineCatchupControllerProvider` in `lib/providers/offline_catchup_providers.dart`. It may be a small provider-layer class that composes `AppDatabase`, `SaveRepository`, `GameWorldNotifier`, `Clock`, and the latest `PersistedGameSnapshot`.
-  - [ ] 6.2 Implement `Future<OfflineCatchupResult?> applyFromLastSavedAt(DateTime? lastSavedAt)`:
+- [x] Task 6: Add boot and resume catch-up orchestration (AC: #3, #7, #9, #10)
+  - [x] 6.1 Add an `offlineCatchupControllerProvider` in `lib/providers/offline_catchup_providers.dart`. It may be a small provider-layer class that composes `AppDatabase`, `SaveRepository`, `GameWorldNotifier`, `Clock`, and the latest `PersistedGameSnapshot`.
+  - [x] 6.2 Implement `Future<OfflineCatchupResult?> applyFromLastSavedAt(DateTime? lastSavedAt)`:
     - return `null` if `lastSavedAt == null`
     - call `gameWorldProvider.notifier.applyOfflineCatchup(lastSavedAt: lastSavedAt)`
     - if `result.emittedEvent`, call `await saveRepository.flush()` so the meta singleton gets the new `lastSavedAt`
     - return the result for tests
-  - [ ] 6.3 Add a boot gate provider, for example `offlineCatchupBootProvider = FutureProvider<void>(...)`, that waits for `persistedGameSnapshotProvider.future`, runs `applyFromLastSavedAt(snapshot.lastSavedAt)` once, and completes before `_GameScreen` is rendered.
-  - [ ] 6.4 Extend `GameLifecycleObserver` to accept an optional `Future<void> Function() onResume` callback. On `AppLifecycleState.resumed`, call it with error logging via `Logger('GameLifecycleObserver')`; do not throw from lifecycle callbacks.
-  - [ ] 6.5 Register the observer only after the providers it needs have resolved. The current `app.dart` reads `saveRepositoryProvider` in `initState`; after this story, avoid reading `saveRepositoryProvider` before the persisted snapshot/database gate is ready.
-  - [ ] 6.6 On resume, read the latest `meta.lastSavedAt` from `AppDatabase.loadAll()` rather than reusing the boot snapshot timestamp. The resume path must use the most recent flushed pause timestamp.
-  - [ ] 6.7 Coordinate `GameLoop` so it does not restart its ticker before `onResume` catch-up completes. Acceptable approaches:
+  - [x] 6.3 Add a boot gate provider, for example `offlineCatchupBootProvider = FutureProvider<void>(...)`, that waits for `persistedGameSnapshotProvider.future`, runs `applyFromLastSavedAt(snapshot.lastSavedAt)` once, and completes before `_GameScreen` is rendered.
+  - [x] 6.4 Extend `GameLifecycleObserver` to accept an optional `Future<void> Function() onResume` callback. On `AppLifecycleState.resumed`, call it with error logging via `Logger('GameLifecycleObserver')`; do not throw from lifecycle callbacks.
+  - [x] 6.5 Register the observer only after the providers it needs have resolved. The current `app.dart` reads `saveRepositoryProvider` in `initState`; after this story, avoid reading `saveRepositoryProvider` before the persisted snapshot/database gate is ready.
+  - [x] 6.6 On resume, read the latest `meta.lastSavedAt` from `AppDatabase.loadAll()` rather than reusing the boot snapshot timestamp. The resume path must use the most recent flushed pause timestamp.
+  - [x] 6.7 Coordinate `GameLoop` so it does not restart its ticker before `onResume` catch-up completes. Acceptable approaches:
     - move resume restart responsibility into a provider-controlled callback that awaits catch-up, then restarts the existing ticker; or
     - keep `GameLoop` as the ticker owner but add a small `resumeGate`/controller it awaits before calling `_ticker.start()`.
     In either approach, keep exactly one ticker in the app.
 
-- [ ] Task 7: Persist offline application through SaveRepository (AC: #7, #9)
-  - [ ] 7.1 Update `lib/data/repositories/save_repository.dart` exhaustive switch with:
+- [x] Task 7: Persist offline application through SaveRepository (AC: #7, #9)
+  - [x] 7.1 Update `lib/data/repositories/save_repository.dart` exhaustive switch with:
     ```dart
     case OfflineEarningsApplied():
       _scheduleMetaSnapshot();
     ```
     This case must schedule even when `totalEarned == Influence.zero`, because `lastSavedAt` must advance.
-  - [ ] 7.2 Do not write country rows, mission rows, active boost rows, active golden rows, or achievement rows for `OfflineEarningsApplied`; the only persistence change is the meta snapshot.
-  - [ ] 7.3 Keep the switch exhaustive with no `default` or `case _`.
-  - [ ] 7.4 Add/extend tests in `test/data/repositories/save_repository_test.dart` proving `OfflineEarningsApplied` schedules a meta write and `flush()` persists `totalInfluence` and a new UTC `lastSavedAt`.
+  - [x] 7.2 Do not write country rows, mission rows, active boost rows, active golden rows, or achievement rows for `OfflineEarningsApplied`; the only persistence change is the meta snapshot.
+  - [x] 7.3 Keep the switch exhaustive with no `default` or `case _`.
+  - [x] 7.4 Add/extend tests in `test/data/repositories/save_repository_test.dart` proving `OfflineEarningsApplied` schedules a meta write and `flush()` persists `totalInfluence` and a new UTC `lastSavedAt`.
 
-- [ ] Task 8: Tests for pure math and GameWorld emission (AC: #3-#8, #11)
-  - [ ] 8.1 Add `test/game/features/economy/offline_catchup_test.dart` using `package:test/test.dart`, not `flutter_test`.
-  - [ ] 8.2 Cover no meta/zero elapsed by calling the pure function with `now == lastSavedAt` and with `now < lastSavedAt`; expect original state and `event == null`.
-  - [ ] 8.3 Cover 8-hour cap by using `lastSavedAt = now - Duration(hours: 12)` and expecting exactly 8 hours of earnings.
-  - [ ] 8.4 Cover leader-only behavior: no Leader earns zero; tier1/tier2/tier3 leaders earn using existing `IncomeCalculator` rates.
-  - [ ] 8.5 Cover stable multipliers: active boost and active golden effect present in state must not change offline earnings; achievements, continent completions, and global upgrades must apply.
-  - [ ] 8.6 Cover zero-earned positive elapsed: elapsed positive, no eligible leaders, event emitted with `Influence.zero`.
-  - [ ] 8.7 Cover large values around the existing 1e38 precision expectations; do not introduce `double`.
-  - [ ] 8.8 Add `GameWorld` tests proving `applyOfflineCatchup` mutates before emitting, emits exactly one `OfflineEarningsApplied`, and leaves missions/achievements untouched.
+- [x] Task 8: Tests for pure math and GameWorld emission (AC: #3-#8, #11)
+  - [x] 8.1 Add `test/game/features/economy/offline_catchup_test.dart` using `package:test/test.dart`, not `flutter_test`.
+  - [x] 8.2 Cover no meta/zero elapsed by calling the pure function with `now == lastSavedAt` and with `now < lastSavedAt`; expect original state and `event == null`.
+  - [x] 8.3 Cover 8-hour cap by using `lastSavedAt = now - Duration(hours: 12)` and expecting exactly 8 hours of earnings.
+  - [x] 8.4 Cover leader-only behavior: no Leader earns zero; tier1/tier2/tier3 leaders earn using existing `IncomeCalculator` rates.
+  - [x] 8.5 Cover stable multipliers: active boost and active golden effect present in state must not change offline earnings; achievements, continent completions, and global upgrades must apply.
+  - [x] 8.6 Cover zero-earned positive elapsed: elapsed positive, no eligible leaders, event emitted with `Influence.zero`.
+  - [x] 8.7 Cover large values around the existing 1e38 precision expectations; do not introduce `double`.
+  - [x] 8.8 Add `GameWorld` tests proving `applyOfflineCatchup` mutates before emitting, emits exactly one `OfflineEarningsApplied`, and leaves missions/achievements untouched.
 
-- [ ] Task 9: Provider, lifecycle, and ticker-ordering tests (AC: #1, #2, #3, #9, #10)
-  - [ ] 9.1 Add provider tests for `persistedGameSnapshotProvider`: existing meta row maps to saved state and timestamp; empty meta maps to `initialSeed` with null timestamp.
-  - [ ] 9.2 Add an app/widget or provider-container test showing boot waits for `offlineCatchupBootProvider` before rendering `_GameScreen`.
-  - [ ] 9.3 Extend `test/services/game_lifecycle_observer_test.dart`: resumed calls the injected `onResume`; errors are logged/swallowed; paused/inactive/detached/hidden still flush.
-  - [ ] 9.4 Extend `test/ui/features/map/game_loop_test.dart` or create a focused test proving resume catch-up completes before ticker restart.
-  - [ ] 9.5 Keep Drift tests on `NativeDatabase.memory()` and close every `AppDatabase` in teardown.
+- [x] Task 9: Provider, lifecycle, and ticker-ordering tests (AC: #1, #2, #3, #9, #10)
+  - [x] 9.1 Add provider tests for `persistedGameSnapshotProvider`: existing meta row maps to saved state and timestamp; empty meta maps to `initialSeed` with null timestamp.
+  - [x] 9.2 Add an app/widget or provider-container test showing boot waits for `offlineCatchupBootProvider` before rendering `_GameScreen`.
+  - [x] 9.3 Extend `test/services/game_lifecycle_observer_test.dart`: resumed calls the injected `onResume`; errors are logged/swallowed; paused/inactive/detached/hidden still flush.
+  - [x] 9.4 Extend `test/ui/features/map/game_loop_test.dart` or create a focused test proving resume catch-up completes before ticker restart.
+  - [x] 9.5 Keep Drift tests on `NativeDatabase.memory()` and close every `AppDatabase` in teardown.
 
-- [ ] Task 10: Verification (AC: #12)
-  - [ ] 10.1 Run `dart format --set-exit-if-changed` on all changed files.
-  - [ ] 10.2 Run targeted tests:
+- [x] Task 10: Verification (AC: #12)
+  - [x] 10.1 Run `dart format --set-exit-if-changed` on all changed files.
+  - [x] 10.2 Run targeted tests:
     - `flutter test test/game/game_event_test.dart`
     - `dart test test/game/features/economy/offline_catchup_test.dart` if pure Dart test discovery works in this Flutter package; otherwise use `flutter test` for the same file.
     - `flutter test test/game/game_world_test.dart`
     - `flutter test test/data/repositories/save_repository_test.dart`
     - `flutter test test/services/game_lifecycle_observer_test.dart`
     - provider/widget tests added in Task 9
-  - [ ] 10.3 Run `flutter analyze`.
-  - [ ] 10.4 Run full `flutter test` if time permits, because this story touches boot, providers, lifecycle, and game event exhaustiveness.
+  - [x] 10.3 Run `flutter analyze`.
+  - [x] 10.4 Run full `flutter test` if time permits, because this story touches boot, providers, lifecycle, and game event exhaustiveness.
 
 ## Dev Notes
 

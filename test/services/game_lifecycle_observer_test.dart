@@ -106,6 +106,21 @@ void main() {
       },
     );
 
+    test('onResume runs on resumed and swallows errors', () async {
+      final h = SaveRepositoryTestHarness()..start();
+      await Future<void>.delayed(Duration.zero);
+      var calls = 0;
+      await GameLifecycleObserver(
+        h.repo,
+        onResume: () async {
+          calls++;
+          throw StateError('forced');
+        },
+      ).didChangeAppLifecycleState(AppLifecycleState.resumed);
+      expect(calls, 1);
+      await h.shutdown();
+    });
+
     test(
       'detach means binding lifecycle change does not flush this repo',
       () async {

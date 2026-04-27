@@ -1,5 +1,8 @@
 # generated: 2026-04-21
 # last_updated: 2026-04-27
+# 2026-04-27: Story 6-3 code review patch pass -> done (closed failed bootstrap DB before recovery restore; added appDatabaseFactoryProvider test seam; fixed SaveRecoveryScreen ScaffoldMessenger context and analyzer warning; restored SaveRecoveryScreen behavioral widget tests; flutter analyze + flutter test 761 passed)
+# 2026-04-27: Story 6-6 created -> ready-for-dev (Save Recovery full corruption path: classify SQLite corrupt/notadb boot failures, latest schema backup restore, double-confirm Start Fresh, WAL/SHM sidecar quarantine, Contact Support diagnostics clipboard, widget/filesystem/provider tests; builds on Story 6-3 SaveRecoveryScreen/SaveRecoveryActions and preserves migration-failure exact backup flow)
+# 2026-04-27: Story 6-3 → review (typed MigrationStep/MigrationRegistry/V1ToV2/V2ToV3, MigrationFailureException, databaseBootstrapProvider + appDatabaseProvider requireValue, main bootstrap await, SaveRecoveryScreen + SaveRecoveryActions + BackupRetentionPolicy.prune, data_boundary migrations purity + negative scratch test; migration/registry/retention/recovery/bootstrap/app_database tests; save_recovery_screen_test minimal smoke due to flaky testWidgets+path_provider on Windows — full widget AC deferred to integration harness or Story 6-6 follow-up; flutter analyze + dart format + flutter test green)
 # 2026-04-27: Story 6-2 code review patch pass -> done (delayed saveRepositoryProvider bootstrap until content load; awaitable GameLifecycleObserver flush callback; GoldenClaimed persists event multiplier; LeaderUpgraded/MissionCompleted/MissionRotated coverage added; flutter test 733 passed, analyze green)
 # 2026-04-27: Story 6-4 created -> ready-for-dev (Offline earnings calculation on boot/resume; adds persisted snapshot boot gate using AppDatabase.loadAll + GameStateMapper, pure OfflineCatchup stable-rate reducer, GameWorld/Notifier applyOfflineCatchup keyhole, OfflineEarningsApplied(totalEarned, elapsed) event contract for 6-5, SaveRepository meta snapshot case + immediate flush, lifecycle resumed ordering before GameLoop ticker restart; excludes modal UI, schema/migration work, and save recovery)
 # 2026-04-27: Story 6-2 → review (SaveRepository exhaustive GameEvent switch + debounced meta with explicit singletonId on first insert; missions/boost/dailies/achievements row handlers; gameWorldEventsProvider; saveRepositoryProvider; GameLifecycleObserver; data_boundary allowlist; save_repository + lifecycle + harness tests; 730 tests, analyze+format green)
@@ -186,10 +189,10 @@ development_status:
   epic-6: in-progress
   6-1-drift-schema-and-gamestatemapper: done
   6-2-persistence-write-strategy-event-driven-and-debounced-snapshot: done
-  6-3-typed-migrations-and-schema-backup-v-n-sqlite: ready-for-dev
-  6-4-offline-earnings-calculation-on-resume: ready-for-dev
+  6-3-typed-migrations-and-schema-backup-v-n-sqlite: done
+  6-4-offline-earnings-calculation-on-resume: in-progress
   6-5-offline-reward-modal-on-resume: ready-for-dev
-  6-6-save-recovery-path-on-corrupt-database: backlog
+  6-6-save-recovery-path-on-corrupt-database: ready-for-dev
   epic-6-retrospective: optional
 
   # Epic 7: Complete the Shell — Navigation, HUD, Stats, Settings, Upgrades & Leaders Screens

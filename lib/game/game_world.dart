@@ -13,6 +13,7 @@ import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
 import 'package:global_domination/game/features/achievements/achievements_reducer.dart';
 import 'package:global_domination/game/features/daily_rewards/daily_rewards_reducer.dart';
 import 'package:global_domination/game/features/missions/missions_reducer.dart';
+import 'package:global_domination/game/features/economy/offline_catchup.dart';
 import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
 import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_error.dart';
@@ -42,6 +43,23 @@ class GameWorld {
 
   GameState get state => _state;
   Stream<GameEvent> get events => _events.stream;
+
+  /// Applies offline elapsed influence using [lastSavedAt] vs [_clock.now()].
+  /// Does not route through mission batching; emits at most one
+  /// [OfflineEarningsApplied].
+  OfflineCatchupResult applyOfflineCatchup({required DateTime lastSavedAt}) {
+    final result = OfflineCatchup.apply(
+      _state,
+      _content,
+      now: _clock.now(),
+      lastSavedAt: lastSavedAt,
+    );
+    if (result.event != null) {
+      _state = result.state;
+      _events.add(result.event!);
+    }
+    return result;
+  }
 
   void tick(Duration dt) {
     assert(!dt.isNegative, 'tick dt must be non-negative, got $dt');

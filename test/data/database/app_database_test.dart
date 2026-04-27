@@ -1,6 +1,7 @@
 // Note: _backupDatabase cannot be exercised with NativeDatabase.memory() because
-// backup logic requires a real file path. Deferred to Story 6-3 (typed migrations
-// and schema backup), matching the deferral pattern from Story 1.4.
+// backup logic requires a real file path. Story 6-3 defers file-backed backup
+// assertions; migration ordering is covered via RecordingMigrator in
+// test/data/database/migrations/migration_registry_test.dart.
 
 import 'dart:io';
 
@@ -9,6 +10,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:global_domination/data/database/app_database.dart';
+import 'package:global_domination/data/database/migrations/migration_failure_exception.dart';
 import 'package:global_domination/data/database/converters/decimal_converter.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -22,8 +24,18 @@ class _FakePathProviderPlatform extends PathProviderPlatform {
   Future<String?> getApplicationDocumentsPath() async => path;
 }
 
+class _ThrowingMigrator extends Migrator {
+  _ThrowingMigrator(super.database);
+
+  @override
+  Future<void> createTable(TableInfo table) async {
+    throw Exception('synthetic');
+  }
+}
+
 void main() {
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   });
 
@@ -253,9 +265,104 @@ void main() {
         expect(await db.select(db.activeGoldenEffect).get(), isEmpty);
       });
 
-      test('onUpgrade v2 to v3 preserves crash_logs and seeds meta', () async {
+      test(
+        'onUpgrade v2 to v3 preserves crash_logs without seeding meta',
+        () async {
+          final tempDir = await Directory.systemTemp.createTemp(
+            'global_domination_path_provider_',
+          );
+          addTearDown(() async {
+            if (await tempDir.exists()) {
+              await tempDir.delete(recursive: true);
+            }
+          });
+          final previousPlatform = PathProviderPlatform.instance;
+          PathProviderPlatform.instance = _FakePathProviderPlatform(
+            tempDir.path,
+          );
+          addTearDown(() {
+            PathProviderPlatform.instance = previousPlatform;
+          });
+
+          final upgradedDb = AppDatabase(
+            NativeDatabase.memory(
+              setup: (rawDb) {
+                rawDb
+                  ..execute('''
+                  CREATE TABLE crash_logs (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    level TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    stack_trace TEXT NULL
+                  );
+                ''')
+                  ..execute(
+                    "INSERT INTO crash_logs "
+                    "(timestamp, level, tag, message, stack_trace) VALUES "
+                    "('2026-01-01T00:00:00.000Z', 'severe', 'MigrationTest', "
+                    "'kept', NULL);",
+                  )
+                  ..execute('PRAGMA user_version = 2');
+              },
+            ),
+          );
+          addTearDown(upgradedDb.close);
+
+          final crashRows = await upgradedDb.select(upgradedDb.crashLogs).get();
+          expect(crashRows, hasLength(1));
+          expect(crashRows.single.tag, equals('MigrationTest'));
+
+          final metaRows = await upgradedDb.select(upgradedDb.meta).get();
+          expect(metaRows, isEmpty);
+
+          expect(
+            await upgradedDb.select(upgradedDb.activeBoost).get(),
+            isEmpty,
+          );
+          expect(await upgradedDb.select(upgradedDb.countries).get(), isEmpty);
+          expect(await upgradedDb.select(upgradedDb.continents).get(), isEmpty);
+          expect(
+            await upgradedDb.select(upgradedDb.continentMilestones).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.earnedAchievements).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.activeGlobalUpgrades).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.activeGoldens).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.activeMissions).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.completedMissions).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.dailyStreaks).get(),
+            isEmpty,
+          );
+          expect(
+            await upgradedDb.select(upgradedDb.activeGoldenEffect).get(),
+            isEmpty,
+          );
+        },
+      );
+    });
+
+    group('migration delegation', () {
+      test('migration failure rewraps as MigrationFailureException', () async {
         final tempDir = await Directory.systemTemp.createTemp(
-          'global_domination_path_provider_',
+          'app_db_migration_fail_',
         );
         addTearDown(() async {
           if (await tempDir.exists()) {
@@ -268,78 +375,19 @@ void main() {
           PathProviderPlatform.instance = previousPlatform;
         });
 
-        final upgradedDb = AppDatabase(
-          NativeDatabase.memory(
-            setup: (rawDb) {
-              rawDb
-                ..execute('''
-                  CREATE TABLE crash_logs (
-                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    timestamp TEXT NOT NULL,
-                    level TEXT NOT NULL,
-                    tag TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    stack_trace TEXT NULL
-                  );
-                ''')
-                ..execute(
-                  "INSERT INTO crash_logs "
-                  "(timestamp, level, tag, message, stack_trace) VALUES "
-                  "('2026-01-01T00:00:00.000Z', 'severe', 'MigrationTest', "
-                  "'kept', NULL);",
-                )
-                ..execute('PRAGMA user_version = 2');
-            },
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(() async {
+          await db.close();
+        });
+        final m = _ThrowingMigrator(db);
+        await expectLater(
+          () => db.migration.onUpgrade(m, 2, 3),
+          throwsA(
+            isA<MigrationFailureException>()
+                .having((e) => e.fromVersion, 'from', 2)
+                .having((e) => e.toVersion, 'to', 3)
+                .having((e) => e.cause, 'cause', contains('synthetic')),
           ),
-        );
-        addTearDown(upgradedDb.close);
-
-        final crashRows = await upgradedDb.select(upgradedDb.crashLogs).get();
-        expect(crashRows, hasLength(1));
-        expect(crashRows.single.tag, equals('MigrationTest'));
-
-        final metaRows = await upgradedDb.select(upgradedDb.meta).get();
-        expect(metaRows, hasLength(1));
-        expect(metaRows.single.schemaVersion, equals(3));
-        expect(metaRows.single.totalInfluence, equals(Decimal.zero));
-        expect(metaRows.single.totalIntel, equals(Decimal.zero));
-        expect(
-          metaRows.single.goldenOpportunityMultiplier,
-          equals(Decimal.one),
-        );
-        expect(metaRows.single.boostMultiplier, equals(Decimal.one));
-
-        expect(await upgradedDb.select(upgradedDb.activeBoost).get(), isEmpty);
-        expect(await upgradedDb.select(upgradedDb.countries).get(), isEmpty);
-        expect(await upgradedDb.select(upgradedDb.continents).get(), isEmpty);
-        expect(
-          await upgradedDb.select(upgradedDb.continentMilestones).get(),
-          isEmpty,
-        );
-        expect(
-          await upgradedDb.select(upgradedDb.earnedAchievements).get(),
-          isEmpty,
-        );
-        expect(
-          await upgradedDb.select(upgradedDb.activeGlobalUpgrades).get(),
-          isEmpty,
-        );
-        expect(
-          await upgradedDb.select(upgradedDb.activeGoldens).get(),
-          isEmpty,
-        );
-        expect(
-          await upgradedDb.select(upgradedDb.activeMissions).get(),
-          isEmpty,
-        );
-        expect(
-          await upgradedDb.select(upgradedDb.completedMissions).get(),
-          isEmpty,
-        );
-        expect(await upgradedDb.select(upgradedDb.dailyStreaks).get(), isEmpty);
-        expect(
-          await upgradedDb.select(upgradedDb.activeGoldenEffect).get(),
-          isEmpty,
         );
       });
     });

@@ -9,6 +9,7 @@ import 'package:global_domination/game/game_world.dart';
 import 'package:global_domination/game/support/clock.dart';
 import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/providers/offline_catchup_providers.dart';
 import 'package:global_domination/ui/features/map/game_loop.dart';
 
 // ---------------------------------------------------------------------------
@@ -47,7 +48,10 @@ class _SpyGameWorldNotifier extends GameWorldNotifier {
 
 Widget _buildApp(_SpyGameWorldNotifier notifier) {
   return ProviderScope(
-    overrides: [gameWorldProvider.overrideWith((ref) => notifier)],
+    overrides: [
+      gameWorldProvider.overrideWith((ref) => notifier),
+      resumeOfflineCatchupProvider.overrideWithValue(() async {}),
+    ],
     child: const MaterialApp(home: GameLoop(child: SizedBox.expand())),
   );
 }
@@ -136,7 +140,10 @@ void main() {
       final notifier = _SpyGameWorldNotifier();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [gameWorldProvider.overrideWith((ref) => notifier)],
+          overrides: [
+            gameWorldProvider.overrideWith((ref) => notifier),
+            resumeOfflineCatchupProvider.overrideWithValue(() async {}),
+          ],
           child: const MaterialApp(home: GameLoop(child: Text('hello'))),
         ),
       );

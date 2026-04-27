@@ -28,6 +28,37 @@ void main() {
     return violations;
   }
 
+  group('lib/data/database/migrations/ purity', () {
+    test('no migration step file imports lib/game/', () {
+      final dir = Directory('lib/data/database/migrations');
+      if (!dir.existsSync()) return;
+      final files = findDartFiles(dir);
+      if (files.isEmpty) return;
+      final pattern = RegExp(
+        r'''import\s+['"]package:global_domination/game/''',
+      );
+      final violations = findViolations(files, pattern);
+      expect(violations, isEmpty, reason: violations.join('\n'));
+    });
+
+    test('detects game import in a scratch migration file', () {
+      final dir = Directory.systemTemp.createTempSync('migration_purity_neg_');
+      addTearDown(() {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      });
+      File('${dir.path}/bad.dart').writeAsStringSync(
+        "import 'package:global_domination/game/game_state.dart';\nvoid f() {}\n",
+      );
+      final pattern = RegExp(
+        r'''import\s+['"]package:global_domination/game/''',
+      );
+      final violations = findViolations([
+        File('${dir.path}/bad.dart'),
+      ], pattern);
+      expect(violations, isNotEmpty);
+    });
+  });
+
   group('lib/data/database tables and converters', () {
     test('do not import lib/game/', () {
       final dirs = [

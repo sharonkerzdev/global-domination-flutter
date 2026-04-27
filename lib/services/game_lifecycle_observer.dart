@@ -5,10 +5,12 @@ import 'package:global_domination/data/repositories/save_repository.dart';
 
 /// Flushes [SaveRepository] when the app is not in the foreground.
 class GameLifecycleObserver with WidgetsBindingObserver {
-  GameLifecycleObserver(this._save);
+  GameLifecycleObserver(this._save, {Future<void> Function()? onResume})
+    : _onResume = onResume;
 
   static final _log = Logger('GameLifecycleObserver');
   final SaveRepository _save;
+  final Future<void> Function()? _onResume;
 
   void attach() {
     WidgetsBinding.instance.addObserver(this);
@@ -28,6 +30,14 @@ class GameLifecycleObserver with WidgetsBindingObserver {
         await _flushAndLog();
         break;
       case AppLifecycleState.resumed:
+        final resume = _onResume;
+        if (resume != null) {
+          try {
+            await resume();
+          } on Object catch (e, s) {
+            _log.warning('lifecycle onResume failed', e, s);
+          }
+        }
         break;
     }
   }

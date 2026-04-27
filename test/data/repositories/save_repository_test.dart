@@ -580,6 +580,31 @@ void main() {
       expect(h.clock.nowCalls, 1);
       await h.shutdown();
     });
+
+    test(
+      'OfflineEarningsApplied schedules meta (flush persists lastSavedAt)',
+      () async {
+        final h = SaveRepositoryTestHarness()
+          ..start(
+            initial: egyptOnlyGameState(total: Influence(Decimal.fromInt(500))),
+            debounce: const Duration(hours: 1),
+          );
+        h.events.add(
+          OfflineEarningsApplied(
+            testRepoTimeUtc,
+            totalEarned: Influence.zero,
+            elapsed: const Duration(minutes: 5),
+          ),
+        );
+        await _pump();
+        expect(await h.db.select(h.db.meta).get(), isEmpty);
+        await h.repo.flush();
+        final meta = await h.db.select(h.db.meta).getSingle();
+        expect(meta.totalInfluence, Decimal.fromInt(500));
+        expect(meta.lastSavedAt, equals(testRepoTimeUtc));
+        await h.shutdown();
+      },
+    );
   });
 
   group('flush and dispose', () {

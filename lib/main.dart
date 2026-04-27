@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 
 import 'app.dart';
 import 'providers/data_providers.dart';
@@ -35,7 +36,14 @@ void main() {
       // Manually construct a ProviderContainer so we can attach CrashReporter
       // before the first frame. Only lib/main.dart contains boot-time global setup.
       final container = ProviderContainer();
-      CrashReporter.instance.attach(container.read(crashLogRepositoryProvider));
+      try {
+        await container.read(databaseBootstrapProvider.future);
+        CrashReporter.instance.attach(
+          container.read(crashLogRepositoryProvider),
+        );
+      } catch (e, s) {
+        Logger('main').severe('database bootstrap failed', e, s);
+      }
 
       runApp(
         UncontrolledProviderScope(

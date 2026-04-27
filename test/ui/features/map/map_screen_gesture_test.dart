@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/geo_providers.dart';
+
+import '../../../helpers/map_screen_test_providers.dart';
 import 'package:global_domination/ui/features/map/country_paints.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
 import 'package:global_domination/ui/features/map/map_screen.dart';
@@ -36,7 +38,10 @@ final _fakeCountries = [
 
 Widget _buildApp(List<CountryPath> countries) {
   return ProviderScope(
-    overrides: [geoProvider.overrideWith((ref) async => countries)],
+    overrides: [
+      geoProvider.overrideWith((ref) async => countries),
+      mapWidgetTestGameWorldOverride(),
+    ],
     child: MaterialApp(theme: appTheme(), home: const MapScreen()),
   );
 }

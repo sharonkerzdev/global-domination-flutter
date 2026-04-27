@@ -2375,6 +2375,51 @@ void main() {
     );
   });
 
+  group('GameWorld.applyOfflineCatchup', () {
+    test('elapsed zero emits nothing', () {
+      final at = DateTime.utc(2026, 1, 1, 12);
+      final c = FakeClock(at);
+      final w = GameWorld(content: content, clock: c, rng: SeededRng(0));
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      final r = w.applyOfflineCatchup(lastSavedAt: at);
+      expect(r.event, isNull);
+      expect(log, isEmpty);
+      sub.cancel();
+    });
+
+    test('emits single OfflineEarningsApplied without Tick', () {
+      final c = FakeClock(DateTime.utc(2026, 1, 1, 13));
+      final w = GameWorld(
+        content: content,
+        clock: c,
+        rng: SeededRng(0),
+        initialState: GameState(
+          countries: {
+            const CountryId('egypt'): CountryState(
+              id: const CountryId('egypt'),
+              unlocked: true,
+              ipLevel: 1,
+              leaderTier: LeaderTier.tier1,
+              bankedInfluence: Influence.zero,
+              lastCollectedAt: null,
+            ),
+          },
+          totalInfluence: Influence.zero,
+          unlockedContinents: _seedAfricaUnlocked,
+        ),
+      );
+      addTearDown(w.dispose);
+      final log = <GameEvent>[];
+      final sub = w.events.listen(log.add);
+      w.applyOfflineCatchup(lastSavedAt: DateTime.utc(2026, 1, 1, 12));
+      expect(log.whereType<OfflineEarningsApplied>(), hasLength(1));
+      expect(log.whereType<Tick>(), isEmpty);
+      sub.cancel();
+    });
+  });
+
   group('GameWorld.dispose', () {
     test('closes the stream', () async {
       final world2 = GameWorld(

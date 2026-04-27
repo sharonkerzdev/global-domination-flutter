@@ -2,15 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:global_domination/data/database/migrations/backup_retention_policy.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/data_providers.dart';
+import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/providers/offline_catchup_providers.dart';
 import 'package:global_domination/services/game_lifecycle_observer.dart';
 import 'package:global_domination/ui/boot_error_screen.dart';
 import 'package:global_domination/ui/debug/support_screen.dart';
 import 'package:global_domination/ui/features/map/game_loop.dart';
 import 'package:global_domination/ui/features/map/map_screen.dart';
+import 'package:global_domination/ui/save_recovery_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
+import 'package:path_provider/path_provider.dart';
 
 class GlobalDominationApp extends ConsumerStatefulWidget {
   const GlobalDominationApp({super.key});
@@ -24,18 +28,67 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
   static final ThemeData _theme = appTheme();
 
   @override
-  Widget build(BuildContext context) {
-    final registryAsync = ref.watch(contentRegistryProvider);
+  void initState() {
+    super.initState();
+    _runPostBootCleanup();
+  }
 
-    return registryAsync.when(
+  Future<void> _runPostBootCleanup() async {
+    try {
+      await ref.read(databaseBootstrapProvider.future);
+      final dbFolder = await getApplicationDocumentsDirectory();
+      unawaited(BackupRetentionPolicy.prune(dbFolder));
+    } catch (_) {
+      // Bootstrap failure — SaveRecoveryScreen handles UX.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bootAsync = ref.watch(databaseBootstrapProvider);
+    return bootAsync.when(
       loading: () => const MaterialApp(
         home: Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
-      error: (error, stack) => BootErrorScreen(message: error.toString()),
-      data: (registry) => MaterialApp(
-        theme: _theme,
-        home: const _SaveRepositoryBootstrap(child: _GameScreen()),
-      ),
+      error: (error, stack) =>
+          SaveRecoveryScreen(error: error, stackTrace: stack),
+      data: (_) {
+        final registryAsync = ref.watch(contentRegistryProvider);
+        return registryAsync.when(
+          loading: () => const MaterialApp(
+            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          ),
+          error: (error, stack) => BootErrorScreen(message: error.toString()),
+          data: (_) {
+            final persistedAsync = ref.watch(persistedGameSnapshotProvider);
+            return persistedAsync.when(
+              loading: () => const MaterialApp(
+                home: Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+              error: (error, stack) =>
+                  BootErrorScreen(message: error.toString()),
+              data: (_) {
+                final offlineBoot = ref.watch(offlineCatchupBootProvider);
+                return offlineBoot.when(
+                  loading: () => const MaterialApp(
+                    home: Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                  error: (error, stack) =>
+                      BootErrorScreen(message: error.toString()),
+                  data: (_) => MaterialApp(
+                    theme: _theme,
+                    home: const _SaveRepositoryBootstrap(child: _GameScreen()),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

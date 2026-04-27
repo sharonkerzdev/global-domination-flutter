@@ -1,6 +1,6 @@
 # Story 6.3: Typed Migrations and `schema_backup_v{n}.sqlite`
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -67,8 +67,8 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define `MigrationStep` contract + `MigrationFailureException` (AC: #1, #2, #5, #9)
-  - [ ] 1.1 Create `lib/data/database/migrations/migration_step.dart`:
+- [x] Task 1: Define `MigrationStep` contract + `MigrationFailureException` (AC: #1, #2, #5, #9)
+  - [x] 1.1 Create `lib/data/database/migrations/migration_step.dart`:
     ```dart
     import 'package:drift/drift.dart';
     import 'package:meta/meta.dart';
@@ -83,7 +83,7 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     }
     ```
     Pure interface; concrete implementations live in their own files. **No `lib/game/` imports.**
-  - [ ] 1.2 Create `lib/data/database/migrations/migration_failure_exception.dart`:
+  - [x] 1.2 Create `lib/data/database/migrations/migration_failure_exception.dart`:
     ```dart
     import 'package:meta/meta.dart';
 
@@ -107,8 +107,8 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     ```
     **Why a new exception type when `lib/game/game_error.dart` already has `MigrationFailure`?** The sim-layer `GameError.MigrationFailure` is the `Result.failure` envelope used by `Result<T, GameError>` consumers. The data layer is allowed to surface raw `Exception` subtypes — wrapping into `MigrationFailure` happens at the boundary (in this story: at `databaseBootstrapProvider`'s catch site if a future story wires it to `Result`; for 6-3, the exception bubbles to the UI via `AsyncError`).
 
-- [ ] Task 2: Implement `V1ToV2` and `V2ToV3` step files (AC: #1, #4)
-  - [ ] 2.1 Create `lib/data/database/migrations/v1_to_v2.dart`. Body migrates the lone Story 1-4 change (creates `crash_logs`):
+- [x] Task 2: Implement `V1ToV2` and `V2ToV3` step files (AC: #1, #4)
+  - [x] 2.1 Create `lib/data/database/migrations/v1_to_v2.dart`. Body migrates the lone Story 1-4 change (creates `crash_logs`):
     ```dart
     import 'package:drift/drift.dart';
     import '../app_database.dart';
@@ -125,7 +125,7 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
       }
     }
     ```
-  - [ ] 2.2 Create `lib/data/database/migrations/v2_to_v3.dart`. Body migrates Story 6-1's batch of new tables. **DEPENDENCY**: this file can be authored only AFTER Story 6-1 lands as `done`. If Story 6-1 is still `ready-for-dev` when this story is implemented, the dev agent MUST verify and HALT. If 6-1 is `done`, the body is exactly the inline branch from 6-1 Task 3.3 (lines 130–148 of 6-1 story spec):
+  - [x] 2.2 Create `lib/data/database/migrations/v2_to_v3.dart`. Body migrates Story 6-1's batch of new tables. **DEPENDENCY**: this file can be authored only AFTER Story 6-1 lands as `done`. If Story 6-1 is still `ready-for-dev` when this story is implemented, the dev agent MUST verify and HALT. If 6-1 is `done`, the body is exactly the inline branch from 6-1 Task 3.3 (lines 130–148 of 6-1 story spec):
     ```dart
     import 'package:decimal/decimal.dart';
     import 'package:drift/drift.dart';
@@ -154,8 +154,8 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     ```
     **Cross-cutting note:** Story 6-1's spec describes seeding a `meta` row inside the v2→v3 branch (6-1 Task 3.3 sample code lines 140–146). Story 6-1 then deliberately reverses that decision in Task 3.4 ("Decision: do NOT seed meta in onCreate; let the empty-DB → `initialSeed` flow drive the first save's INSERT in Story 6-2"). The 6-1 dev should have implemented the Task 3.4 decision; this story 6-3 step body MUST match the actual implementation. **Verify before authoring `v2_to_v3.dart`**: open `lib/data/database/app_database.dart` post-6-1 and copy the actual `from <= 2 && to >= 3` branch verbatim into the step file, dropping the `if` wrapper.
 
-- [ ] Task 3: Implement `MigrationRegistry` (AC: #1, #3)
-  - [ ] 3.1 Create `lib/data/database/migrations/migration_registry.dart`:
+- [x] Task 3: Implement `MigrationRegistry` (AC: #1, #3)
+  - [x] 3.1 Create `lib/data/database/migrations/migration_registry.dart`:
     ```dart
     import 'package:drift/drift.dart';
     import '../app_database.dart';
@@ -193,10 +193,10 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     }
     ```
     The cursor-walk pattern composes contiguous single-step migrations. A future v3→v4 step from Story 5-2 just appends `V3ToV4()` to `_steps` — no other change.
-  - [ ] 3.2 **Do NOT** add multi-step jumps (e.g. `V1ToV3`). Each step is a single contiguous version bump. If a feature legitimately needs to skip a version (impossible per project rule "Schema changes REQUIRE a new migration file under `lib/data/database/migrations/`. Never mutate an existing version."), revisit the design.
+  - [x] 3.2 **Do NOT** add multi-step jumps (e.g. `V1ToV3`). Each step is a single contiguous version bump. If a feature legitimately needs to skip a version (impossible per project rule "Schema changes REQUIRE a new migration file under `lib/data/database/migrations/`. Never mutate an existing version."), revisit the design.
 
-- [ ] Task 4: Refactor `app_database.dart` to delegate to the registry (AC: #2, #5)
-  - [ ] 4.1 Open `lib/data/database/app_database.dart`. Replace the entire `migration` getter body with:
+- [x] Task 4: Refactor `app_database.dart` to delegate to the registry (AC: #2, #5)
+  - [x] 4.1 Open `lib/data/database/app_database.dart`. Replace the entire `migration` getter body with:
     ```dart
     @override
     MigrationStrategy get migration {
@@ -225,11 +225,11 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     import 'migrations/migration_failure_exception.dart';
     import 'migrations/migration_registry.dart';
     ```
-  - [ ] 4.2 Confirm `_backupDatabase` and `_openConnection` are unchanged. `schemaVersion` getter unchanged (still returns whatever 6-1 bumped it to — this story does NOT bump the schema version).
-  - [ ] 4.3 The `LazyDatabase`'s factory closure does NOT need `try/catch` — `MigrationFailureException` propagates naturally through the `Future<NativeDatabase>` that `LazyDatabase` returns. Drift's open path surfaces the exception to the first `await`-ing query (which is the bootstrap provider in Task 5).
+  - [x] 4.2 Confirm `_backupDatabase` and `_openConnection` are unchanged. `schemaVersion` getter unchanged (still returns whatever 6-1 bumped it to — this story does NOT bump the schema version).
+  - [x] 4.3 The `LazyDatabase`'s factory closure does NOT need `try/catch` — `MigrationFailureException` propagates naturally through the `Future<NativeDatabase>` that `LazyDatabase` returns. Drift's open path surfaces the exception to the first `await`-ing query (which is the bootstrap provider in Task 5).
 
-- [ ] Task 5: Wire `databaseBootstrapProvider` and refactor `appDatabaseProvider` (AC: #5, #6)
-  - [ ] 5.1 Open `lib/providers/data_providers.dart`. Add:
+- [x] Task 5: Wire `databaseBootstrapProvider` and refactor `appDatabaseProvider` (AC: #5, #6)
+  - [x] 5.1 Open `lib/providers/data_providers.dart`. Add:
     ```dart
     final databaseBootstrapProvider = FutureProvider<AppDatabase>((ref) async {
       final db = AppDatabase();
@@ -241,19 +241,19 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     });
     ```
     The `customSelect('SELECT 1')` is the canonical Drift-blessed way to force `LazyDatabase` to open. **`customSelect` is the lone exception to the no-raw-SQL rule** in this story — it's a Drift API call with a literal `'SELECT 1'`, not a query against a real table. (`crash_log_repository.dart` precedent: `_db.customSelect('SELECT 1')` is already used in `app_database_test.dart` at the time of writing.)
-  - [ ] 5.2 **Replace** `appDatabaseProvider`'s body:
+  - [x] 5.2 **Replace** `appDatabaseProvider`'s body:
     ```dart
     final appDatabaseProvider = Provider<AppDatabase>((ref) {
       return ref.watch(databaseBootstrapProvider).requireValue;
     });
     ```
     Remove the `ref.onDispose(() => db.close())` line — disposal lives on `databaseBootstrapProvider` now; `appDatabaseProvider` is just a sync read of the bootstrapped DB.
-  - [ ] 5.3 **Verify downstream consumers still work**:
+  - [x] 5.3 **Verify downstream consumers still work**:
     - `crashLogRepositoryProvider` reads `appDatabaseProvider` — works (sync `.requireValue` succeeds once bootstrap is `AsyncData`).
     - `crashLogsProvider` (FutureProvider) reads `crashLogRepositoryProvider` — chains through correctly.
     - Story 6-2's `saveRepositoryProvider` reads `appDatabaseProvider` — chains through correctly.
     - `main.dart`'s `container.read(crashLogRepositoryProvider)` runs BEFORE `runApp`. The first `appDatabaseProvider` read will throw `StateError` if the bootstrap is still `AsyncLoading` at boot. **Fix**: in `main.dart`, before `CrashReporter.instance.attach(...)`, `await container.read(databaseBootstrapProvider.future);` (suppress and log on error — CrashReporter falls back to in-memory if attach fails).
-  - [ ] 5.4 Update `lib/main.dart`:
+  - [x] 5.4 Update `lib/main.dart`:
     ```dart
     // ... existing setup ...
     final container = ProviderContainer();
@@ -270,8 +270,8 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     ```
     Add `import 'package:logging/logging.dart';` if not already present. **The migration failure does NOT block `runApp`** — the user MUST land on the `SaveRecoveryScreen` rather than seeing a frozen splash.
 
-- [ ] Task 6: Implement `BackupRetentionPolicy` (AC: #8, #10)
-  - [ ] 6.1 Create `lib/data/database/migrations/backup_retention_policy.dart`:
+- [x] Task 6: Implement `BackupRetentionPolicy` (AC: #8, #10)
+  - [x] 6.1 Create `lib/data/database/migrations/backup_retention_policy.dart`:
     ```dart
     import 'dart:io';
 
@@ -307,7 +307,7 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     }
     ```
     Add `import 'package:path/path.dart' as p;` (already a project dependency per pubspec).
-  - [ ] 6.2 Wire the prune call in `lib/app.dart`. Convert `GlobalDominationApp` to `ConsumerStatefulWidget` (if Story 6-2 has not already done so):
+  - [x] 6.2 Wire the prune call in `lib/app.dart`. Convert `GlobalDominationApp` to `ConsumerStatefulWidget` (if Story 6-2 has not already done so):
     ```dart
     @override
     void initState() {
@@ -327,8 +327,8 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     ```
     Add `import 'dart:async';` for `unawaited` and `import 'package:path_provider/path_provider.dart';`. **If Story 6-2 already converted `GlobalDominationApp` to ConsumerStatefulWidget**, append `_runPostBootCleanup()` inside the existing `initState`; do NOT duplicate the conversion.
 
-- [ ] Task 7: Implement `SaveRecoveryActions` helper (AC: #7)
-  - [ ] 7.1 Create `lib/data/database/migrations/save_recovery_actions.dart`:
+- [x] Task 7: Implement `SaveRecoveryActions` helper (AC: #7)
+  - [x] 7.1 Create `lib/data/database/migrations/save_recovery_actions.dart`:
     ```dart
     import 'dart:io';
 
@@ -366,12 +366,12 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     ```
     **Pure helper** — no Riverpod, no Flutter imports. Caller (the `SaveRecoveryScreen` widget) invokes and then triggers `ref.invalidate(databaseBootstrapProvider)`.
 
-- [ ] Task 8: Implement `SaveRecoveryScreen` widget (AC: #6, #7)
-  - [ ] 8.1 Create `lib/ui/save_recovery_screen.dart`. The screen receives a `MigrationFailureException` (or generic `Object error` for non-migration corruption). Three buttons:
+- [x] Task 8: Implement `SaveRecoveryScreen` widget (AC: #6, #7)
+  - [x] 8.1 Create `lib/ui/save_recovery_screen.dart`. The screen receives a `MigrationFailureException` (or generic `Object error` for non-migration corruption). Three buttons:
     - **Restore from Backup v$fromVersion**: visible iff `SaveRecoveryActions.backupExists(fromVersion)` returns true. On tap: invoke `restoreFromBackup`, then `ref.invalidate(databaseBootstrapProvider)`. Spinner during restore.
     - **Start Fresh** (placeholder for Story 6-6): tap shows a SnackBar `'Start Fresh available in Story 6-6'` and does nothing else. **Do NOT throw `UnimplementedError`** — that's a UX antipattern in production. The button is rendered (so the screen looks complete) but stubs out cleanly.
     - **Copy Crash Log**: copies `error.toString()\n\n${error.originalStackTrace ?? ''}` to clipboard via `Clipboard.setData(ClipboardData(text: ...))`. Shows a SnackBar `'Copied'`.
-  - [ ] 8.2 Skeleton:
+  - [x] 8.2 Skeleton:
     ```dart
     class SaveRecoveryScreen extends ConsumerStatefulWidget {
       final Object error;
@@ -404,10 +404,10 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     }
     ```
     Pattern matches `BootErrorScreen` for layout (centered column, error icon, message text, button stack). Use `MaterialApp` wrapper since this is a top-level screen invoked before the real app shell.
-  - [ ] 8.3 The `Restore from Backup` button is shown only when `_backupExists == true` AND `widget.error is MigrationFailureException`. While loading (`_backupExists == null`) show a small `CircularProgressIndicator` placeholder. While restoring (`_restoring == true`), disable all buttons and show a centered spinner.
+  - [x] 8.3 The `Restore from Backup` button is shown only when `_backupExists == true` AND `widget.error is MigrationFailureException`. While loading (`_backupExists == null`) show a small `CircularProgressIndicator` placeholder. While restoring (`_restoring == true`), disable all buttons and show a centered spinner.
 
-- [ ] Task 9: Update `lib/app.dart` to gate on `databaseBootstrapProvider` (AC: #6)
-  - [ ] 9.1 The current `GlobalDominationApp.build` has a single `registryAsync.when(...)` gate. **Wrap** it with a `databaseBootstrapProvider.when(...)` gate:
+- [x] Task 9: Update `lib/app.dart` to gate on `databaseBootstrapProvider` (AC: #6)
+  - [x] 9.1 The current `GlobalDominationApp.build` has a single `registryAsync.when(...)` gate. **Wrap** it with a `databaseBootstrapProvider.when(...)` gate:
     ```dart
     @override
     Widget build(BuildContext context, WidgetRef ref) {
@@ -430,10 +430,10 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
       );
     }
     ```
-  - [ ] 9.2 If Story 6-2 already converted `GlobalDominationApp` to `ConsumerStatefulWidget` (Task 6.4 in 6-2), preserve that conversion; just edit the `build` body. The `_runPostBootCleanup` from Task 6.2 of THIS story coexists with 6-2's lifecycle observer wiring.
+  - [x] 9.2 If Story 6-2 already converted `GlobalDominationApp` to `ConsumerStatefulWidget` (Task 6.4 in 6-2), preserve that conversion; just edit the `build` body. The `_runPostBootCleanup` from Task 6.2 of THIS story coexists with 6-2's lifecycle observer wiring.
 
-- [ ] Task 10: Extend `data_boundary_test.dart` (AC: #9)
-  - [ ] 10.1 Open `test/architecture/data_boundary_test.dart` (created by Story 6-1; extended by Story 6-2). Add a third group `'lib/data/database/migrations/ purity'`:
+- [x] Task 10: Extend `data_boundary_test.dart` (AC: #9)
+  - [x] 10.1 Open `test/architecture/data_boundary_test.dart` (created by Story 6-1; extended by Story 6-2). Add a third group `'lib/data/database/migrations/ purity'`:
     ```dart
     group('lib/data/database/migrations/ purity', () {
       test('no migration step file imports lib/game/', () {
@@ -445,24 +445,24 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
       });
     });
     ```
-  - [ ] 10.2 Confirm the existing dual-import allowlist (mapper + save_repository, set in Story 6-2 Task 7.2) is unchanged. Migration step files do NOT import from `lib/data/database/...` cross-folder either — they import only `../app_database.dart` (sibling) which IS under `lib/data/database/`; if the allowlist test misclassifies migrations folder under `lib/data/database/...`, ensure the predicate scopes to file path `lib/data/repositories/` for the dual-import check (the test's intent is "the only file ROUTING events from sim layer to DB"; migrations don't route, they declare DDL).
+  - [x] 10.2 Confirm the existing dual-import allowlist (mapper + save_repository, set in Story 6-2 Task 7.2) is unchanged. Migration step files do NOT import from `lib/data/database/...` cross-folder either — they import only `../app_database.dart` (sibling) which IS under `lib/data/database/`; if the allowlist test misclassifies migrations folder under `lib/data/database/...`, ensure the predicate scopes to file path `lib/data/repositories/` for the dual-import check (the test's intent is "the only file ROUTING events from sim layer to DB"; migrations don't route, they declare DDL).
 
-- [ ] Task 11: Tests for `MigrationRegistry`, `MigrationStep`, `MigrationFailureException` (AC: #1, #3, #5, #11)
-  - [ ] 11.1 Create `test/data/database/migrations/migration_registry_test.dart`. Use `flutter_test` (touches `Migrator` from `package:drift/drift.dart`).
-  - [ ] 11.2 Tests:
+- [x] Task 11: Tests for `MigrationRegistry`, `MigrationStep`, `MigrationFailureException` (AC: #1, #3, #5, #11)
+  - [x] 11.1 Create `test/data/database/migrations/migration_registry_test.dart`. Use `flutter_test` (touches `Migrator` from `package:drift/drift.dart`).
+  - [x] 11.2 Tests:
     - `'V1ToV2 has fromVersion=1, toVersion=2'`
     - `'V2ToV3 has fromVersion=2, toVersion=3'`
     - `'MigrationRegistry.run executes steps in order for v1→v3'`: use a `_RecordingMigrator` test double that records every `createTable` call; assert order matches `crash_logs` first, then `meta`, `countries`, ... (Story 6-1's order).
     - `'MigrationRegistry.run is no-op for from==to'`: pass `from: 3, to: 3`; assert no step ran.
     - `'MigrationRegistry.run throws StateError on missing step'`: call with `from: 4, to: 5` while no V4ToV5 step exists; assert `StateError` thrown with the expected message.
-  - [ ] 11.3 Create `test/data/database/migrations/migration_failure_exception_test.dart`:
+  - [x] 11.3 Create `test/data/database/migrations/migration_failure_exception_test.dart`:
     - `'toString includes from/to versions and cause'`: trivial.
     - `'preserves stackTrace'`: trivial.
 
-- [ ] Task 12: Tests for `BackupRetentionPolicy` (AC: #8, #10, #11)
-  - [ ] 12.1 Create `test/data/database/migrations/backup_retention_policy_test.dart`. Use `package:test/test.dart` — pure Dart, `dart:io` only.
-  - [ ] 12.2 Helper: `setUp` creates `Directory.systemTemp.createTempSync('backup_retention_test_')`; `tearDown` calls `dir.deleteSync(recursive: true)`.
-  - [ ] 12.3 Tests:
+- [x] Task 12: Tests for `BackupRetentionPolicy` (AC: #8, #10, #11)
+  - [x] 12.1 Create `test/data/database/migrations/backup_retention_policy_test.dart`. Use `package:test/test.dart` — pure Dart, `dart:io` only.
+  - [x] 12.2 Helper: `setUp` creates `Directory.systemTemp.createTempSync('backup_retention_test_')`; `tearDown` calls `dir.deleteSync(recursive: true)`.
+  - [x] 12.3 Tests:
     - `'retains 3 most recent of 5 backups by mtime'`: create 5 files; manipulate `setLastModifiedSync` to space them apart by 1 second (oldest to newest = v1..v5); call `prune(dir, retainMostRecent: 3)`; assert v3, v4, v5 remain; v1, v2 gone.
     - `'ignores non-matching files'`: create `global_domination.sqlite`, `app_v2_corrupt_1234.sqlite`, `schema_backup_v1.sqlite`; call `prune(dir, retainMostRecent: 3)`; assert all three remain (only one matches the regex; retention >= count).
     - `'is no-op on empty directory'`: empty temp dir; call `prune`; assert no error.
@@ -470,19 +470,19 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     - `'with retainMostRecent=0 deletes all matching'`: 3 backup files; `prune(dir, retainMostRecent: 0)`; assert dir empty of backups.
     - `'sort is stable across equal mtimes'`: 2 files with identical mtime; `prune(dir, retainMostRecent: 1)`; assert exactly 1 file remains (which one is implementation-defined; document in test).
 
-- [ ] Task 13: Tests for `SaveRecoveryActions` (AC: #7, #11)
-  - [ ] 13.1 Create `test/data/database/migrations/save_recovery_actions_test.dart`. Use `flutter_test` because `getApplicationDocumentsDirectory` requires `path_provider` test setup.
-  - [ ] 13.2 Use `path_provider_platform_interface`'s test helper (or override via `PathProviderPlatform.instance`) to redirect `getApplicationDocumentsDirectory` to a temp dir for the test. **Reference**: existing `app_database_test.dart` does NOT do this because `NativeDatabase.memory()` bypasses path_provider; we DO need it here.
-  - [ ] 13.3 Tests:
+- [x] Task 13: Tests for `SaveRecoveryActions` (AC: #7, #11)
+  - [x] 13.1 Create `test/data/database/migrations/save_recovery_actions_test.dart`. Use `flutter_test` because `getApplicationDocumentsDirectory` requires `path_provider` test setup.
+  - [x] 13.2 Use `path_provider_platform_interface`'s test helper (or override via `PathProviderPlatform.instance`) to redirect `getApplicationDocumentsDirectory` to a temp dir for the test. **Reference**: existing `app_database_test.dart` does NOT do this because `NativeDatabase.memory()` bypasses path_provider; we DO need it here.
+  - [x] 13.3 Tests:
     - `'backupExists returns true when file present'`: write `schema_backup_v2.sqlite` to temp dir; call `backupExists(2)`; assert `true`.
     - `'backupExists returns false when file missing'`: empty temp dir; call `backupExists(2)`; assert `false`.
     - `'restoreFromBackup renames live db and copies backup'`: write live `global_domination.sqlite` and `schema_backup_v2.sqlite`; call `restoreFromBackup(fromVersion: 2, toVersion: 3)`; assert: (a) live file content equals backup content, (b) a file matching `app_v3_corrupt_*.sqlite` exists, (c) backup file still present (not consumed).
     - `'restoreFromBackup throws StateError when backup missing'`: empty temp dir; expect throw.
     - `'restoreFromBackup is idempotent for live-file-missing path'`: only backup present, no live; call → live file copied from backup, no rename of nonexistent file (no throw).
 
-- [ ] Task 14: Widget tests for `SaveRecoveryScreen` (AC: #6, #7, #11)
-  - [ ] 14.1 Create `test/ui/save_recovery_screen_test.dart`. Use `flutter_test`.
-  - [ ] 14.2 Tests:
+- [x] Task 14: Widget tests for `SaveRecoveryScreen` (AC: #6, #7, #11)
+  - [x] 14.1 Create `test/ui/save_recovery_screen_test.dart`. Use `flutter_test`.
+  - [x] 14.2 Tests:
     - `'renders error message + restore hidden when backup missing'`: pump screen with `MigrationFailureException(from: 99, to: 100, cause: 'test')`; expect `find.text(...)` for the error text; expect restore button NOT present (or disabled).
     - `'restore button visible when backup present'`: stub `path_provider` to a temp dir; write `schema_backup_v2.sqlite`; pump screen with `MigrationFailureException(from: 2, ...)`; pump-and-settle; expect restore button present.
     - `'restore tap invokes SaveRecoveryActions and invalidates provider'`: same setup; tap restore; assert `databaseBootstrapProvider` invalidated (use a `ProviderContainer` with a counter).
@@ -490,23 +490,23 @@ So that every schema change ships as a reviewable, testable, isolated unit, the 
     - `'copy crash log writes to clipboard'`: use `MockMethodChannel` to intercept the clipboard channel; assert payload contains the error text.
     - `'renders for non-migration error (generic Object)'`: pump with `Exception('boom')`; expect screen renders without throw; restore button NOT present.
 
-- [ ] Task 15: Tests for `app_database.dart` migration delegation (AC: #4, #5, #11)
-  - [ ] 15.1 Open `test/data/database/app_database_test.dart`. Add a new group `'migration delegation'`:
+- [x] Task 15: Tests for `app_database.dart` migration delegation (AC: #4, #5, #11)
+  - [x] 15.1 Open `test/data/database/app_database_test.dart`. Add a new group `'migration delegation'`:
     - `'migration failure rewraps as MigrationFailureException'`: use `_FailingMigrator` test double passed via a `_TestableAppDatabase` subclass that overrides the `migration` getter; assert the thrown exception is `MigrationFailureException` with correct fromVersion/toVersion. **Alternate approach**: register a temporary `V99ToV100` step that throws, set `schemaVersion` higher via subclass; this is more invasive than a `_FailingMigrator` mock. **Pick `_FailingMigrator`** — it's the lower-blast-radius approach.
     - `'v1→v2→v3 chained migration produces same end-state as fresh v3'`: open two in-memory DBs — one with `schemaVersion: 1` baseline (somehow — Drift in-memory always starts at the current `schemaVersion`, so this test is a deferred-pattern: assert the chain runs as expected via `_RecordingMigrator` instead).
-  - [ ] 15.2 Update the existing comment block at lines 1–3 of `app_database_test.dart` to reference Story 6-3 explicitly (it already does — confirm it still mentions "deferred to Story 6-3" or similar).
+  - [x] 15.2 Update the existing comment block at lines 1–3 of `app_database_test.dart` to reference Story 6-3 explicitly (it already does — confirm it still mentions "deferred to Story 6-3" or similar).
 
-- [ ] Task 16: Tests for `databaseBootstrapProvider` failure path (AC: #5, #6, #11)
-  - [ ] 16.1 Create `test/providers/database_bootstrap_provider_test.dart`. Use `flutter_test`.
-  - [ ] 16.2 Test `'bootstrap resolves to AsyncError when migration step throws'`: override `appDatabaseProvider` to construct an `AppDatabase` whose schemaVersion is one higher than current (forcing onUpgrade to run a step that doesn't exist); assert `await container.read(databaseBootstrapProvider.future)` throws `MigrationFailureException`.
-  - [ ] 16.3 Test `'bootstrap resolves to AsyncData on healthy open'`: trivial; assert no throw and `db.schemaVersion` matches expected.
+- [x] Task 16: Tests for `databaseBootstrapProvider` failure path (AC: #5, #6, #11)
+  - [x] 16.1 Create `test/providers/database_bootstrap_provider_test.dart`. Use `flutter_test`.
+  - [x] 16.2 Test `'bootstrap resolves to AsyncError when migration step throws'`: override `appDatabaseProvider` to construct an `AppDatabase` whose schemaVersion is one higher than current (forcing onUpgrade to run a step that doesn't exist); assert `await container.read(databaseBootstrapProvider.future)` throws `MigrationFailureException`.
+  - [x] 16.3 Test `'bootstrap resolves to AsyncData on healthy open'`: trivial; assert no throw and `db.schemaVersion` matches expected.
 
-- [ ] Task 17: Run code generation, format, analyze, full test suite (AC: all)
-  - [ ] 17.1 No `build_runner` re-run required (no schema change). If Story 6-1 stale, run once.
-  - [ ] 17.2 `flutter analyze` — 0 warnings, 0 errors.
-  - [ ] 17.3 `dart format --set-exit-if-changed .`.
-  - [ ] 17.4 `flutter test` — full suite green. Expected new tests: ≈ 25–30. Full suite should land at ≈ 630–655 (assuming 6-1 + 6-2 already added their counts).
-  - [ ] 17.5 Update `Status` to `review`. Append a Change Log entry and File List.
+- [x] Task 17: Run code generation, format, analyze, full test suite (AC: all)
+  - [x] 17.1 No `build_runner` re-run required (no schema change). If Story 6-1 stale, run once.
+  - [x] 17.2 `flutter analyze` — 0 warnings, 0 errors.
+  - [x] 17.3 `dart format --set-exit-if-changed .`.
+  - [x] 17.4 `flutter test` — full suite green. Expected new tests: ≈ 25–30. Full suite should land at ≈ 630–655 (assuming 6-1 + 6-2 already added their counts).
+  - [x] 17.5 Update `Status` to `review`. Append a Change Log entry and File List.
 
 ## Dev Notes
 
@@ -682,14 +682,60 @@ The `_FailingMigrator` test patterns in Tasks 11/15 are NOT testing backward com
 - [Source: test/data/database/app_database_test.dart] — pattern for `flutter_test` + `NativeDatabase.memory()` + `tearDown` close (lines 11–22); deferred-test comment block (lines 1–3) referenced in this story's Task 15.2
 - [Source: test/architecture/game_boundary_test.dart] — pattern for static-analysis architecture tests; mirrored in this story's data-boundary test extension (Task 10)
 
+### Review Findings
+
+- [x] [Review][Patch] Close or dispose the failed bootstrap `AppDatabase` before the restore flow renames `global_domination.sqlite`; the provider keeps the failed database alive while `SaveRecoveryScreen` restores first and invalidates afterward, which can leave the live SQLite file locked and make the AC #7 restore path fail. [lib/providers/data_providers.dart:21]
+- [x] [Review][Patch] Remove the redundant restore-button type check so `flutter analyze` is green again; current analyze fails with `unnecessary_type_check`. [lib/ui/save_recovery_screen.dart:140]
+- [x] [Review][Patch] Complete AC #11 behavioral coverage instead of the current smoke-only recovery screen test; the bootstrap failure test also overrides the provider under test, and the named v1->v2 upgrade test is a fresh onCreate path, so key specified behaviors are not actually verified. [test/ui/save_recovery_screen_test.dart:4]
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
+- Restored `package:decimal/decimal.dart` import in `app_database.dart` after generated code required `Decimal`.
+- Code review patch restored `SaveRecoveryScreen` behavioral `testWidgets` coverage via injectable backup/restore seams, avoiding the Windows `path_provider` + `pumpAndSettle` flake while preserving production behavior.
+
 ### Completion Notes List
 
+- Implemented typed migrations under `lib/data/database/migrations/`: `MigrationStep`, `MigrationFailureException`, `MigrationRegistry`, `V1ToV2`, `V2ToV3` (no meta seed), `BackupRetentionPolicy`, `SaveRecoveryActions` (`backupExists` uses sync existence check after resolving documents dir).
+- `AppDatabase.migration`: `_backupDatabase(from)` then `MigrationRegistry.run` in try/catch; rethrow `MigrationFailureException` with `originalStackTrace`.
+- `databaseBootstrapProvider` (`FutureProvider`): `customSelect('SELECT 1')`, `onDispose` closes DB; on failure reports via `CrashReporter.instance.reportZonedError`; `appDatabaseProvider` uses `requireValue` from bootstrap.
+- Code review patch: failed bootstrap DB now closes before rethrow, so recovery restore can safely rename/copy the live database file; `appDatabaseFactoryProvider` test seam verifies the provider logic without overriding the provider under test.
+- `main.dart`: `await databaseBootstrapProvider.future` before `CrashReporter.attach`; catch logs with `Logger('main')`.
+- `app.dart`: outer `databaseBootstrapProvider.when` (loading / `SaveRecoveryScreen` / inner content registry gate); post-success `unawaited(BackupRetentionPolicy.prune(...))`.
+- `SaveRecoveryScreen`: restore, start-fresh SnackBar placeholder (per spec — no `UnimplementedError`), copy log; test-only backup/restore seams keep widget tests deterministic on Windows.
+- Extended `data_boundary_test.dart` with migrations purity group and negative scratch-file import test.
+- **AC #11 widget tests:** `test/ui/save_recovery_screen_test.dart` now covers error rendering, restore visibility, restore CTA dispatch, Start Fresh SnackBar, and Copy Crash Log clipboard behavior.
+- `dart format`, `flutter analyze`, and `flutter test` (full suite, 761 tests) completed green after review patches.
+
 ### File List
+
+- `lib/data/database/migrations/migration_step.dart`
+- `lib/data/database/migrations/migration_failure_exception.dart`
+- `lib/data/database/migrations/migration_registry.dart`
+- `lib/data/database/migrations/v1_to_v2.dart`
+- `lib/data/database/migrations/v2_to_v3.dart`
+- `lib/data/database/migrations/backup_retention_policy.dart`
+- `lib/data/database/migrations/save_recovery_actions.dart`
+- `lib/data/database/app_database.dart`
+- `lib/providers/data_providers.dart`
+- `lib/main.dart`
+- `lib/app.dart`
+- `lib/ui/save_recovery_screen.dart`
+- `test/data/database/migrations/migration_registry_test.dart`
+- `test/data/database/migrations/migration_failure_exception_test.dart`
+- `test/data/database/migrations/backup_retention_policy_test.dart`
+- `test/data/database/migrations/save_recovery_actions_test.dart`
+- `test/data/database/app_database_test.dart`
+- `test/providers/database_bootstrap_provider_test.dart`
+- `test/ui/save_recovery_screen_test.dart`
+- `test/architecture/data_boundary_test.dart`
+
+## Change Log
+
+- **2026-04-27:** Story 6-3 implementation complete — typed migration registry, bootstrap provider, save recovery UI, backup retention, architecture tests; story marked **review**; sprint status **6-3 → review**.
+- **2026-04-27:** Code review patch pass complete — closed failed bootstrap DB before recovery, fixed SaveRecoveryScreen button context/analyzer warning, restored recovery-screen behavioral widget tests, verified `flutter analyze` + full `flutter test` (761) green; story marked **done**.
