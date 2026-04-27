@@ -10,6 +10,7 @@ import 'package:global_domination/game/features/leaders/leaders_reducer.dart';
 import 'package:global_domination/game/features/boosts/boosts_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_reducer.dart';
 import 'package:global_domination/game/features/goldens/goldens_scheduler.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_rewards_reducer.dart';
 import 'package:global_domination/game/features/missions/missions_reducer.dart';
 import 'package:global_domination/game/features/upgrades/upgrades_reducer.dart';
 import 'package:global_domination/game/game_command.dart';
@@ -175,6 +176,7 @@ class GameWorld {
       HireLeader() => _applyHireLeader(cmd, batch),
       UpgradeLeader() => _applyUpgradeLeader(cmd, batch),
       ActivateBoost() => _applyActivateBoost(cmd, batch),
+      ClaimDailyReward() => _applyClaimDailyReward(cmd, batch),
       Noop() => const Success<void, GameError>(null),
       UnlockCountry() => const Success<void, GameError>(null),
       ClaimGolden() => throw AssertionError('unreachable ClaimGolden: $cmd'),
@@ -269,6 +271,23 @@ class GameWorld {
     List<GameEvent> batch,
   ) {
     final result = applyActivateBoost(_state, cmd, now: _clock.now());
+    return result.map((tuple) {
+      final (newState, event) = tuple;
+      _state = newState;
+      if (event != null) batch.add(event);
+    });
+  }
+
+  Result<void, GameError> _applyClaimDailyReward(
+    ClaimDailyReward cmd,
+    List<GameEvent> batch,
+  ) {
+    final result = applyClaimDailyReward(
+      _state,
+      _content,
+      cmd,
+      now: _clock.now(),
+    );
     return result.map((tuple) {
       final (newState, event) = tuple;
       _state = newState;

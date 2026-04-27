@@ -1,6 +1,6 @@
 # Story 5.4: 7-Day Daily Reward Streak
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -62,29 +62,29 @@ so that I have gentle reason to return daily without being punished for missing.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add the `DailyStreak` value class (AC: 2, 4, 5, 7)
-  - [ ] 1.1 Create `lib/game/features/daily_rewards/daily_streak.dart`
-  - [ ] 1.2 Define `@immutable class DailyStreak { final int day; final DateTime? lastClaimDate; const DailyStreak({required this.day, required this.lastClaimDate}); static const empty = DailyStreak(day: 0, lastClaimDate: null); }` (use `const` constructor; `DateTime?` is nullable)
-  - [ ] 1.3 Implement manual `==`, `hashCode`, `toString` (NO `freezed`). For `==` on `DateTime?`, use direct `==` (Dart compares microsecond-equal `DateTime`s as equal). Pattern reference: `lib/game/features/countries/country_state.dart`.
-  - [ ] 1.4 Add a `copyWith({int? day, DateTime? lastClaimDate, bool clearLastClaimDate = false})` helper following the `lastCollectedAt` nullable pattern in `country_state.dart` (the `clearLastClaimDate` flag handles the rare null-set case; for this story it's not needed — claims always set a non-null date — but include the flag for symmetry).
+- [x] Task 1: Add the `DailyStreak` value class (AC: 2, 4, 5, 7)
+  - [x] 1.1 Create `lib/game/features/daily_rewards/daily_streak.dart`
+  - [x] 1.2 Define `@immutable class DailyStreak { final int day; final DateTime? lastClaimDate; const DailyStreak({required this.day, required this.lastClaimDate}); static const empty = DailyStreak(day: 0, lastClaimDate: null); }` (use `const` constructor; `DateTime?` is nullable)
+  - [x] 1.3 Implement manual `==`, `hashCode`, `toString` (NO `freezed`). For `==` on `DateTime?`, use direct `==` (Dart compares microsecond-equal `DateTime`s as equal). Pattern reference: `lib/game/features/countries/country_state.dart`.
+  - [x] 1.4 Add a `copyWith({int? day, DateTime? lastClaimDate, bool clearLastClaimDate = false})` helper following the `lastCollectedAt` nullable pattern in `country_state.dart` (the `clearLastClaimDate` flag handles the rare null-set case; for this story it's not needed — claims always set a non-null date — but include the flag for symmetry).
 
-- [ ] Task 2: Extend `lib/game/game_state.dart` with `totalIntel` and `dailyStreak` (AC: 2, 7)
-  - [ ] 2.1 Import `Intel` from `lib/game/values/intel.dart` and `DailyStreak` from the new file
-  - [ ] 2.2 Add fields: `final Intel totalIntel;` and `final DailyStreak dailyStreak;`
-  - [ ] 2.3 Wire through constructor (defaults: `totalIntel ?? Intel.zero`, `dailyStreak ?? DailyStreak.empty`), `copyWith`, `==`, `hashCode`, `toString`
-  - [ ] 2.4 Update `GameState.initialSeed(content)` to pass `totalIntel: Intel.zero, dailyStreak: DailyStreak.empty` explicitly (kept defensive even though defaults match)
-  - [ ] 2.5 No `MapEquality` needed — both new fields are scalars
+- [x] Task 2: Extend `lib/game/game_state.dart` with `totalIntel` and `dailyStreak` (AC: 2, 7)
+  - [x] 2.1 Import `Intel` from `lib/game/values/intel.dart` and `DailyStreak` from the new file
+  - [x] 2.2 Add fields: `final Intel totalIntel;` and `final DailyStreak dailyStreak;`
+  - [x] 2.3 Wire through constructor (defaults: `totalIntel ?? Intel.zero`, `dailyStreak ?? DailyStreak.empty`), `copyWith`, `==`, `hashCode`, `toString`
+  - [x] 2.4 Update `GameState.initialSeed(content)` to pass `totalIntel: Intel.zero, dailyStreak: DailyStreak.empty` explicitly (kept defensive even though defaults match)
+  - [x] 2.5 No `MapEquality` needed — both new fields are scalars
 
-- [ ] Task 3: Add `ClaimDailyReward` command in `lib/game/game_command.dart` (AC: 2, 3)
-  - [ ] 3.1 `final class ClaimDailyReward extends GameCommand { const ClaimDailyReward(); }` with `==`/`hashCode`/`toString` matching existing command style (e.g., `Noop`)
-  - [ ] 3.2 Add to the exhaustive `switch` in `GameWorld.applyCommand` (`lib/game/game_world.dart`) — see Task 6
+- [x] Task 3: Add `ClaimDailyReward` command in `lib/game/game_command.dart` (AC: 2, 3)
+  - [x] 3.1 `final class ClaimDailyReward extends GameCommand { const ClaimDailyReward(); }` with `==`/`hashCode`/`toString` matching existing command style (e.g., `Noop`)
+  - [x] 3.2 Add to the exhaustive `switch` in `GameWorld.applyCommand` (`lib/game/game_world.dart`) — see Task 6
 
-- [ ] Task 4: Add `DailyRewardClaimed` event in `lib/game/game_event.dart` (AC: 2)
-  - [ ] 4.1 `final class DailyRewardClaimed extends GameEvent { final int day; final Influence influenceReward; final Intel intelReward; const DailyRewardClaimed(super.at, {required this.day, required this.influenceReward, required this.intelReward}); }` with manual `==`/`hashCode`/`toString` covering all 4 fields (`at`, `day`, `influenceReward`, `intelReward`)
-  - [ ] 4.2 Update `test/game/game_event_test.dart` to cover the new event
+- [x] Task 4: Add `DailyRewardClaimed` event in `lib/game/game_event.dart` (AC: 2)
+  - [x] 4.1 `final class DailyRewardClaimed extends GameEvent { final int day; final Influence influenceReward; final Intel intelReward; const DailyRewardClaimed(super.at, {required this.day, required this.influenceReward, required this.intelReward}); }` with manual `==`/`hashCode`/`toString` covering all 4 fields (`at`, `day`, `influenceReward`, `intelReward`)
+  - [x] 4.2 Update `test/game/game_event_test.dart` to cover the new event
 
-- [ ] Task 5: Add content type and registry parse for daily rewards (AC: 6)
-  - [ ] 5.1 Create `lib/game/content/daily_reward_def.dart`:
+- [x] Task 5: Add content type and registry parse for daily rewards (AC: 6)
+  - [x] 5.1 Create `lib/game/content/daily_reward_def.dart`:
       ```
       @immutable
       class DailyRewardDef {
@@ -96,15 +96,15 @@ so that I have gentle reason to return daily without being punished for missing.
       }
       ```
       Pattern reference: `lib/game/content/continent_def.dart` (`MilestoneReward.fromJson`).
-  - [ ] 5.2 Extend `ContentRegistry`:
+  - [x] 5.2 Extend `ContentRegistry`:
       - Add `final List<DailyRewardDef> dailyRewards;` field (immutable list)
       - Add to `const` constructor and `fromJsonStrings` (new required positional? — match the existing **named-required** style of all other `fromJsonStrings` parameters; add `required String dailyRewardsJson`)
       - Add `_parseDailyRewards(String json)` that:
         - decodes a JSON list of length 7
         - asserts each entry's `day == index + 1` (1..7 in order)
         - throws `ContentLoadException` with a clear message on length mismatch, duplicate days, out-of-order days, or unparseable Decimal strings
-  - [ ] 5.3 Update `lib/services/content_registry_loader.dart` to load `assets/data/daily_rewards.json` alongside the existing 6 files (`Future.wait` pattern); pass into `fromJsonStrings`
-  - [ ] 5.4 Create `assets/data/daily_rewards.json` with 7 placeholder entries (Epic 10 will tune):
+  - [x] 5.3 Update `lib/services/content_registry_loader.dart` to load `assets/data/daily_rewards.json` alongside the existing 6 files (`Future.wait` pattern); pass into `fromJsonStrings`
+  - [x] 5.4 Create `assets/data/daily_rewards.json` with 7 placeholder entries (Epic 10 will tune):
       ```json
       [
         {"day": 1, "influenceReward": "100",      "intelReward": "1"},
@@ -116,12 +116,12 @@ so that I have gentle reason to return daily without being punished for missing.
         {"day": 7, "influenceReward": "100000",   "intelReward": "21"}
       ]
       ```
-  - [ ] 5.5 `pubspec.yaml` already declares `- assets/data/` (line 90) — NO pubspec change needed for the new file
-  - [ ] 5.6 NO Drift schema changes in this story — persistence is Epic 6's job. Old saves break (acceptable per project rule).
+  - [x] 5.5 `pubspec.yaml` already declares `- assets/data/` (line 90) — NO pubspec change needed for the new file
+  - [x] 5.6 NO Drift schema changes in this story — persistence is Epic 6's job. Old saves break (acceptable per project rule).
 
-- [ ] Task 6: Implement the reducer (AC: 1, 2, 3, 4, 5, 8, 11)
-  - [ ] 6.1 Create `lib/game/features/daily_rewards/daily_rewards_reducer.dart`
-  - [ ] 6.2 Implement pure helper `bool dailyRewardAvailable(GameState state, DateTime now)`:
+- [x] Task 6: Implement the reducer (AC: 1, 2, 3, 4, 5, 8, 11)
+  - [x] 6.1 Create `lib/game/features/daily_rewards/daily_rewards_reducer.dart`
+  - [x] 6.2 Implement pure helper `bool dailyRewardAvailable(GameState state, DateTime now)`:
       ```
       final last = state.dailyStreak.lastClaimDate;
       if (last == null) return true;
@@ -130,7 +130,7 @@ so that I have gentle reason to return daily without being punished for missing.
       return !_sameLocalDate(lastLocal, nowLocal);
       // _sameLocalDate compares (year, month, day)
       ```
-  - [ ] 6.3 Implement `Result<(GameState, GameEvent?), GameError> applyClaimDailyReward(GameState state, ContentRegistry content, ClaimDailyReward cmd, {required DateTime now})`:
+  - [x] 6.3 Implement `Result<(GameState, GameEvent?), GameError> applyClaimDailyReward(GameState state, ContentRegistry content, ClaimDailyReward cmd, {required DateTime now})`:
       - if `!dailyRewardAvailable(state, now)` → `Result.failure(GameError.userLocked(reason: 'daily_reward_already_claimed'))`
       - compute `newDay`:
         - `last = state.dailyStreak.lastClaimDate`
@@ -145,8 +145,8 @@ so that I have gentle reason to return daily without being punished for missing.
       - `final newState = state.copyWith(totalInfluence: state.totalInfluence + Influence(def.influenceReward), totalIntel: state.totalIntel + Intel(def.intelReward), dailyStreak: DailyStreak(day: newDay, lastClaimDate: now));`
       - `final event = DailyRewardClaimed(now, day: newDay, influenceReward: Influence(def.influenceReward), intelReward: Intel(def.intelReward));`
       - return `Result.success((newState, event))`
-  - [ ] 6.4 Pure: NO `DateTime.now()`, NO `Random()`, NO I/O, NO logging
-  - [ ] 6.5 Implement `int _localDayDelta(DateTime aLocal, DateTime bLocal)`:
+  - [x] 6.4 Pure: NO `DateTime.now()`, NO `Random()`, NO I/O, NO logging
+  - [x] 6.5 Implement `int _localDayDelta(DateTime aLocal, DateTime bLocal)`:
       ```
       final a = DateTime(aLocal.year, aLocal.month, aLocal.day);
       final b = DateTime(bLocal.year, bLocal.month, bLocal.day);
@@ -154,14 +154,14 @@ so that I have gentle reason to return daily without being punished for missing.
       ```
       Both arguments MUST already be `.toLocal()`. Constructing `DateTime(y, m, d)` with no time gives midnight in the LOCAL zone, which makes `.difference(...).inDays` correct across DST (avoids the classic 23/25-hour DST off-by-one).
 
-- [ ] Task 7: Wire the reducer into `GameWorld` (AC: 2, 3, 8, 11)
-  - [ ] 7.1 In `lib/game/game_world.dart`, add a private helper `_applyClaimDailyReward(ClaimDailyReward cmd)` mirroring `_applyTapCountry` style: calls `applyClaimDailyReward(_state, _content, cmd, now: _clock.now())`, on success assigns `_state = newState` and emits the event via `_events.add(event)`
-  - [ ] 7.2 Add `ClaimDailyReward()` arm to the exhaustive `switch (cmd)` in `applyCommand` after the `UnlockCountry()` arm. The trailing post-success block (`_evaluateContinentUnlocks` + `_evaluateMilestones`) automatically runs — that's harmless because a successful daily claim DOES change `totalInfluence`, which can cross continent thresholds; we WANT continent-unlock evaluation to fire (this is consistent with FR14 + Story 4.2's threshold-based unlocks)
-  - [ ] 7.3 Do NOT short-circuit the post-command evaluators — `_evaluateContinentUnlocks` is currently the only path that auto-unlocks a continent when `totalInfluence` crosses its threshold via reward, and the daily reward reaches that scale at later days. `_evaluateMilestones` is a no-op here because the claim doesn't unlock countries.
-  - [ ] 7.4 Update `import 'daily_rewards_reducer.dart'` and ensure no Flutter import sneaks in via transitive imports.
+- [x] Task 7: Wire the reducer into `GameWorld` (AC: 2, 3, 8, 11)
+  - [x] 7.1 In `lib/game/game_world.dart`, add a private helper `_applyClaimDailyReward(ClaimDailyReward cmd)` mirroring `_applyTapCountry` style: calls `applyClaimDailyReward(_state, _content, cmd, now: _clock.now())`, on success assigns `_state = newState` and emits the event via `_events.add(event)`
+  - [x] 7.2 Add `ClaimDailyReward()` arm to the exhaustive `switch (cmd)` in `applyCommand` after the `UnlockCountry()` arm. The trailing post-success block (`_evaluateContinentUnlocks` + `_evaluateMilestones`) automatically runs — that's harmless because a successful daily claim DOES change `totalInfluence`, which can cross continent thresholds; we WANT continent-unlock evaluation to fire (this is consistent with FR14 + Story 4.2's threshold-based unlocks)
+  - [x] 7.3 Do NOT short-circuit the post-command evaluators — `_evaluateContinentUnlocks` is currently the only path that auto-unlocks a continent when `totalInfluence` crosses its threshold via reward, and the daily reward reaches that scale at later days. `_evaluateMilestones` is a no-op here because the claim doesn't unlock countries.
+  - [x] 7.4 Update `import 'daily_rewards_reducer.dart'` and ensure no Flutter import sneaks in via transitive imports.
 
-- [ ] Task 8: Riverpod provider (AC: 1, 9)
-  - [ ] 8.1 In `lib/providers/feature_providers.dart` (existing — created by Story 4.5), add:
+- [x] Task 8: Riverpod provider (AC: 1, 9)
+  - [x] 8.1 In `lib/providers/feature_providers.dart` (existing — created by Story 4.5), add:
       ```
       final dailyRewardAvailableProvider = Provider<bool>((ref) {
         final state = ref.watch(gameWorldProvider);
@@ -169,48 +169,48 @@ so that I have gentle reason to return daily without being punished for missing.
         return dailyRewardAvailable(state, clock.now());
       });
       ```
-  - [ ] 8.2 IMPORTANT — staleness caveat: this provider does NOT auto-refresh at midnight; it re-evaluates only when `gameWorldProvider` emits OR when explicitly invalidated. For v1 that is acceptable — `LifecycleObserver` (Epic 6) will trigger a re-read on resume, and any tick or command that follows will refresh the underlying state. Document this caveat in a `///` comment on the provider; do NOT add a midnight timer in this story (out of scope; Epic 7 modal-queue will own midnight refresh if needed).
-  - [ ] 8.3 Use `ref.watch(clockProvider)` (NOT `ref.read`) so the test override flows in
-  - [ ] 8.4 Do NOT use `.select(...)` — the entire `state` doesn't have a "dailyStreak.lastClaimDate"-narrow watcher worth optimizing; full-state watch is correct given how rarely daily claims happen
+  - [x] 8.2 IMPORTANT — staleness caveat: this provider does NOT auto-refresh at midnight; it re-evaluates only when `gameWorldProvider` emits OR when explicitly invalidated. For v1 that is acceptable — `LifecycleObserver` (Epic 6) will trigger a re-read on resume, and any tick or command that follows will refresh the underlying state. Document this caveat in a `///` comment on the provider; do NOT add a midnight timer in this story (out of scope; Epic 7 modal-queue will own midnight refresh if needed).
+  - [x] 8.3 Use `ref.watch(clockProvider)` (NOT `ref.read`) so the test override flows in
+  - [x] 8.4 Do NOT use `.select(...)` — the entire `state` doesn't have a "dailyStreak.lastClaimDate"-narrow watcher worth optimizing; full-state watch is correct given how rarely daily claims happen
 
-- [ ] Task 9: Pure-Dart reducer tests (AC: 1, 2, 3, 4, 5, 6, 8, 11)
-  - [ ] 9.1 Create `test/game/features/daily_rewards/daily_rewards_reducer_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart invariant per `test/architecture/game_boundary_test.dart`)
-  - [ ] 9.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings` with `dailyRewardsJson` = 7 entries with deterministic small integer reward values (e.g., influence `1, 2, 3, 4, 5, 6, 7`; intel `10, 20, 30, 40, 50, 60, 70`). Reuse the fixture-builder pattern from `test/game/features/economy/income_calculator_test.dart` lines 17-67.
-  - [ ] 9.3 Test: first-ever claim — `state.dailyStreak == DailyStreak.empty` → newDay = 1, totalInfluence += 1, totalIntel += 10, event = `DailyRewardClaimed(at: now, day: 1, influenceReward: Influence(1), intelReward: Intel(10))`, `state.dailyStreak == DailyStreak(day: 1, lastClaimDate: now)`
-  - [ ] 9.4 Test: consecutive-day claim — prior `(day: 3, lastClaimDate: yesterday)`, `now = today` → newDay = 4, totalInfluence += 4, totalIntel += 40
-  - [ ] 9.5 Test: day-7 → day-1 cycle (AC #5) — prior `(day: 7, lastClaimDate: yesterday)`, claim today → newDay = 1, day-1 reward applied
-  - [ ] 9.6 Test: skip-a-day reset (AC #4) — prior `(day: 5, lastClaimDate: 3 days ago)`, claim today → newDay = 1, day-1 reward applied, totalInfluence/Intel NOT clawed back from any prior totals
-  - [ ] 9.7 Test: same-day double-claim → `Result.failure(GameError.userLocked(reason: 'daily_reward_already_claimed'))`, state unchanged
-  - [ ] 9.8 Test: `dailyRewardAvailable` boundary — exactly midnight crosses local date (use a deliberately constructed `DateTime` at `23:59:59.999` and `00:00:00.001` of the next local date) — verifies calendar-date comparison, not 24h-Duration
-  - [ ] 9.9 Test: `dailyRewardAvailable` returns true when `lastClaimDate == null`
-  - [ ] 9.10 Test: content parser — wrong length (6 entries) throws `ContentLoadException`; out-of-order days (`[1,2,4,3,5,6,7]`) throws; duplicate day throws; unparseable Decimal throws
-  - [ ] 9.11 Test: `DailyStreak` value semantics — equal-field instances are `==` and share `hashCode`; `toString` includes both fields
+- [x] Task 9: Pure-Dart reducer tests (AC: 1, 2, 3, 4, 5, 6, 8, 11)
+  - [x] 9.1 Create `test/game/features/daily_rewards/daily_rewards_reducer_test.dart` using `package:test/test.dart` (NOT `flutter_test` — pure-Dart invariant per `test/architecture/game_boundary_test.dart`)
+  - [x] 9.2 Build a fixture `ContentRegistry` via `ContentRegistry.fromJsonStrings` with `dailyRewardsJson` = 7 entries with deterministic small integer reward values (e.g., influence `1, 2, 3, 4, 5, 6, 7`; intel `10, 20, 30, 40, 50, 60, 70`). Reuse the fixture-builder pattern from `test/game/features/economy/income_calculator_test.dart` lines 17-67.
+  - [x] 9.3 Test: first-ever claim — `state.dailyStreak == DailyStreak.empty` → newDay = 1, totalInfluence += 1, totalIntel += 10, event = `DailyRewardClaimed(at: now, day: 1, influenceReward: Influence(1), intelReward: Intel(10))`, `state.dailyStreak == DailyStreak(day: 1, lastClaimDate: now)`
+  - [x] 9.4 Test: consecutive-day claim — prior `(day: 3, lastClaimDate: yesterday)`, `now = today` → newDay = 4, totalInfluence += 4, totalIntel += 40
+  - [x] 9.5 Test: day-7 → day-1 cycle (AC #5) — prior `(day: 7, lastClaimDate: yesterday)`, claim today → newDay = 1, day-1 reward applied
+  - [x] 9.6 Test: skip-a-day reset (AC #4) — prior `(day: 5, lastClaimDate: 3 days ago)`, claim today → newDay = 1, day-1 reward applied, totalInfluence/Intel NOT clawed back from any prior totals
+  - [x] 9.7 Test: same-day double-claim → `Result.failure(GameError.userLocked(reason: 'daily_reward_already_claimed'))`, state unchanged
+  - [x] 9.8 Test: `dailyRewardAvailable` boundary — exactly midnight crosses local date (use a deliberately constructed `DateTime` at `23:59:59.999` and `00:00:00.001` of the next local date) — verifies calendar-date comparison, not 24h-Duration
+  - [x] 9.9 Test: `dailyRewardAvailable` returns true when `lastClaimDate == null`
+  - [x] 9.10 Test: content parser — wrong length (6 entries) throws `ContentLoadException`; out-of-order days (`[1,2,4,3,5,6,7]`) throws; duplicate day throws; unparseable Decimal throws
+  - [x] 9.11 Test: `DailyStreak` value semantics — equal-field instances are `==` and share `hashCode`; `toString` includes both fields
 
-- [ ] Task 10: GameWorld wiring tests (AC: 2, 3, 8)
-  - [ ] 10.1 Update `test/game/game_world_test.dart`: dispatch `ClaimDailyReward` from a `GameWorld` constructed with a `FakeClock` pinned at a known `DateTime` and an initial state with `dailyStreak == DailyStreak.empty`. Assert: `state.totalInfluence` increases, `state.totalIntel` increases, `state.dailyStreak.day == 1`, the `DailyRewardClaimed` event was emitted on `events`. Use the `events.toList().then(...)` collection pattern already in that test file.
-  - [ ] 10.2 Test: same-day double-claim returns failure; state unchanged on the second call (verify via captured `state` reference equality — `identical(beforeSecondClaim, afterSecondClaim)` is true)
-  - [ ] 10.3 Test: a daily claim at a level that crosses a continent's `unlockThreshold` triggers `ContinentUnlocked` AFTER `DailyRewardClaimed` (proves Task 7.2's wiring — events ordered: claim → continent-unlock → milestone). Use a small-fixture content where a continent threshold is `<= day-1 reward` so a fresh claim crosses it.
+- [x] Task 10: GameWorld wiring tests (AC: 2, 3, 8)
+  - [x] 10.1 Update `test/game/game_world_test.dart`: dispatch `ClaimDailyReward` from a `GameWorld` constructed with a `FakeClock` pinned at a known `DateTime` and an initial state with `dailyStreak == DailyStreak.empty`. Assert: `state.totalInfluence` increases, `state.totalIntel` increases, `state.dailyStreak.day == 1`, the `DailyRewardClaimed` event was emitted on `events`. Use the `events.toList().then(...)` collection pattern already in that test file.
+  - [x] 10.2 Test: same-day double-claim returns failure; state unchanged on the second call (verify via captured `state` reference equality — `identical(beforeSecondClaim, afterSecondClaim)` is true)
+  - [x] 10.3 Test: a daily claim at a level that crosses a continent's `unlockThreshold` triggers `ContinentUnlocked` AFTER `DailyRewardClaimed` (proves Task 7.2's wiring — events ordered: claim → continent-unlock → milestone). Use a small-fixture content where a continent threshold is `<= day-1 reward` so a fresh claim crosses it.
 
-- [ ] Task 11: GameState seed test updates (AC: 7)
-  - [ ] 11.1 Add cases to `test/game/game_state_seed_test.dart`: `initialSeed` returns `totalIntel == Intel.zero` and `dailyStreak == DailyStreak.empty`
-  - [ ] 11.2 Add a `copyWith` round-trip case to `test/game/game_state_test.dart` covering both new fields and `==`/`hashCode` on identical streaks
+- [x] Task 11: GameState seed test updates (AC: 7)
+  - [x] 11.1 Add cases to `test/game/game_state_seed_test.dart`: `initialSeed` returns `totalIntel == Intel.zero` and `dailyStreak == DailyStreak.empty`
+  - [x] 11.2 Add a `copyWith` round-trip case to `test/game/game_state_test.dart` covering both new fields and `==`/`hashCode` on identical streaks
 
-- [ ] Task 12: Provider test (AC: 9)
-  - [ ] 12.1 Extend `test/providers/feature_providers_test.dart` (existing from Story 4.5):
+- [x] Task 12: Provider test (AC: 9)
+  - [x] 12.1 Extend `test/providers/feature_providers_test.dart` (existing from Story 4.5):
       - override `clockProvider` with a `_FixedClock` (test helper) returning a pinned `DateTime`
       - override `gameWorldProvider` via the `_TestGameWorldNotifier` pattern documented in Story 4.5 Dev Notes (see `test/providers/feature_providers_test.dart` lines around the existing override block)
       - assert `dailyRewardAvailableProvider` returns `true` for `dailyStreak.empty`, `false` after pushing a state where `lastClaimDate == clock.now()`, and `true` again after the test pushes a state where `lastClaimDate` is a prior local day
-  - [ ] 12.2 Always `addTearDown(container.dispose);`
+  - [x] 12.2 Always `addTearDown(container.dispose);`
 
-- [ ] Task 13: Architecture compliance verification (AC: 11)
-  - [ ] 13.1 Run `flutter test test/architecture/` — `lib/game/features/daily_rewards/**` and `lib/game/content/daily_reward_def.dart` MUST contain NO `package:flutter/`, NO `dart:ui`, NO `lib/data/` imports (`test/architecture/game_boundary_test.dart`)
-  - [ ] 13.2 Confirm `daily_rewards_reducer.dart` does NOT match the income-math grep guard in `test/architecture/no_duplicate_income_math_test.dart` — the reducer adds rewards to `totalInfluence`/`totalIntel` directly; it does not invoke or duplicate the multiplier stack. Daily reward is NOT a multiplier — it's a flat additive grant.
+- [x] Task 13: Architecture compliance verification (AC: 11)
+  - [x] 13.1 Run `flutter test test/architecture/` — `lib/game/features/daily_rewards/**` and `lib/game/content/daily_reward_def.dart` MUST contain NO `package:flutter/`, NO `dart:ui`, NO `lib/data/` imports (`test/architecture/game_boundary_test.dart`)
+  - [x] 13.2 Confirm `daily_rewards_reducer.dart` does NOT match the income-math grep guard in `test/architecture/no_duplicate_income_math_test.dart` — the reducer adds rewards to `totalInfluence`/`totalIntel` directly; it does not invoke or duplicate the multiplier stack. Daily reward is NOT a multiplier — it's a flat additive grant.
 
-- [ ] Task 14: Full validation (AC: all)
-  - [ ] 14.1 `flutter analyze` — 0 warnings
-  - [ ] 14.2 `dart format --set-exit-if-changed .`
-  - [ ] 14.3 `flutter test` — all pass (existing + new). Existing tests will need only the `ContentRegistry.fromJsonStrings` callsites to add `dailyRewardsJson:` — search across `test/` and update each fixture builder.
-  - [ ] 14.4 Update `Status` to `review` and append entries to the Completion Notes / File List
+- [x] Task 14: Full validation (AC: all)
+  - [x] 14.1 `flutter analyze` — 0 warnings
+  - [x] 14.2 `dart format --set-exit-if-changed .`
+  - [x] 14.3 `flutter test` — all pass (existing + new). Existing tests will need only the `ContentRegistry.fromJsonStrings` callsites to add `dailyRewardsJson:` — search across `test/` and update each fixture builder.
+  - [x] 14.4 Update `Status` to `review` and append entries to the Completion Notes / File List
 
 ## Dev Notes
 
@@ -476,14 +476,62 @@ Extracted from `_bmad-output/project-context.md` — applies to this story:
 - [Source: test/architecture/game_boundary_test.dart] — purity invariant enforcement
 - [Source: pubspec.yaml] — `assets/data/` directory already declared (line 90); no pubspec changes needed for `daily_rewards.json`
 
+### Review Findings
+
+- [x] [Review][Patch] Future `lastClaimDate` is treated as claimable instead of locked [lib/game/features/daily_rewards/daily_rewards_reducer.dart:23]
+- [x] [Review][Patch] DST spring-forward can reset a consecutive streak to day 1 [lib/game/features/daily_rewards/daily_rewards_reducer.dart:29]
+- [x] [Review][Patch] Claim path can crash while content is still using placeholder daily rewards [lib/providers/feature_providers.dart:29]
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented 7-day daily reward streak: `DailyStreak`, `ClaimDailyReward` / `DailyRewardClaimed`, `assets/data/daily_rewards.json`, `ContentRegistry.dailyRewards` + loader (7th asset), pure `daily_rewards_reducer` with local calendar-day rules and day-7→1 cycle, `GameWorld` wiring with post-success continent/milestone evaluators, `dailyRewardAvailableProvider` with midnight caveat comment. `GameState` had `totalIntel` already; added `dailyStreak` only. Tests: new reducer + updates across fixtures (`test/helpers/daily_rewards_test_json.dart`), `content_registry_loader_test` mock asset, `game_world_test`, `feature_providers_test`. `flutter analyze` clean; `dart format --set-exit-if-changed .` clean; full `flutter test` pass (638+).
+- Final closure (dev-story run): fixed `missions_reducer_test` import to `../../../helpers/daily_rewards_test_json.dart`; `game_state_test` uses `DailyStreak.empty` (not invalid `const DailyStreak.empty`); UI map tests’ empty `ContentRegistry` includes `dailyRewards: []`; `daily_rewards_reducer_test` duplicate-day parse case; removed unused helper import from `content_registry_loader_test` (inline 7-row JSON mock). Re-verified `flutter test`, `flutter test test/architecture/`, `flutter analyze`, `dart format --set-exit-if-changed .`.
+
+- Code review patch pass: fixed future claim-date availability, DST-safe calendar-day delta math, and loading-placeholder daily reward availability; added reducer/provider regression tests. Re-verified targeted tests, architecture tests, full `flutter test` (643), and `flutter analyze`.
+
 ### File List
+
+- `assets/data/daily_rewards.json` (new)
+- `lib/game/content/daily_reward_def.dart` (new)
+- `lib/game/content/content_registry.dart` (modified)
+- `lib/game/features/daily_rewards/daily_streak.dart` (new)
+- `lib/game/features/daily_rewards/daily_rewards_reducer.dart` (new)
+- `lib/game/game_command.dart` (modified)
+- `lib/game/game_event.dart` (modified)
+- `lib/game/game_state.dart` (modified)
+- `lib/game/game_world.dart` (modified)
+- `lib/providers/feature_providers.dart` (modified)
+- `lib/providers/game_providers.dart` (modified)
+- `lib/services/content_registry_loader.dart` (modified)
+- `test/helpers/daily_rewards_test_json.dart` (new)
+- `test/game/features/daily_rewards/daily_rewards_reducer_test.dart` (new)
+- `test/services/content_registry_loader_test.dart` (modified — 7th mocked asset + expect `dailyRewards.length`)
+- `test/game/features/missions/missions_reducer_test.dart` (import path fix)
+- `test/ui/features/map/game_loop_test.dart` (empty `ContentRegistry`: `dailyRewards: []`)
+- `test/ui/features/map/map_screen_tap_test.dart` (same)
+- `test/ui/features/map/map_screen_golden_tap_test.dart` (same)
+- `test/game/content/content_registry_test.dart` (modified)
+- `test/game/game_command_test.dart` (modified)
+- `test/game/game_event_test.dart` (modified)
+- `test/game/game_state_test.dart` (modified)
+- `test/game/game_state_seed_test.dart` (modified)
+- `test/game/game_world_test.dart` (modified)
+- `test/providers/feature_providers_test.dart` (modified)
+- `test/helpers/next_unlock_test_fixtures.dart` (modified)
+- Plus: all `ContentRegistry.fromJsonStrings` call sites under `test/game/**` and `test/helpers` updated with `dailyRewardsJson` (e.g. `income_calculator_test`, `milestones_reducer_test`, `missions_reducer_test`, `goldens_scheduler_test`, `unlocks`/`continents`/`countries`/`leaders`/`upgrades` reducer tests, etc.)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (development_status 5-4)
+
+### Change Log
+
+- 2026-04-27: Story 5-4 code review patch pass - fixed 3 review findings; status -> done
+
+- 2026-04-26: Story 5-4 complete — 7-day daily reward streak, content + reducer + provider + tests; status → review
+- 2026-04-26: Story 5-4 dev-story closure — test/import/UI fixture fixes; duplicate-day content parse test; full suite green

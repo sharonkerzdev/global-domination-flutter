@@ -8,6 +8,8 @@ import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 
+import '../../helpers/daily_rewards_test_json.dart';
+
 void main() {
   final validContinents = jsonEncode([
     {
@@ -47,6 +49,7 @@ void main() {
     String? achievementsJson,
     String? missionsJson,
     String? globalUpgradesJson,
+    String? dailyRewardsJson,
   }) {
     return ContentRegistry.fromJsonStrings(
       countriesJson: countriesJson ?? validCountries,
@@ -55,6 +58,7 @@ void main() {
       achievementsJson: achievementsJson ?? emptyArray,
       missionsJson: missionsJson ?? emptyArray,
       globalUpgradesJson: globalUpgradesJson ?? emptyArray,
+      dailyRewardsJson: dailyRewardsJson ?? testDailyRewardsJson(),
     );
   }
 
@@ -68,6 +72,7 @@ void main() {
       expect(registry.achievements, isEmpty);
       expect(registry.missions, isEmpty);
       expect(registry.globalUpgrades, isEmpty);
+      expect(registry.dailyRewards, hasLength(7));
     });
 
     test('countries map keyed by CountryId', () {
@@ -150,6 +155,51 @@ void main() {
             contains('empty'),
           ),
         ),
+      );
+    });
+
+    test('daily rewards: wrong length throws', () {
+      final bad6 = jsonEncode([
+        for (var d = 1; d <= 6; d++)
+          {'day': d, 'influenceReward': '$d', 'intelReward': '${d * 10}'},
+      ]);
+      expect(
+        () => buildRegistry(dailyRewardsJson: bad6),
+        throwsA(
+          isA<ContentLoadException>().having(
+            (e) => e.message,
+            'message',
+            contains('7'),
+          ),
+        ),
+      );
+    });
+
+    test('daily rewards: out-of-order days throw', () {
+      final shuffled = jsonEncode([
+        {'day': 1, 'influenceReward': '1', 'intelReward': '10'},
+        {'day': 2, 'influenceReward': '2', 'intelReward': '20'},
+        {'day': 4, 'influenceReward': '4', 'intelReward': '40'},
+        {'day': 3, 'influenceReward': '3', 'intelReward': '30'},
+        {'day': 5, 'influenceReward': '5', 'intelReward': '50'},
+        {'day': 6, 'influenceReward': '6', 'intelReward': '60'},
+        {'day': 7, 'influenceReward': '7', 'intelReward': '70'},
+      ]);
+      expect(
+        () => buildRegistry(dailyRewardsJson: shuffled),
+        throwsA(isA<ContentLoadException>()),
+      );
+    });
+
+    test('daily rewards: unparseable decimal throws', () {
+      final bad = jsonEncode([
+        {'day': 1, 'influenceReward': 'not_a_decimal', 'intelReward': '1'},
+        for (var d = 2; d <= 7; d++)
+          {'day': d, 'influenceReward': '$d', 'intelReward': '1'},
+      ]);
+      expect(
+        () => buildRegistry(dailyRewardsJson: bad),
+        throwsA(isA<ContentLoadException>()),
       );
     });
 

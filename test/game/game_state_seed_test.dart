@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:test/test.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_streak.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
@@ -10,7 +11,9 @@ import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 
+import '../helpers/daily_rewards_test_json.dart';
 import '../helpers/fake_clock.dart';
 
 ContentRegistry _buildContent({bool includeNonEgypt = true}) {
@@ -60,6 +63,7 @@ ContentRegistry _buildContent({bool includeNonEgypt = true}) {
     achievementsJson: jsonEncode([]),
     missionsJson: jsonEncode([]),
     globalUpgradesJson: jsonEncode([]),
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -105,6 +109,7 @@ ContentRegistry _buildAfricaAndEuropeContent() {
     achievementsJson: jsonEncode([]),
     missionsJson: jsonEncode([]),
     globalUpgradesJson: jsonEncode([]),
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -173,6 +178,13 @@ void main() {
       final content = _buildContent();
       final state = GameState.initialSeed(content);
       expect(state.totalInfluence, equals(Influence.zero));
+    });
+
+    test('5-4: totalIntel is zero and dailyStreak is empty', () {
+      final content = _buildContent();
+      final state = GameState.initialSeed(content);
+      expect(state.totalIntel, equals(Intel.zero));
+      expect(state.dailyStreak, equals(DailyStreak.empty));
     });
 
     test('initialSeed has empty reachedMilestones (Story 4.3)', () {

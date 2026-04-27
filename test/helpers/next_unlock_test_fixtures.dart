@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:global_domination/game/content/content_registry.dart';
 
+import 'daily_rewards_test_json.dart';
+
 /// Three continents at thresholds 0, 1e9, 1e14; multiple countries with
 /// distinct [unlockCost] values for selector tests.
 ContentRegistry multiContinentNextUnlockFixture() {
@@ -85,6 +87,7 @@ ContentRegistry multiContinentNextUnlockFixture() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -117,6 +120,7 @@ ContentRegistry allContinentsPositiveThresholdFixture() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -163,6 +167,7 @@ ContentRegistry tieBreakContinentFixture() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -203,5 +208,6 @@ ContentRegistry declarationOrderVsCostFixture() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }

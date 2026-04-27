@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/boosts/boost_state.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_streak.dart';
 import 'package:global_domination/game/features/missions/mission_state.dart';
 import 'package:global_domination/game/features/missions/missions_seed.dart';
 import 'package:global_domination/game/features/goldens/active_golden.dart';
@@ -32,6 +33,7 @@ class GameState {
   final Map<CountryId, CountryState> countries;
   final Influence totalInfluence;
   final Intel totalIntel;
+  final DailyStreak dailyStreak;
   final List<MissionState> activeMissions;
   final Set<String> completedMissionIds;
   final Map<ContinentId, bool> unlockedContinents;
@@ -48,6 +50,7 @@ class GameState {
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
     Intel? totalIntel,
+    DailyStreak? dailyStreak,
     Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, Set<int>>? reachedMilestones,
     Map<ContinentId, bool>? continentCompletions,
@@ -62,6 +65,7 @@ class GameState {
   }) : countries = countries ?? const {},
        totalInfluence = totalInfluence ?? Influence.zero,
        totalIntel = totalIntel ?? Intel.zero,
+       dailyStreak = dailyStreak ?? DailyStreak.empty,
        activeMissions = List.unmodifiable(activeMissions ?? const []),
        completedMissionIds = Set.unmodifiable(
          completedMissionIds ?? const <String>{},
@@ -92,6 +96,7 @@ class GameState {
     Map<CountryId, CountryState>? countries,
     Influence? totalInfluence,
     Intel? totalIntel,
+    DailyStreak? dailyStreak,
     Map<ContinentId, bool>? unlockedContinents,
     Map<ContinentId, Set<int>>? reachedMilestones,
     Map<ContinentId, bool>? continentCompletions,
@@ -108,6 +113,7 @@ class GameState {
       countries: countries ?? this.countries,
       totalInfluence: totalInfluence ?? this.totalInfluence,
       totalIntel: totalIntel ?? this.totalIntel,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
       activeMissions: activeMissions ?? this.activeMissions,
       completedMissionIds: completedMissionIds ?? this.completedMissionIds,
       unlockedContinents: unlockedContinents ?? this.unlockedContinents,
@@ -154,6 +160,7 @@ class GameState {
       countries: Map.unmodifiable(countries),
       totalInfluence: Influence.zero,
       totalIntel: Intel.zero,
+      dailyStreak: DailyStreak.empty,
       activeBoost: null,
       unlockedContinents: Map.unmodifiable(unlockedContinents),
       reachedMilestones: const <ContinentId, Set<int>>{},
@@ -169,6 +176,7 @@ class GameState {
           _mapsEqual(countries, other.countries) &&
           totalInfluence == other.totalInfluence &&
           totalIntel == other.totalIntel &&
+          dailyStreak == other.dailyStreak &&
           _activeMissionsEq.equals(activeMissions, other.activeMissions) &&
           _stringSetEq.equals(completedMissionIds, other.completedMissionIds) &&
           _unlockedContinentsEq.equals(
@@ -201,6 +209,7 @@ class GameState {
     _mapHash(countries),
     totalInfluence,
     totalIntel,
+    dailyStreak,
     _activeMissionsEq.hash(activeMissions),
     _stringSetEq.hash(completedMissionIds),
     _unlockedContinentsEq.hash(unlockedContinents),
@@ -219,6 +228,7 @@ class GameState {
       'GameState(countries: ${countries.length} entries, '
       'totalInfluence: $totalInfluence, '
       'totalIntel: $totalIntel, '
+      'dailyStreak: $dailyStreak, '
       'activeMissions: ${activeMissions.length}, '
       'completedMissionIds: ${completedMissionIds.length}, '
       'unlockedContinents: ${unlockedContinents.length}, '

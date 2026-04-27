@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:global_domination/game/content/achievement_def.dart';
 import 'package:global_domination/game/content/content_load_exception.dart';
 import 'package:global_domination/game/content/continent_def.dart';
+import 'package:global_domination/game/content/daily_reward_def.dart';
 import 'package:global_domination/game/content/country_def.dart';
 import 'package:global_domination/game/content/global_upgrade_def.dart';
 import 'package:global_domination/game/content/leader_def.dart';
@@ -20,6 +21,7 @@ class ContentRegistry {
   final List<AchievementDef> achievements;
   final List<MissionDef> missions;
   final List<GlobalUpgradeDef> globalUpgrades;
+  final List<DailyRewardDef> dailyRewards;
 
   const ContentRegistry({
     required this.countries,
@@ -28,6 +30,7 @@ class ContentRegistry {
     required this.achievements,
     required this.missions,
     required this.globalUpgrades,
+    required this.dailyRewards,
   });
 
   factory ContentRegistry.fromJsonStrings({
@@ -37,6 +40,7 @@ class ContentRegistry {
     required String achievementsJson,
     required String missionsJson,
     required String globalUpgradesJson,
+    required String dailyRewardsJson,
   }) {
     try {
       final continents = _parseContinents(continentsJson);
@@ -45,6 +49,7 @@ class ContentRegistry {
       final achievements = _parseAchievements(achievementsJson);
       final missions = _parseMissions(missionsJson);
       final globalUpgrades = _parseGlobalUpgrades(globalUpgradesJson);
+      final dailyRewards = _parseDailyRewards(dailyRewardsJson);
 
       return ContentRegistry(
         countries: Map.unmodifiable(countries),
@@ -53,6 +58,7 @@ class ContentRegistry {
         achievements: List.unmodifiable(achievements),
         missions: List.unmodifiable(missions),
         globalUpgrades: List.unmodifiable(globalUpgrades),
+        dailyRewards: List.unmodifiable(dailyRewards),
       );
     } on ContentLoadException {
       rethrow;
@@ -121,5 +127,32 @@ class ContentRegistry {
     return list
         .map((e) => GlobalUpgradeDef.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  static List<DailyRewardDef> _parseDailyRewards(String json) {
+    final list = jsonDecode(json) as List<dynamic>;
+    if (list.length != 7) {
+      throw ContentLoadException(
+        'Expected daily rewards list length 7, got ${list.length}',
+      );
+    }
+    final out = <DailyRewardDef>[];
+    for (var i = 0; i < list.length; i++) {
+      final item = list[i] as Map<String, dynamic>;
+      final def = DailyRewardDef.fromJson(item);
+      final expected = i + 1;
+      if (def.day != expected) {
+        throw ContentLoadException(
+          'Daily reward index $i: expected day $expected, got ${def.day}',
+        );
+      }
+      if (i > 0 && def.day <= out.last.day) {
+        throw ContentLoadException(
+          'Daily reward days out of order or duplicate at day ${def.day}',
+        );
+      }
+      out.add(def);
+    }
+    return out;
   }
 }

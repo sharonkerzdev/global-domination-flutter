@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_streak.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
@@ -18,6 +19,7 @@ import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/feature_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 
+import '../helpers/fake_clock.dart';
 import '../helpers/next_unlock_test_fixtures.dart';
 
 class _TestGameWorldNotifier extends GameWorldNotifier {
@@ -234,5 +236,58 @@ void main() {
       );
       expect(container.read(nextUnlockOverallProvider), isNull);
     });
+  });
+
+  group('feature_providers — daily reward', () {
+    test('dailyRewardAvailableProvider is false while content is loading', () {
+      final content = multiContinentNextUnlockFixture();
+      final notifier = _TestGameWorldNotifier(
+        content: content,
+        initialState: GameState(),
+      );
+      final never = Completer<ContentRegistry>();
+      final container = ProviderContainer(
+        overrides: [
+          clockProvider.overrideWithValue(FakeClock(DateTime(2026, 4, 25))),
+          contentRegistryProvider.overrideWith((_) => never.future),
+          gameWorldProvider.overrideWith((_) => notifier),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(dailyRewardAvailableProvider), isFalse);
+    });
+
+    test(
+      'dailyRewardAvailableProvider: empty, claimed today, next day',
+      () async {
+        final content = multiContinentNextUnlockFixture();
+        final now = DateTime(2026, 4, 25, 12, 0);
+        final clock = FakeClock(now);
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameState(),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            clockProvider.overrideWithValue(clock),
+            contentRegistryProvider.overrideWith((_) async => content),
+            gameWorldProvider.overrideWith((_) => notifier),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(contentRegistryProvider.future);
+        expect(container.read(dailyRewardAvailableProvider), isTrue);
+
+        notifier.setTestState(
+          GameState(dailyStreak: DailyStreak(day: 1, lastClaimDate: now)),
+        );
+        expect(container.read(dailyRewardAvailableProvider), isFalse);
+
+        clock.advance(const Duration(days: 1));
+        container.invalidate(dailyRewardAvailableProvider);
+        expect(container.read(dailyRewardAvailableProvider), isTrue);
+      },
+    );
   });
 }

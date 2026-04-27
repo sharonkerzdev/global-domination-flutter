@@ -57,6 +57,7 @@ final gameWorldProvider = StateNotifierProvider<GameWorldNotifier, GameState>((
             achievements: [],
             missions: [],
             globalUpgrades: [],
+            dailyRewards: [],
           ),
           clock: clock,
           rng: rng,

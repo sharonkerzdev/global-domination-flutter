@@ -138,3 +138,17 @@ final class ActivateBoost extends GameCommand {
   @override
   String toString() => 'ActivateBoost()';
 }
+
+final class ClaimDailyReward extends GameCommand {
+  const ClaimDailyReward();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is ClaimDailyReward;
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() => 'ClaimDailyReward()';
+}

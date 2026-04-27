@@ -15,6 +15,8 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 ContentRegistry _contentAfrica() {
   final continents = jsonEncode([
     {
@@ -58,6 +60,7 @@ ContentRegistry _contentAfrica() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -89,6 +92,7 @@ ContentRegistry _contentEuropeLocked() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -127,6 +131,7 @@ ContentRegistry _contentNegativeUnlockCost() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 

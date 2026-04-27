@@ -22,6 +22,7 @@ final _emptyContent = const ContentRegistry(
   achievements: [],
   missions: [],
   globalUpgrades: [],
+  dailyRewards: [],
 );
 
 class _SpyGameWorldNotifier extends GameWorldNotifier {

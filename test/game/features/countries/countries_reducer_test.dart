@@ -11,6 +11,8 @@ import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 ContentRegistry _makeRegistry({
   String id = 'egypt',
   String baseInfluence = '1',
@@ -42,6 +44,7 @@ ContentRegistry _makeRegistry({
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -80,6 +83,7 @@ ContentRegistry _makeTwoCountryRegistry() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 

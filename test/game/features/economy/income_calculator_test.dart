@@ -16,6 +16,8 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 ContentRegistry _fixtureRegistry() {
   final continents = jsonEncode([
     {
@@ -111,6 +113,7 @@ ContentRegistry _fixtureRegistry() {
     achievementsJson: achievements,
     missionsJson: '[]',
     globalUpgradesJson: upgrades,
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -271,6 +274,7 @@ void main() {
       achievementsJson: '[]',
       missionsJson: '[]',
       globalUpgradesJson: '[]',
+      dailyRewardsJson: testDailyRewardsJson(),
     );
     final expected = seven.continents.values.fold<Decimal>(
       Decimal.one,
@@ -489,6 +493,7 @@ void main() {
       achievementsJson: achievements,
       missionsJson: '[]',
       globalUpgradesJson: upgrades,
+      dailyRewardsJson: testDailyRewardsJson(),
     );
     final upgradeIds = <String>{for (var i = 0; i < 10; i++) 'up10_$i'};
     final s = _state(

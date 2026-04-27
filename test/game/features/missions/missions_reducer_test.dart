@@ -14,6 +14,8 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 const _minimalCountries = '''
 [{"id":"egypt","continent":"africa","baseInfluence":"1","unlockCost":"0","tier":1,"generationSeconds":1}]
 ''';
@@ -68,6 +70,7 @@ ContentRegistry _registry({String? missionsJson}) {
     achievementsJson: '[]',
     missionsJson: missionsJson ?? _missionsCatalog5(),
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 

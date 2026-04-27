@@ -38,6 +38,7 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('noop'));
     });
@@ -87,6 +88,7 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('tap_country'));
     });
@@ -112,6 +114,7 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('purchase'));
     });
@@ -138,6 +141,7 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('upgrade_leader'));
     });
@@ -162,6 +166,7 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('unlock_country'));
     });
@@ -195,8 +200,32 @@ void main() {
         UnlockCountry() => 'unlock_country',
         ClaimGolden() => 'claim_golden',
         ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
       };
       expect(result, equals('activate_boost'));
+    });
+  });
+
+  group('ClaimDailyReward', () {
+    test('equality, hashCode, toString, exhaustive switch', () {
+      const a = ClaimDailyReward();
+      const b = ClaimDailyReward();
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a.toString(), equals('ClaimDailyReward()'));
+      const GameCommand cmd = ClaimDailyReward();
+      final result = switch (cmd) {
+        Noop() => 'noop',
+        TapCountry() => 'tap_country',
+        PurchaseUpgrade() => 'purchase',
+        HireLeader() => 'hire',
+        UpgradeLeader() => 'upgrade_leader',
+        UnlockCountry() => 'unlock_country',
+        ClaimGolden() => 'claim_golden',
+        ActivateBoost() => 'activate_boost',
+        ClaimDailyReward() => 'claim_daily_reward',
+      };
+      expect(result, equals('claim_daily_reward'));
     });
   });
 }

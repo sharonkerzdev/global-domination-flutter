@@ -61,6 +61,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('tick'));
     });
@@ -94,6 +95,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('upgrade'));
     });
@@ -131,6 +133,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       final ru = switch (upgraded) {
         Tick() => 'tick',
@@ -149,6 +152,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(rh, equals('h'));
       expect(ru, equals('g'));
@@ -201,6 +205,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('country_unlocked'));
     });
@@ -239,6 +244,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('continent_unlocked'));
     });
@@ -295,6 +301,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('milestone_reached'));
     });
@@ -333,6 +340,7 @@ void main() {
         BoostExpired() => 'boost_expired',
         MissionCompleted() => 'mission_completed',
         MissionRotated() => 'mission_rotated',
+        DailyRewardClaimed() => 'daily_reward_claimed',
       };
       expect(result, equals('continent_completed'));
     });
@@ -368,6 +376,35 @@ void main() {
       final b = BoostExpired(at);
       expect(a, equals(b));
       expect(a.toString(), equals('BoostExpired(at: $at)'));
+    });
+  });
+
+  group('DailyRewardClaimed', () {
+    final at = DateTime.utc(2026, 1, 1);
+    test('equality covers all four fields', () {
+      final inf = Influence(Decimal.parse('10'));
+      final it = Intel(Decimal.parse('3'));
+      final a = DailyRewardClaimed(
+        at,
+        day: 1,
+        influenceReward: inf,
+        intelReward: it,
+      );
+      final b = DailyRewardClaimed(
+        at,
+        day: 1,
+        influenceReward: inf,
+        intelReward: it,
+      );
+      final c = DailyRewardClaimed(
+        at,
+        day: 2,
+        influenceReward: inf,
+        intelReward: it,
+      );
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+      expect(a.toString(), contains('DailyRewardClaimed'));
     });
   });
 }

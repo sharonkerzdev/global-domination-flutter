@@ -41,6 +41,10 @@ void main() {
     'assets/data/achievements.json': '[]',
     'assets/data/missions.json': '[]',
     'assets/data/global_upgrades.json': '[]',
+    'assets/data/daily_rewards.json': jsonEncode([
+      for (var d = 1; d <= 7; d++)
+        {'day': d, 'influenceReward': '$d', 'intelReward': '${d * 10}'},
+    ]),
   };
 
   final allAssetKeys = validAssets.keys.toList();
@@ -74,7 +78,7 @@ void main() {
   });
 
   group('ContentRegistryLoader.loadFromAssets', () {
-    test('loads all 6 files and returns valid registry', () async {
+    test('loads all 7 content files and returns valid registry', () async {
       setMockAssets(validAssets);
 
       final registry = await ContentRegistryLoader.loadFromAssets();
@@ -87,6 +91,7 @@ void main() {
       expect(registry.achievements, isEmpty);
       expect(registry.missions, isEmpty);
       expect(registry.globalUpgrades, isEmpty);
+      expect(registry.dailyRewards, hasLength(7));
     });
 
     test('throws ContentLoadException on missing asset file', () async {

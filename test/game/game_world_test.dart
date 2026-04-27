@@ -7,6 +7,7 @@ import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/boosts/boost_state.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_streak.dart';
 import 'package:global_domination/game/features/goldens/active_golden.dart';
 import 'package:global_domination/game/features/economy/income_calculator.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
@@ -21,6 +22,7 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/game/values/intel.dart';
 
+import '../helpers/daily_rewards_test_json.dart';
 import '../helpers/fake_clock.dart';
 
 /// Manual [GameState] fixtures using African content must mirror
@@ -63,6 +65,7 @@ ContentRegistry _buildSingleCountryContent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -124,6 +127,61 @@ ContentRegistry _buildEuropeUnlockMissionContent() {
     achievementsJson: '[]',
     missionsJson: missions,
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
+  );
+}
+
+/// Europe at influence threshold 1; day-1 daily reward (fixture) is enough to unlock.
+ContentRegistry _buildEuropeThresholdOneContent() {
+  final continents = jsonEncode([
+    {
+      'id': 'africa',
+      'name': 'Africa',
+      'unlockThreshold': '0',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+    {
+      'id': 'europe',
+      'name': 'Europe',
+      'unlockThreshold': '1',
+      'completionBonus': '0.25',
+      'milestoneRewards': <dynamic>[],
+    },
+  ]);
+  final countries = jsonEncode([
+    {
+      'id': 'egypt',
+      'continent': 'africa',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+    {
+      'id': 'france',
+      'continent': 'europe',
+      'baseInfluence': '1',
+      'unlockCost': '0',
+      'tier': 1,
+      'generationSeconds': 1,
+    },
+  ]);
+  final leaders = jsonEncode([
+    {
+      'id': 'default_leader',
+      'name': 'General',
+      'tierMultipliers': ['1.0', '1.5', '2.0', '3.0'],
+    },
+  ]);
+  return ContentRegistry.fromJsonStrings(
+    countriesJson: countries,
+    continentsJson: continents,
+    leadersJson: leaders,
+    achievementsJson: '[]',
+    missionsJson: '[]',
+    globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -170,6 +228,7 @@ ContentRegistry _buildMissionOneTapContent() {
     achievementsJson: '[]',
     missionsJson: missions,
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -216,6 +275,7 @@ ContentRegistry _buildThreeCountryContent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -261,6 +321,7 @@ ContentRegistry _buildAfricaEuropeStory42Content() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -321,6 +382,7 @@ ContentRegistry _buildThreeContinentStory42Content() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -351,6 +413,7 @@ ContentRegistry _buildEuropeUnlockSpendEdgeContent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -388,6 +451,7 @@ ContentRegistry _buildFourCountryAfricaMilestoneContent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -425,6 +489,7 @@ ContentRegistry _buildThreeCountryAfricaMilestoneContent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -1958,6 +2023,81 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(log.whereType<MissionCompleted>(), hasLength(1));
         expect(log.whereType<MissionRotated>(), hasLength(1));
+        await sub.cancel();
+      },
+    );
+  });
+
+  group('ClaimDailyReward (Story 5-4)', () {
+    test(
+      'first claim emits DailyRewardClaimed and updates streak and totals',
+      () async {
+        final c = _buildSingleCountryContent();
+        final t = DateTime(2026, 4, 25, 10, 0);
+        final w = GameWorld(
+          content: c,
+          clock: FakeClock(t),
+          rng: SeededRng(0),
+          initialState: GameState.initialSeed(c),
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        expect(w.applyCommand(const ClaimDailyReward()).isSuccess, isTrue);
+        expect(w.state.dailyStreak.day, 1);
+        expect(w.state.dailyStreak.lastClaimDate, equals(t));
+        expect(w.state.totalInfluence, equals(Influence(Decimal.one)));
+        await Future<void>.delayed(Duration.zero);
+        expect(log, contains(isA<DailyRewardClaimed>()));
+        await sub.cancel();
+      },
+    );
+
+    test('same-day second claim fails; state is unchanged', () {
+      final c = _buildSingleCountryContent();
+      final t = DateTime(2026, 4, 25, 10, 0);
+      final s = GameState.initialSeed(c).copyWith(
+        dailyStreak: DailyStreak(day: 1, lastClaimDate: t),
+        totalInfluence: Influence(Decimal.one),
+        totalIntel: Intel(Decimal.parse('10')),
+      );
+      final w = GameWorld(
+        content: c,
+        clock: FakeClock(t),
+        rng: SeededRng(0),
+        initialState: s,
+      );
+      addTearDown(w.dispose);
+      final before = w.state;
+      expect(w.applyCommand(const ClaimDailyReward()).isFailure, isTrue);
+      expect(identical(before, w.state), isTrue);
+    });
+
+    test(
+      'claim that crosses Europe threshold: DailyRewardClaimed then ContinentUnlocked',
+      () async {
+        final c = _buildEuropeThresholdOneContent();
+        final t = DateTime(2026, 5, 1, 9, 0);
+        final w = GameWorld(
+          content: c,
+          clock: FakeClock(t),
+          rng: SeededRng(0),
+          initialState: GameState.initialSeed(c),
+        );
+        addTearDown(w.dispose);
+        final log = <GameEvent>[];
+        final sub = w.events.listen(log.add);
+        expect(w.applyCommand(const ClaimDailyReward()).isSuccess, isTrue);
+        await Future<void>.delayed(Duration.zero);
+        final d = log.indexWhere((e) => e is DailyRewardClaimed);
+        final u = log.indexWhere(
+          (e) =>
+              e is ContinentUnlocked &&
+              e.continentId == const ContinentId('europe'),
+        );
+        expect(d, greaterThanOrEqualTo(0));
+        expect(u, greaterThan(d));
+        expect(w.state.unlockedContinents[const ContinentId('europe')], isTrue);
         await sub.cancel();
       },
     );

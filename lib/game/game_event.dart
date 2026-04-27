@@ -437,3 +437,33 @@ final class MissionRotated extends GameEvent {
       'MissionRotated(at: $at, oldMissionId: $oldMissionId, '
       'newMissionId: $newMissionId)';
 }
+
+final class DailyRewardClaimed extends GameEvent {
+  const DailyRewardClaimed(
+    super.at, {
+    required this.day,
+    required this.influenceReward,
+    required this.intelReward,
+  });
+
+  final int day;
+  final Influence influenceReward;
+  final Intel intelReward;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DailyRewardClaimed &&
+          at == other.at &&
+          day == other.day &&
+          influenceReward == other.influenceReward &&
+          intelReward == other.intelReward);
+
+  @override
+  int get hashCode => Object.hash(at, day, influenceReward, intelReward);
+
+  @override
+  String toString() =>
+      'DailyRewardClaimed(at: $at, day: $day, influenceReward: '
+      '$influenceReward, intelReward: $intelReward)';
+}

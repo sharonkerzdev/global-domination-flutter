@@ -13,6 +13,8 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 List<Map<String, Object?>> _fourInfluenceRewards() => [
   {'percent': 25, 'rewardType': 'influence', 'rewardValue': '10'},
   {'percent': 50, 'rewardType': 'influence', 'rewardValue': '20'},
@@ -48,6 +50,7 @@ ContentRegistry _contentFourCountryContinent() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 
@@ -187,6 +190,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: '[]',
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
       final s = _unlockFirstK(c, 1);
       final (next, ev) = evaluateMilestones(s, c, now);
@@ -224,6 +228,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: '[]',
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
       final s = _unlockFirstK(c, 3);
       expect(s.continentCompletions, isEmpty);
@@ -271,6 +276,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: '[]',
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
       final base = _unlockFirstK(c, 3);
       final (completed, ev1) = evaluateMilestones(base, c, now);
@@ -318,6 +324,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: '[]',
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
       final loaded = _unlockFirstK(c, 3).copyWith(
         reachedMilestones: {
@@ -361,6 +368,7 @@ void main() {
       achievementsJson: '[]',
       missionsJson: '[]',
       globalUpgradesJson: '[]',
+      dailyRewardsJson: testDailyRewardsJson(),
     );
     final s = _unlockFirstK(c, 2);
     final (next, ev) = evaluateMilestones(s, c, now);
@@ -397,6 +405,7 @@ void main() {
       achievementsJson: '[]',
       missionsJson: '[]',
       globalUpgradesJson: '[]',
+      dailyRewardsJson: testDailyRewardsJson(),
     );
     final s3 = _unlockFirstK(c, 3);
     final (_, ev3) = evaluateMilestones(s3, c, now);
@@ -437,6 +446,7 @@ void main() {
       achievementsJson: '[]',
       missionsJson: '[]',
       globalUpgradesJson: '[]',
+      dailyRewardsJson: testDailyRewardsJson(),
     );
     final s0 = _stateAllLocked(c);
     final (next, ev) = evaluateMilestones(s0, c, now);
@@ -491,6 +501,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: '[]',
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
       final countriesMap = <CountryId, CountryState>{};
       for (final id in c.countries.keys) {

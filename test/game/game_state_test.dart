@@ -6,10 +6,13 @@ import 'package:test/test.dart';
 import 'package:global_domination/game/config/balance.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/features/boosts/boost_state.dart';
+import 'package:global_domination/game/features/daily_rewards/daily_streak.dart';
 import 'package:global_domination/game/features/missions/mission_state.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/intel.dart';
+
+import '../helpers/daily_rewards_test_json.dart';
 
 void main() {
   group('GameState', () {
@@ -38,7 +41,8 @@ void main() {
         GameState().toString(),
         equals(
           'GameState(countries: 0 entries, totalInfluence: Influence(0), '
-          'totalIntel: Intel(0), activeMissions: 0, completedMissionIds: 0, '
+          'totalIntel: Intel(0), dailyStreak: DailyStreak(day: 0, lastClaimDate: null), '
+          'activeMissions: 0, completedMissionIds: 0, '
           'unlockedContinents: 0, reachedMilestones: 0, continentCompletions: 0, '
           'earnedAchievementIds: 0, '
           'activeGlobalUpgradeIds: 0, goldenOpportunityMultiplier: 1, '
@@ -68,6 +72,22 @@ void main() {
       final c = GameState(totalIntel: Intel(Decimal.fromInt(5)));
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
+    });
+
+    test('equality includes dailyStreak', () {
+      final t = DateTime.utc(2026, 1, 1);
+      final a = GameState(dailyStreak: DailyStreak(day: 1, lastClaimDate: t));
+      final b = GameState(dailyStreak: DailyStreak(day: 1, lastClaimDate: t));
+      final c = GameState(dailyStreak: DailyStreak.empty);
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+    });
+
+    test('copyWith round-trips dailyStreak', () {
+      final t = DateTime.utc(2026, 2, 1);
+      final s = GameState(dailyStreak: DailyStreak.empty);
+      final u = s.copyWith(dailyStreak: DailyStreak(day: 2, lastClaimDate: t));
+      expect(u.dailyStreak, equals(DailyStreak(day: 2, lastClaimDate: t)));
     });
 
     test('equality includes activeBoost', () {
@@ -142,6 +162,7 @@ void main() {
         achievementsJson: '[]',
         missionsJson: missionsJson,
         globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
       );
     }
 

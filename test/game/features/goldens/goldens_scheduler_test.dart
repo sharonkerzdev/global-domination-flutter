@@ -17,6 +17,8 @@ import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 /// Africa @0, egypt / nigeria / south_africa — mirrors income_calculator_test.
 ContentRegistry _fixture3() {
   final continents = jsonEncode([
@@ -61,6 +63,7 @@ ContentRegistry _fixture3() {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 

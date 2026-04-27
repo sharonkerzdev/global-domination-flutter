@@ -16,6 +16,8 @@ import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 
+import '../../../helpers/daily_rewards_test_json.dart';
+
 ContentRegistry _content({String baseInfluence = '1'}) {
   final continents = jsonEncode([
     {
@@ -43,6 +45,7 @@ ContentRegistry _content({String baseInfluence = '1'}) {
     achievementsJson: '[]',
     missionsJson: '[]',
     globalUpgradesJson: '[]',
+    dailyRewardsJson: testDailyRewardsJson(),
   );
 }
 

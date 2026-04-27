@@ -1,0 +1,9 @@
+[
+  {"day": 1, "influenceReward": "100", "intelReward": "1"},
+  {"day": 2, "influenceReward": "300", "intelReward": "2"},
+  {"day": 3, "influenceReward": "1000", "intelReward": "3"},
+  {"day": 4, "influenceReward": "3000", "intelReward": "5"},
+  {"day": 5, "influenceReward": "10000", "intelReward": "8"},
+  {"day": 6, "influenceReward": "30000", "intelReward": "13"},
+  {"day": 7, "influenceReward": "100000", "intelReward": "21"}
+]
