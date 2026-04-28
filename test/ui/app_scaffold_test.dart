@@ -10,6 +10,7 @@ import 'package:global_domination/providers/geo_providers.dart';
 
 import '../helpers/map_screen_test_providers.dart';
 import 'package:global_domination/ui/app_scaffold.dart';
+import 'package:global_domination/ui/features/hud/global_hud.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
 import 'package:global_domination/ui/features/map/map_screen.dart';
 import 'package:global_domination/ui/features/map/world_map_painter.dart';
@@ -193,6 +194,39 @@ void main() {
       }
 
       expect(loads, 1);
+    });
+
+    testWidgets('GlobalHud is mounted once and stays visible on every tab', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_pumpAppScaffold());
+      await tester.pump();
+
+      expect(find.byType(GlobalHud), findsOneWidget);
+
+      for (final label in [
+        'Upgrades',
+        'Leaders',
+        'Achievements',
+        'Minigames',
+        'Map',
+      ]) {
+        await tester.tap(find.text(label));
+        await tester.pump();
+        expect(find.byType(GlobalHud), findsOneWidget);
+      }
+    });
+
+    testWidgets('Map tab no longer shows temporary Influence pill', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_pumpAppScaffold());
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('temporaryInfluencePill')),
+        findsNothing,
+      );
     });
   });
 

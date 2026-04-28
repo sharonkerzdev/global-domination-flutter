@@ -4,8 +4,20 @@ import 'package:global_domination/game/features/continents/next_unlock_selector.
 import 'package:global_domination/game/features/continents/next_unlock_teaser.dart';
 import 'package:global_domination/game/features/daily_rewards/daily_rewards_reducer.dart';
 import 'package:global_domination/game/values/continent_id.dart';
+import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
+
+/// Narrow selector: rebuilds only when [GameState.totalInfluence] changes.
+final totalInfluenceProvider = Provider<Influence>(
+  (ref) => ref.watch(gameWorldProvider.select((s) => s.totalInfluence)),
+);
+
+/// Narrow selector: rebuilds only when [GameState.totalIntel] changes.
+final totalIntelProvider = Provider<Intel>(
+  (ref) => ref.watch(gameWorldProvider.select((s) => s.totalIntel)),
+);
 
 final nextUnlockInContinentProvider =
     Provider.family<NextUnlockTeaser?, ContinentId>((ref, continentId) {

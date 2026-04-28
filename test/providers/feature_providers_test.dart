@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,7 @@ import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/game/values/intel.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/feature_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
@@ -289,5 +291,214 @@ void main() {
         expect(container.read(dailyRewardAvailableProvider), isTrue);
       },
     );
+  });
+
+  group('feature_providers — currency totals', () {
+    test(
+      'totalInfluenceProvider and totalIntelProvider return typed values',
+      () async {
+        final content = multiContinentNextUnlockFixture();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameState(
+            totalInfluence: Influence(Decimal.parse('1234')),
+            totalIntel: Intel(Decimal.parse('56')),
+          ),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            contentRegistryProvider.overrideWith((_) async => content),
+            gameWorldProvider.overrideWith((_) => notifier),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(contentRegistryProvider.future);
+
+        expect(
+          container.read(totalInfluenceProvider),
+          equals(Influence(Decimal.parse('1234'))),
+        );
+        expect(
+          container.read(totalIntelProvider),
+          equals(Intel(Decimal.parse('56'))),
+        );
+      },
+    );
+
+    testWidgets(
+      'ref.listen on totalInfluenceProvider skips intel-only state updates',
+      (tester) async {
+        var influenceNotifications = 0;
+        final content = multiContinentNextUnlockFixture();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameState(
+            totalInfluence: Influence(Decimal.one),
+            totalIntel: Intel(Decimal.one),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(
+              home: Consumer(
+                builder: (context, ref, _) {
+                  ref.watch(gameWorldProvider);
+                  ref.listen<Influence>(totalInfluenceProvider, (
+                    previous,
+                    next,
+                  ) {
+                    influenceNotifications++;
+                  });
+                  return Scaffold(
+                    body: Column(
+                      children: [
+                        TextButton(
+                          key: const Key('intelOnly'),
+                          onPressed: () {
+                            notifier.setTestState(
+                              GameState(
+                                totalInfluence: Influence(Decimal.one),
+                                totalIntel: Intel(Decimal.parse('99')),
+                              ),
+                            );
+                          },
+                          child: const Text('intelOnly'),
+                        ),
+                        TextButton(
+                          key: const Key('influence'),
+                          onPressed: () {
+                            notifier.setTestState(
+                              GameState(
+                                totalInfluence: Influence(Decimal.parse('2')),
+                                totalIntel: Intel(Decimal.parse('99')),
+                              ),
+                            );
+                          },
+                          child: const Text('influence'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        final baseline = influenceNotifications;
+
+        await tester.tap(find.byKey(const Key('intelOnly')));
+        await tester.pump();
+        expect(influenceNotifications, baseline);
+
+        await tester.tap(find.byKey(const Key('influence')));
+        await tester.pump();
+        expect(influenceNotifications, baseline + 1);
+      },
+    );
+
+    testWidgets(
+      'ref.listen on totalIntelProvider skips influence-only state updates',
+      (tester) async {
+        var intelNotifications = 0;
+        final content = multiContinentNextUnlockFixture();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameState(
+            totalInfluence: Influence(Decimal.one),
+            totalIntel: Intel(Decimal.one),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(
+              home: Consumer(
+                builder: (context, ref, _) {
+                  ref.watch(gameWorldProvider);
+                  ref.listen<Intel>(totalIntelProvider, (previous, next) {
+                    intelNotifications++;
+                  });
+                  return Scaffold(
+                    body: Column(
+                      children: [
+                        TextButton(
+                          key: const Key('influenceOnly'),
+                          onPressed: () {
+                            notifier.setTestState(
+                              GameState(
+                                totalInfluence: Influence(Decimal.parse('500')),
+                                totalIntel: Intel(Decimal.one),
+                              ),
+                            );
+                          },
+                          child: const Text('influenceOnly'),
+                        ),
+                        TextButton(
+                          key: const Key('intel'),
+                          onPressed: () {
+                            notifier.setTestState(
+                              GameState(
+                                totalInfluence: Influence(Decimal.parse('500')),
+                                totalIntel: Intel(Decimal.parse('3')),
+                              ),
+                            );
+                          },
+                          child: const Text('intel'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        final baseline = intelNotifications;
+
+        await tester.tap(find.byKey(const Key('influenceOnly')));
+        await tester.pump();
+        expect(intelNotifications, baseline);
+
+        await tester.tap(find.byKey(const Key('intel')));
+        await tester.pump();
+        expect(intelNotifications, baseline + 1);
+      },
+    );
+
+    testWidgets('totalInfluenceProvider can be overridden in widget tests', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            totalInfluenceProvider.overrideWithValue(
+              Influence(Decimal.parse('777')),
+            ),
+            totalIntelProvider.overrideWithValue(Intel(Decimal.parse('2'))),
+          ],
+          child: MaterialApp(
+            home: Consumer(
+              builder: (context, ref, _) {
+                final inf = ref.watch(totalInfluenceProvider);
+                return Scaffold(body: Text(inf.format()));
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('777'), findsOneWidget);
+    });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:global_domination/ui/features/hud/global_hud.dart';
 import 'package:global_domination/ui/features/achievements/achievements_screen.dart';
 import 'package:global_domination/ui/features/leaders/leaders_screen.dart';
 import 'package:global_domination/ui/features/map/map_screen.dart';
@@ -37,15 +38,24 @@ class _AppScaffoldState extends State<AppScaffold> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: const [
-          MapScreen(),
-          UpgradesScreen(),
-          LeadersScreen(),
-          AchievementsScreen(),
-          MinigamesScreen(),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            const GlobalHud(),
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: const [
+                  MapScreen(),
+                  UpgradesScreen(),
+                  LeadersScreen(),
+                  AchievementsScreen(),
+                  MinigamesScreen(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,

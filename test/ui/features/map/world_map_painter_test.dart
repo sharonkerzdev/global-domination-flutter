@@ -245,30 +245,31 @@ void main() {
       expect(find.textContaining('boom'), findsOneWidget);
     });
 
-    testWidgets('temporary Influence pill stays within narrow viewport', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(160, 320));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'MapScreen does not render legacy Influence pill at huge totals',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(160, 320));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            geoProvider.overrideWith((ref) async => fakeCountries),
-            mapWidgetTestGameWorldOverride(
-              GameState(totalInfluence: Influence(Decimal.parse('1e38'))),
-            ),
-          ],
-          child: MaterialApp(theme: appTheme(), home: const MapScreen()),
-        ),
-      );
-      await tester.pump();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              geoProvider.overrideWith((ref) async => fakeCountries),
+              mapWidgetTestGameWorldOverride(
+                GameState(totalInfluence: Influence(Decimal.parse('1e38'))),
+              ),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const MapScreen()),
+          ),
+        );
+        await tester.pump();
 
-      final badgeBox = tester.renderObject<RenderBox>(
-        find.byKey(const ValueKey('temporaryInfluencePill')),
-      );
-      expect(badgeBox.size.width, lessThanOrEqualTo(112));
-      expect(tester.takeException(), isNull);
-    });
+        expect(
+          find.byKey(const ValueKey<String>('temporaryInfluencePill')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

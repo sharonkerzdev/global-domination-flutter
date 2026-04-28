@@ -15,7 +15,6 @@ import 'package:global_domination/ui/features/map/country_visual_state.dart';
 import 'package:global_domination/ui/features/map/hit_test/polygon_hit_tester.dart';
 import 'package:global_domination/ui/features/map/world_map_painter.dart';
 import 'package:global_domination/ui/theme/country_colors.dart';
-import 'package:global_domination/ui/theme/hud_palette.dart';
 import 'package:global_domination/ui/theme/spacing.dart';
 
 class MapScreen extends ConsumerWidget {
@@ -164,9 +163,7 @@ class _MapViewState extends ConsumerState<_MapView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.extension<CountryColors>()!;
-    final hud = theme.extension<HudPalette>()!;
     final countryStates = _deriveVisualStates(widget.gameState);
-    final totalInfluence = widget.gameState.totalInfluence;
 
     if (_paints == null || !identical(_lastColors, colors)) {
       _paints = CountryPaints(colors);
@@ -188,54 +185,18 @@ class _MapViewState extends ConsumerState<_MapView> {
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final canvasSize = Size(
-                constraints.maxWidth,
-                constraints.maxHeight,
-              );
-              return GestureDetector(
-                onScaleStart: _onScaleStart,
-                onScaleUpdate: _onScaleUpdate,
-                onTapUp: (details) => _onTapUp(details, canvasSize),
-                child: RepaintBoundary(
-                  child: CustomPaint(size: Size.infinite, painter: _painter),
-                ),
-              );
-            },
-          ),
-          Positioned(
-            top: Spacing.xxl,
-            left: Spacing.lg,
-            right: Spacing.lg,
-            child: Center(
-              child: Container(
-                key: const ValueKey('temporaryInfluencePill'),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.md,
-                  vertical: Spacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: hud.badgeBackground,
-                  borderRadius: BorderRadius.circular(hud.badgeBorderRadius),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Influence: ${totalInfluence.format()}',
-                    maxLines: 1,
-                    softWrap: false,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: hud.badgeForeground,
-                    ),
-                  ),
-                ),
-              ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+          return GestureDetector(
+            onScaleStart: _onScaleStart,
+            onScaleUpdate: _onScaleUpdate,
+            onTapUp: (details) => _onTapUp(details, canvasSize),
+            child: RepaintBoundary(
+              child: CustomPaint(size: Size.infinite, painter: _painter),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
