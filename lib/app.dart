@@ -12,7 +12,7 @@ import 'package:global_domination/services/game_lifecycle_observer.dart';
 import 'package:global_domination/ui/boot_error_screen.dart';
 import 'package:global_domination/ui/debug/support_screen.dart';
 import 'package:global_domination/ui/features/map/game_loop.dart';
-import 'package:global_domination/ui/features/map/map_screen.dart';
+import 'package:global_domination/ui/app_scaffold.dart';
 import 'package:global_domination/ui/features/modals/offline_reward_modal_host.dart';
 import 'package:global_domination/ui/save_recovery_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
@@ -175,7 +175,7 @@ class _GameScreenState extends State<_GameScreen> {
       onLongPressStart: _onLongPressStart,
       onLongPressEnd: (_) => _cancelLongPress(),
       onLongPressCancel: _cancelLongPress,
-      child: const GameLoop(child: MapScreen()),
+      child: const GameLoop(child: AppScaffold()),
     );
   }
 }

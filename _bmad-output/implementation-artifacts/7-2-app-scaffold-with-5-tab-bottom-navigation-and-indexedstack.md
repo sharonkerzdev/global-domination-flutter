@@ -1,6 +1,6 @@
 # Story 7.2: App Scaffold with 5-Tab Bottom Navigation and IndexedStack
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -55,61 +55,61 @@ so that the app feels snappy and the map preserves pan/zoom state.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the shell widget (AC: #1, #2, #3, #4, #6, #13)
-  - [ ] 1.1 Add `lib/ui/app_scaffold.dart`.
-  - [ ] 1.2 Implement `AppScaffold` as a `StatefulWidget` with private selected-index state initialized to `0`.
-  - [ ] 1.3 Build a root `Scaffold` with `body: IndexedStack(...)` and `bottomNavigationBar: BottomNavigationBar(...)`.
-  - [ ] 1.4 Define the five nav items in one private constant/list in Map, Upgrades, Leaders, Achievements, Minigames order.
-  - [ ] 1.5 Use Material icons from `Icons.*` only. Suggested icons: `Icons.public`, `Icons.trending_up`, `Icons.groups`, `Icons.emoji_events`, `Icons.sports_esports`.
-  - [ ] 1.6 Set `BottomNavigationBarType.fixed` explicitly because Flutter defaults to shifting behavior for four or more items.
-  - [ ] 1.7 Style selected/unselected colors from `Theme.of(context).colorScheme` or Story 7.1 tokens. Do not introduce raw widget colors.
+- [x] Task 1: Create the shell widget (AC: #1, #2, #3, #4, #6, #13)
+  - [x] 1.1 Add `lib/ui/app_scaffold.dart`.
+  - [x] 1.2 Implement `AppScaffold` as a `StatefulWidget` with private selected-index state initialized to `0`.
+  - [x] 1.3 Build a root `Scaffold` with `body: IndexedStack(...)` and `bottomNavigationBar: BottomNavigationBar(...)`.
+  - [x] 1.4 Define the five nav items in one private constant/list in Map, Upgrades, Leaders, Achievements, Minigames order.
+  - [x] 1.5 Use Material icons from `Icons.*` only. Suggested icons: `Icons.public`, `Icons.trending_up`, `Icons.groups`, `Icons.emoji_events`, `Icons.sports_esports`.
+  - [x] 1.6 Set `BottomNavigationBarType.fixed` explicitly because Flutter defaults to shifting behavior for four or more items.
+  - [x] 1.7 Style selected/unselected colors from `Theme.of(context).colorScheme` or Story 7.1 tokens. Do not introduce raw widget colors.
 
-- [ ] Task 2: Add placeholder tab screens without feature creep (AC: #9, #10, #13)
-  - [ ] 2.1 Add lightweight placeholder screens for Upgrades, Leaders, Achievements, and Minigames.
-  - [ ] 2.2 Preferred file locations:
+- [x] Task 2: Add placeholder tab screens without feature creep (AC: #9, #10, #13)
+  - [x] 2.1 Add lightweight placeholder screens for Upgrades, Leaders, Achievements, and Minigames.
+  - [x] 2.2 Preferred file locations:
     - `lib/ui/features/upgrades/upgrades_screen.dart`
     - `lib/ui/features/leaders/leaders_screen.dart`
     - `lib/ui/features/achievements/achievements_screen.dart`
     - `lib/ui/features/minigames/minigames_screen.dart`
-  - [ ] 2.3 Keep placeholder screens UI-only and token-styled with `Spacing.*`, `Theme.of(context).textTheme`, and `ColorScheme`.
-  - [ ] 2.4 Minigames must include the required "Coming Soon" text.
-  - [ ] 2.5 Upgrades and Leaders placeholders must not dispatch `PurchaseUpgrade`, `UnlockCountry`, `HireLeader`, or `UpgradeLeader`; those belong to Stories 7.7 and 7.8.
-  - [ ] 2.6 Achievements placeholder must not change `earnedAchievementIds`, achievement reducer behavior, or achievement content.
+  - [x] 2.3 Keep placeholder screens UI-only and token-styled with `Spacing.*`, `Theme.of(context).textTheme`, and `ColorScheme`.
+  - [x] 2.4 Minigames must include the required "Coming Soon" text.
+  - [x] 2.5 Upgrades and Leaders placeholders must not dispatch `PurchaseUpgrade`, `UnlockCountry`, `HireLeader`, or `UpgradeLeader`; those belong to Stories 7.7 and 7.8.
+  - [x] 2.6 Achievements placeholder must not change `earnedAchievementIds`, achievement reducer behavior, or achievement content.
 
-- [ ] Task 3: Wire AppScaffold into booted app flow (AC: #1, #5, #11, #12)
-  - [ ] 3.1 Update `lib/app.dart` final successful boot branch to render `AppScaffold` instead of `MapScreen` as the direct game screen.
-  - [ ] 3.2 Keep `OfflineRewardModalHost` outside the game shell exactly as the modal host for boot/resume offline rewards.
-  - [ ] 3.3 Keep `_SaveRepositoryBootstrap` and `GameLifecycleObserver` behavior unchanged.
-  - [ ] 3.4 Wrap the whole shell in the existing `GameLoop`, not just the Map tab, so simulation continues while the player views other tabs.
-  - [ ] 3.5 Preserve the temporary Support long-press trigger until Story 7.6 replaces it with the HUD gear/settings path.
-  - [ ] 3.6 Do not add another `MaterialApp`, nested `ProviderScope`, database bootstrap, content bootstrap, or ticker inside `AppScaffold`.
+- [x] Task 3: Wire AppScaffold into booted app flow (AC: #1, #5, #11, #12)
+  - [x] 3.1 Update `lib/app.dart` final successful boot branch to render `AppScaffold` instead of `MapScreen` as the direct game screen.
+  - [x] 3.2 Keep `OfflineRewardModalHost` outside the game shell exactly as the modal host for boot/resume offline rewards.
+  - [x] 3.3 Keep `_SaveRepositoryBootstrap` and `GameLifecycleObserver` behavior unchanged.
+  - [x] 3.4 Wrap the whole shell in the existing `GameLoop`, not just the Map tab, so simulation continues while the player views other tabs.
+  - [x] 3.5 Preserve the temporary Support long-press trigger until Story 7.6 replaces it with the HUD gear/settings path.
+  - [x] 3.6 Do not add another `MaterialApp`, nested `ProviderScope`, database bootstrap, content bootstrap, or ticker inside `AppScaffold`.
 
-- [ ] Task 4: Preserve map state and GeoJSON loading behavior (AC: #6, #7, #8)
-  - [ ] 4.1 Keep the Map tab child as the existing `MapScreen`; do not rewrite map gesture, painter, hit-test, or provider logic.
-  - [ ] 4.2 Ensure `IndexedStack` keeps `MapScreen` and its `_MapViewState` alive while other tabs are selected.
-  - [ ] 4.3 Do not call `rootBundle.loadString('assets/geo/countries.geojson.json')` anywhere outside `geoProvider`.
-  - [ ] 4.4 Do not move GeoJSON parsing into `AppScaffold`, placeholder tabs, or `app.dart`.
-  - [ ] 4.5 Avoid `PageView`, `TabBarView`, `Navigator` per tab, or rebuilding the selected tab with a `switch` that drops inactive tab subtrees.
+- [x] Task 4: Preserve map state and GeoJSON loading behavior (AC: #6, #7, #8)
+  - [x] 4.1 Keep the Map tab child as the existing `MapScreen`; do not rewrite map gesture, painter, hit-test, or provider logic.
+  - [x] 4.2 Ensure `IndexedStack` keeps `MapScreen` and its `_MapViewState` alive while other tabs are selected.
+  - [x] 4.3 Do not call `rootBundle.loadString('assets/geo/countries.geojson.json')` anywhere outside `geoProvider`.
+  - [x] 4.4 Do not move GeoJSON parsing into `AppScaffold`, placeholder tabs, or `app.dart`.
+  - [x] 4.5 Avoid `PageView`, `TabBarView`, `Navigator` per tab, or rebuilding the selected tab with a `switch` that drops inactive tab subtrees.
 
-- [ ] Task 5: Widget and architecture tests (AC: #2, #3, #4, #6, #7, #8, #9, #12, #14)
-  - [ ] 5.1 Add `test/ui/app_scaffold_test.dart`.
-  - [ ] 5.2 Test the bottom nav has exactly five labeled items in the required order and uses `BottomNavigationBarType.fixed`.
-  - [ ] 5.3 Test `AppScaffold` contains an `IndexedStack` whose `index` changes when tapping each tab.
-  - [ ] 5.4 Test initial selected tab is Map.
-  - [ ] 5.5 Test Minigames tab renders "Coming Soon".
-  - [ ] 5.6 Test map pan/zoom transform survives tab switching by reading `WorldMapPainter.viewTransform` before and after switching away/back.
-  - [ ] 5.7 Test GeoJSON provider load count remains `1` across repeated tab switches using a provider override around `geoProvider`.
-  - [ ] 5.8 Add or extend a small architecture/widget test that fails if `AppScaffold` imports database/repository classes directly.
-  - [ ] 5.9 Existing map tests should continue to pump `MaterialApp(theme: appTheme(), home: const MapScreen())`; do not force them through `AppScaffold` unless the test purpose is shell integration.
+- [x] Task 5: Widget and architecture tests (AC: #2, #3, #4, #6, #7, #8, #9, #12, #14)
+  - [x] 5.1 Add `test/ui/app_scaffold_test.dart`.
+  - [x] 5.2 Test the bottom nav has exactly five labeled items in the required order and uses `BottomNavigationBarType.fixed`.
+  - [x] 5.3 Test `AppScaffold` contains an `IndexedStack` whose `index` changes when tapping each tab.
+  - [x] 5.4 Test initial selected tab is Map.
+  - [x] 5.5 Test Minigames tab renders "Coming Soon".
+  - [x] 5.6 Test map pan/zoom transform survives tab switching by reading `WorldMapPainter.viewTransform` before and after switching away/back.
+  - [x] 5.7 Test GeoJSON provider load count remains `1` across repeated tab switches using a provider override around `geoProvider`.
+  - [x] 5.8 Add or extend a small architecture/widget test that fails if `AppScaffold` imports database/repository classes directly.
+  - [x] 5.9 Existing map tests should continue to pump `MaterialApp(theme: appTheme(), home: const MapScreen())`; do not force them through `AppScaffold` unless the test purpose is shell integration.
 
-- [ ] Task 6: Verification (AC: all)
-  - [ ] 6.1 Run `dart format --set-exit-if-changed` on changed Dart files.
-  - [ ] 6.2 Run `flutter test test/ui/app_scaffold_test.dart`.
-  - [ ] 6.3 Run `flutter test test/ui/features/map`.
-  - [ ] 6.4 Run `flutter test test/ui/features/modals/offline_reward_modal_host_test.dart`.
-  - [ ] 6.5 Run `flutter test test/architecture`.
-  - [ ] 6.6 Run `flutter analyze`.
-  - [ ] 6.7 Run full `flutter test` if time permits.
+- [x] Task 6: Verification (AC: all)
+  - [x] 6.1 Run `dart format --set-exit-if-changed` on changed Dart files.
+  - [x] 6.2 Run `flutter test test/ui/app_scaffold_test.dart`.
+  - [x] 6.3 Run `flutter test test/ui/features/map`.
+  - [x] 6.4 Run `flutter test test/ui/features/modals/offline_reward_modal_host_test.dart`.
+  - [x] 6.5 Run `flutter test test/architecture`.
+  - [x] 6.6 Run `flutter analyze`.
+  - [x] 6.7 Run full `flutter test` if time permits.
 
 ## Dev Notes
 
@@ -256,14 +256,33 @@ For the no-reparse test, use an override that increments a local counter when `g
 
 ### Agent Model Used
 
-TBD by dev agent.
+Composer (Cursor agent).
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `AppScaffold` with `BottomNavigationBarType.fixed`, theme `ColorScheme` colors, and `IndexedStack` of `MapScreen` plus four token-styled placeholder roots.
+- Wired `lib/app.dart` `_GameScreen` to `GameLoop(child: AppScaffold())`; preserved 5s Support long-press and outer boot/modal/save/bootstrap structure.
+- Added `test/ui/app_scaffold_test.dart`: nav order, `IndexedStack` index, Minigames "Coming Soon", map `viewTransform` after pan + tab round-trip, single `geoProvider` resolution across tab switches, and guardrail that `app_scaffold.dart` does not import `package:global_domination/data/`.
+- Ran `dart format`, `flutter test` (full suite), `flutter analyze` — all green.
+
 ### File List
+
+- `lib/ui/app_scaffold.dart`
+- `lib/ui/features/upgrades/upgrades_screen.dart`
+- `lib/ui/features/leaders/leaders_screen.dart`
+- `lib/ui/features/achievements/achievements_screen.dart`
+- `lib/ui/features/minigames/minigames_screen.dart`
+- `lib/app.dart`
+- `test/ui/app_scaffold_test.dart`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+- 2026-04-27: Story 7.2 implemented — five-tab shell, placeholders, tests, sprint status → review.
+- 2026-04-28: Code review passed — clean review; story status → done.
 
 ## Story Completion Status
 
-Ultimate context engine analysis completed - comprehensive developer guide created.
+Implementation complete; ready for code review.
