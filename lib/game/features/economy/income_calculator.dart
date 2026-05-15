@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 
 import 'package:global_domination/game/config/balance.dart';
-import 'package:global_domination/game/content/achievement_def.dart';
 import 'package:global_domination/game/content/content_registry.dart';
 import 'package:global_domination/game/content/country_def.dart';
 import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/economy/multiplier_stack_helpers.dart';
 import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/influence.dart';
@@ -42,9 +42,9 @@ abstract final class IncomeCalculator {
         Decimal.one +
         Decimal.fromInt(country.ipLevel) * BalanceConfig.ipMultPerLevel;
     rate *= _leaderMultiplier(country.leaderTier);
-    rate *= _continentCompletionBonus(state, content);
-    rate *= Decimal.one + _sumAchievementMultipliers(state, content);
-    rate *= _globalUpgradeAmplifier(state, content);
+    rate *= MultiplierStackHelpers.continentCompletionProduct(state, content);
+    rate *= MultiplierStackHelpers.achievementInfluenceFactor(state, content);
+    rate *= MultiplierStackHelpers.globalUpgradeProduct(state, content);
     rate *= state.goldenOpportunityMultiplier;
     rate *= state.activeBoost?.multiplier ?? Decimal.one;
 
@@ -53,58 +53,6 @@ abstract final class IncomeCalculator {
 
   static Decimal _leaderMultiplier(LeaderTier tier) =>
       BalanceConfig.leaderMultiplier(tier);
-
-  static Decimal _continentCompletionBonus(
-    GameState state,
-    ContentRegistry content,
-  ) {
-    var product = Decimal.one;
-    for (final e in state.continentCompletions.entries) {
-      if (e.value != true) continue;
-      final continentDef = content.continents[e.key];
-      if (continentDef == null) continue;
-      product *= Decimal.one + continentDef.completionBonus;
-    }
-    return product;
-  }
-
-  static Decimal _sumAchievementMultipliers(
-    GameState state,
-    ContentRegistry content,
-  ) {
-    var sum = Decimal.zero;
-    for (final id in state.earnedAchievementIds) {
-      AchievementDef? match;
-      for (final a in content.achievements) {
-        if (a.id == id) {
-          match = a;
-          break;
-        }
-      }
-      if (match == null) continue;
-      if (match.rewardType == 'influenceMultiplier') {
-        sum += match.rewardValue;
-      }
-    }
-    return sum;
-  }
-
-  static Decimal _globalUpgradeAmplifier(
-    GameState state,
-    ContentRegistry content,
-  ) {
-    if (state.activeGlobalUpgradeIds.isEmpty) return Decimal.one;
-    var product = Decimal.one;
-    for (final id in state.activeGlobalUpgradeIds) {
-      for (final u in content.globalUpgrades) {
-        if (u.id == id) {
-          product *= u.influenceAmplifier;
-          break;
-        }
-      }
-    }
-    return product;
-  }
 
   /// Geometric cost for `bulk` consecutive IP levels starting at [currentLevel].
   ///

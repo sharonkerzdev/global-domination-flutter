@@ -25,6 +25,7 @@ import 'tables/crash_logs_table.dart';
 import 'tables/daily_streaks_table.dart';
 import 'tables/earned_achievements_table.dart';
 import 'tables/meta_table.dart';
+import 'tables/settings_table.dart';
 
 import 'migrations/migration_failure_exception.dart';
 import 'migrations/migration_registry.dart';
@@ -46,12 +47,13 @@ part 'app_database.g.dart';
     DailyStreaks,
     EarnedAchievements,
     Meta,
+    Settings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
-  static const int currentSchemaVersion = 3;
+  static const int currentSchemaVersion = 4;
 
   @override
   int get schemaVersion => currentSchemaVersion;

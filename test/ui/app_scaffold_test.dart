@@ -4,11 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/leaders/leader_tier.dart';
+import 'package:global_domination/game/game_command.dart';
+import 'package:global_domination/game/game_state.dart';
+import 'package:global_domination/game/game_world.dart';
+import 'package:global_domination/game/support/clock.dart';
+import 'package:global_domination/game/support/rng.dart';
+import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/providers/app_providers.dart';
+import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/geo_providers.dart';
 
 import '../helpers/map_screen_test_providers.dart';
+import '../helpers/test_content_registry.dart';
 import 'package:global_domination/ui/app_scaffold.dart';
 import 'package:global_domination/ui/features/hud/global_hud.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
@@ -69,6 +81,52 @@ bool _matricesNearlyEqual(Matrix4 a, Matrix4 b) {
     }
   }
   return true;
+}
+
+class _StatsRouteTestNotifier extends GameWorldNotifier {
+  _StatsRouteTestNotifier({
+    required ContentRegistry content,
+    required GameState initialState,
+  }) : super(
+         GameWorld(
+           content: content,
+           clock: const SystemClock(),
+           rng: SeededRng(0),
+           initialState: initialState,
+         ),
+       );
+
+  @override
+  void apply(GameCommand cmd) {}
+
+  @override
+  void tick(Duration dt) {}
+}
+
+Widget _pumpAppScaffoldWithStatsContent() {
+  final content = testMapperContentRegistry();
+  final initial = GameState(
+    countries: {
+      for (final id in content.countries.keys)
+        id: CountryState(
+          id: id,
+          unlocked: true,
+          ipLevel: 1,
+          leaderTier: LeaderTier.none,
+          bankedInfluence: Influence.zero,
+        ),
+    },
+  );
+  return ProviderScope(
+    overrides: [
+      geoProvider.overrideWith((ref) async => _fakeCountries),
+      contentRegistryProvider.overrideWith((_) async => content),
+      gameWorldProvider.overrideWith(
+        (_) => _StatsRouteTestNotifier(content: content, initialState: initial),
+      ),
+    ],
+    child: MaterialApp(theme: appTheme(), home: const AppScaffold()),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +223,33 @@ void main() {
       final afterReturn = _mapPainter(tester).viewTransform;
       expect(_matricesNearlyEqual(afterReturn, afterPan), isTrue);
     });
+
+    testWidgets(
+      'Stats HUD route push and pop preserves map tab and transform',
+      (tester) async {
+        await tester.pumpWidget(_pumpAppScaffoldWithStatsContent());
+        await tester.pump();
+
+        IndexedStack stack() => tester.widget(find.byType(IndexedStack));
+        expect(stack().index, 0);
+
+        await tester.drag(_mapGestureDetector(), const Offset(40, 20));
+        await tester.pump();
+        final afterPan = _mapPainter(tester).viewTransform;
+        expect(_matricesNearlyEqual(afterPan, Matrix4.identity()), isFalse);
+
+        await tester.tap(find.byTooltip('Stats'));
+        await tester.pumpAndSettle();
+        expect(find.text('Stats'), findsWidgets);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(stack().index, 0);
+        final afterReturn = _mapPainter(tester).viewTransform;
+        expect(_matricesNearlyEqual(afterReturn, afterPan), isTrue);
+      },
+    );
 
     testWidgets('geoProvider async body runs once across tab switches', (
       tester,

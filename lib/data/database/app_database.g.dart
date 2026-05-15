@@ -3814,6 +3814,344 @@ class MetaCompanion extends UpdateCompanion<MetaRow> {
   }
 }
 
+class $SettingsTable extends Settings
+    with TableInfo<$SettingsTable, SettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _singletonIdMeta = const VerificationMeta(
+    'singletonId',
+  );
+  @override
+  late final GeneratedColumn<int> singletonId = GeneratedColumn<int>(
+    'singleton_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _soundEnabledMeta = const VerificationMeta(
+    'soundEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> soundEnabled = GeneratedColumn<bool>(
+    'sound_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("sound_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _hapticsEnabledMeta = const VerificationMeta(
+    'hapticsEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> hapticsEnabled = GeneratedColumn<bool>(
+    'haptics_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("haptics_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _notificationsEnabledMeta =
+      const VerificationMeta('notificationsEnabled');
+  @override
+  late final GeneratedColumn<bool> notificationsEnabled = GeneratedColumn<bool>(
+    'notifications_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notifications_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    singletonId,
+    soundEnabled,
+    hapticsEnabled,
+    notificationsEnabled,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('singleton_id')) {
+      context.handle(
+        _singletonIdMeta,
+        singletonId.isAcceptableOrUnknown(
+          data['singleton_id']!,
+          _singletonIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sound_enabled')) {
+      context.handle(
+        _soundEnabledMeta,
+        soundEnabled.isAcceptableOrUnknown(
+          data['sound_enabled']!,
+          _soundEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('haptics_enabled')) {
+      context.handle(
+        _hapticsEnabledMeta,
+        hapticsEnabled.isAcceptableOrUnknown(
+          data['haptics_enabled']!,
+          _hapticsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notifications_enabled')) {
+      context.handle(
+        _notificationsEnabledMeta,
+        notificationsEnabled.isAcceptableOrUnknown(
+          data['notifications_enabled']!,
+          _notificationsEnabledMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {singletonId};
+  @override
+  SettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SettingsRow(
+      singletonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}singleton_id'],
+      )!,
+      soundEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}sound_enabled'],
+      )!,
+      hapticsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}haptics_enabled'],
+      )!,
+      notificationsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notifications_enabled'],
+      )!,
+    );
+  }
+
+  @override
+  $SettingsTable createAlias(String alias) {
+    return $SettingsTable(attachedDatabase, alias);
+  }
+}
+
+class SettingsRow extends DataClass implements Insertable<SettingsRow> {
+  final int singletonId;
+  final bool soundEnabled;
+  final bool hapticsEnabled;
+  final bool notificationsEnabled;
+  const SettingsRow({
+    required this.singletonId,
+    required this.soundEnabled,
+    required this.hapticsEnabled,
+    required this.notificationsEnabled,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['singleton_id'] = Variable<int>(singletonId);
+    map['sound_enabled'] = Variable<bool>(soundEnabled);
+    map['haptics_enabled'] = Variable<bool>(hapticsEnabled);
+    map['notifications_enabled'] = Variable<bool>(notificationsEnabled);
+    return map;
+  }
+
+  SettingsCompanion toCompanion(bool nullToAbsent) {
+    return SettingsCompanion(
+      singletonId: Value(singletonId),
+      soundEnabled: Value(soundEnabled),
+      hapticsEnabled: Value(hapticsEnabled),
+      notificationsEnabled: Value(notificationsEnabled),
+    );
+  }
+
+  factory SettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SettingsRow(
+      singletonId: serializer.fromJson<int>(json['singletonId']),
+      soundEnabled: serializer.fromJson<bool>(json['soundEnabled']),
+      hapticsEnabled: serializer.fromJson<bool>(json['hapticsEnabled']),
+      notificationsEnabled: serializer.fromJson<bool>(
+        json['notificationsEnabled'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'singletonId': serializer.toJson<int>(singletonId),
+      'soundEnabled': serializer.toJson<bool>(soundEnabled),
+      'hapticsEnabled': serializer.toJson<bool>(hapticsEnabled),
+      'notificationsEnabled': serializer.toJson<bool>(notificationsEnabled),
+    };
+  }
+
+  SettingsRow copyWith({
+    int? singletonId,
+    bool? soundEnabled,
+    bool? hapticsEnabled,
+    bool? notificationsEnabled,
+  }) => SettingsRow(
+    singletonId: singletonId ?? this.singletonId,
+    soundEnabled: soundEnabled ?? this.soundEnabled,
+    hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+    notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+  );
+  SettingsRow copyWithCompanion(SettingsCompanion data) {
+    return SettingsRow(
+      singletonId: data.singletonId.present
+          ? data.singletonId.value
+          : this.singletonId,
+      soundEnabled: data.soundEnabled.present
+          ? data.soundEnabled.value
+          : this.soundEnabled,
+      hapticsEnabled: data.hapticsEnabled.present
+          ? data.hapticsEnabled.value
+          : this.hapticsEnabled,
+      notificationsEnabled: data.notificationsEnabled.present
+          ? data.notificationsEnabled.value
+          : this.notificationsEnabled,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SettingsRow(')
+          ..write('singletonId: $singletonId, ')
+          ..write('soundEnabled: $soundEnabled, ')
+          ..write('hapticsEnabled: $hapticsEnabled, ')
+          ..write('notificationsEnabled: $notificationsEnabled')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    singletonId,
+    soundEnabled,
+    hapticsEnabled,
+    notificationsEnabled,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SettingsRow &&
+          other.singletonId == this.singletonId &&
+          other.soundEnabled == this.soundEnabled &&
+          other.hapticsEnabled == this.hapticsEnabled &&
+          other.notificationsEnabled == this.notificationsEnabled);
+}
+
+class SettingsCompanion extends UpdateCompanion<SettingsRow> {
+  final Value<int> singletonId;
+  final Value<bool> soundEnabled;
+  final Value<bool> hapticsEnabled;
+  final Value<bool> notificationsEnabled;
+  const SettingsCompanion({
+    this.singletonId = const Value.absent(),
+    this.soundEnabled = const Value.absent(),
+    this.hapticsEnabled = const Value.absent(),
+    this.notificationsEnabled = const Value.absent(),
+  });
+  SettingsCompanion.insert({
+    this.singletonId = const Value.absent(),
+    this.soundEnabled = const Value.absent(),
+    this.hapticsEnabled = const Value.absent(),
+    this.notificationsEnabled = const Value.absent(),
+  });
+  static Insertable<SettingsRow> custom({
+    Expression<int>? singletonId,
+    Expression<bool>? soundEnabled,
+    Expression<bool>? hapticsEnabled,
+    Expression<bool>? notificationsEnabled,
+  }) {
+    return RawValuesInsertable({
+      if (singletonId != null) 'singleton_id': singletonId,
+      if (soundEnabled != null) 'sound_enabled': soundEnabled,
+      if (hapticsEnabled != null) 'haptics_enabled': hapticsEnabled,
+      if (notificationsEnabled != null)
+        'notifications_enabled': notificationsEnabled,
+    });
+  }
+
+  SettingsCompanion copyWith({
+    Value<int>? singletonId,
+    Value<bool>? soundEnabled,
+    Value<bool>? hapticsEnabled,
+    Value<bool>? notificationsEnabled,
+  }) {
+    return SettingsCompanion(
+      singletonId: singletonId ?? this.singletonId,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (singletonId.present) {
+      map['singleton_id'] = Variable<int>(singletonId.value);
+    }
+    if (soundEnabled.present) {
+      map['sound_enabled'] = Variable<bool>(soundEnabled.value);
+    }
+    if (hapticsEnabled.present) {
+      map['haptics_enabled'] = Variable<bool>(hapticsEnabled.value);
+    }
+    if (notificationsEnabled.present) {
+      map['notifications_enabled'] = Variable<bool>(notificationsEnabled.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SettingsCompanion(')
+          ..write('singletonId: $singletonId, ')
+          ..write('soundEnabled: $soundEnabled, ')
+          ..write('hapticsEnabled: $hapticsEnabled, ')
+          ..write('notificationsEnabled: $notificationsEnabled')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3835,6 +4173,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $EarnedAchievementsTable earnedAchievements =
       $EarnedAchievementsTable(this);
   late final $MetaTable meta = $MetaTable(this);
+  late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3853,6 +4192,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     dailyStreaks,
     earnedAchievements,
     meta,
+    settings,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6399,6 +6739,186 @@ typedef $$MetaTableProcessedTableManager =
       MetaRow,
       PrefetchHooks Function()
     >;
+typedef $$SettingsTableCreateCompanionBuilder =
+    SettingsCompanion Function({
+      Value<int> singletonId,
+      Value<bool> soundEnabled,
+      Value<bool> hapticsEnabled,
+      Value<bool> notificationsEnabled,
+    });
+typedef $$SettingsTableUpdateCompanionBuilder =
+    SettingsCompanion Function({
+      Value<int> singletonId,
+      Value<bool> soundEnabled,
+      Value<bool> hapticsEnabled,
+      Value<bool> notificationsEnabled,
+    });
+
+class $$SettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $SettingsTable> {
+  $$SettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get singletonId => $composableBuilder(
+    column: $table.singletonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get soundEnabled => $composableBuilder(
+    column: $table.soundEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hapticsEnabled => $composableBuilder(
+    column: $table.hapticsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SettingsTable> {
+  $$SettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get singletonId => $composableBuilder(
+    column: $table.singletonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get soundEnabled => $composableBuilder(
+    column: $table.soundEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hapticsEnabled => $composableBuilder(
+    column: $table.hapticsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SettingsTable> {
+  $$SettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get singletonId => $composableBuilder(
+    column: $table.singletonId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get soundEnabled => $composableBuilder(
+    column: $table.soundEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get hapticsEnabled => $composableBuilder(
+    column: $table.hapticsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
+    builder: (column) => column,
+  );
+}
+
+class $$SettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SettingsTable,
+          SettingsRow,
+          $$SettingsTableFilterComposer,
+          $$SettingsTableOrderingComposer,
+          $$SettingsTableAnnotationComposer,
+          $$SettingsTableCreateCompanionBuilder,
+          $$SettingsTableUpdateCompanionBuilder,
+          (
+            SettingsRow,
+            BaseReferences<_$AppDatabase, $SettingsTable, SettingsRow>,
+          ),
+          SettingsRow,
+          PrefetchHooks Function()
+        > {
+  $$SettingsTableTableManager(_$AppDatabase db, $SettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> singletonId = const Value.absent(),
+                Value<bool> soundEnabled = const Value.absent(),
+                Value<bool> hapticsEnabled = const Value.absent(),
+                Value<bool> notificationsEnabled = const Value.absent(),
+              }) => SettingsCompanion(
+                singletonId: singletonId,
+                soundEnabled: soundEnabled,
+                hapticsEnabled: hapticsEnabled,
+                notificationsEnabled: notificationsEnabled,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> singletonId = const Value.absent(),
+                Value<bool> soundEnabled = const Value.absent(),
+                Value<bool> hapticsEnabled = const Value.absent(),
+                Value<bool> notificationsEnabled = const Value.absent(),
+              }) => SettingsCompanion.insert(
+                singletonId: singletonId,
+                soundEnabled: soundEnabled,
+                hapticsEnabled: hapticsEnabled,
+                notificationsEnabled: notificationsEnabled,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SettingsTable,
+      SettingsRow,
+      $$SettingsTableFilterComposer,
+      $$SettingsTableOrderingComposer,
+      $$SettingsTableAnnotationComposer,
+      $$SettingsTableCreateCompanionBuilder,
+      $$SettingsTableUpdateCompanionBuilder,
+      (SettingsRow, BaseReferences<_$AppDatabase, $SettingsTable, SettingsRow>),
+      SettingsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6428,4 +6948,6 @@ class $AppDatabaseManager {
   $$EarnedAchievementsTableTableManager get earnedAchievements =>
       $$EarnedAchievementsTableTableManager(_db, _db.earnedAchievements);
   $$MetaTableTableManager get meta => $$MetaTableTableManager(_db, _db.meta);
+  $$SettingsTableTableManager get settings =>
+      $$SettingsTableTableManager(_db, _db.settings);
 }

@@ -73,6 +73,7 @@ class OfflineRewardModal extends StatelessWidget {
             button: true,
             label: 'Collect',
             child: FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
               onPressed: onCollect,
               child: const Text('Collect'),
             ),

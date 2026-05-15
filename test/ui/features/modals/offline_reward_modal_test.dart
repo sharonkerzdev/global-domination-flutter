@@ -33,6 +33,8 @@ void main() {
       tester,
     ) async {
       final entry = OfflineRewardModalEntry(
+        id: 't1',
+        enqueueOrder: 0,
         totalEarned: Influence(Decimal.fromInt(1000)),
         elapsed: const Duration(hours: 1, minutes: 5),
         at: _kAt,
@@ -80,6 +82,8 @@ void main() {
     ) async {
       final huge = Influence(Decimal.parse('1e38') * Decimal.fromInt(2));
       final e = OfflineRewardModalEntry(
+        id: 't2',
+        enqueueOrder: 0,
         totalEarned: huge,
         elapsed: const Duration(hours: 8),
         at: _kAt,

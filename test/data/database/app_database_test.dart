@@ -50,9 +50,9 @@ void main() {
       await db.close();
     });
 
-    group('AppDatabase v3 schema', () {
-      test('opens at schema version 3', () {
-        expect(db.schemaVersion, equals(3));
+    group('AppDatabase v4 schema', () {
+      test('opens at schema version 4', () {
+        expect(db.schemaVersion, equals(4));
       });
 
       test(
@@ -124,6 +124,11 @@ void main() {
 
       test('onCreate creates active_golden_effect table', () async {
         final rows = await db.select(db.activeGoldenEffect).get();
+        expect(rows, isEmpty);
+      });
+
+      test('onCreate creates settings table', () async {
+        final rows = await db.select(db.settings).get();
         expect(rows, isEmpty);
       });
 
@@ -239,18 +244,44 @@ void main() {
         },
       );
 
+      test('settings table enforces single-row CHECK constraint', () async {
+        await db
+            .into(db.settings)
+            .insert(
+              SettingsCompanion.insert(
+                singletonId: const Value(0),
+                soundEnabled: const Value(true),
+                hapticsEnabled: const Value(true),
+                notificationsEnabled: const Value(false),
+              ),
+            );
+        expect(
+          () => db
+              .into(db.settings)
+              .insert(
+                SettingsCompanion.insert(
+                  singletonId: const Value(1),
+                  soundEnabled: const Value(true),
+                  hapticsEnabled: const Value(true),
+                  notificationsEnabled: const Value(false),
+                ),
+              ),
+          throwsA(isA<SqliteException>()),
+        );
+      });
+
       test('onUpgrade v1→v2 creates crash_logs table without error', () async {
         await db.customSelect('SELECT 1').get();
-        expect(db.schemaVersion, equals(3));
+        expect(db.schemaVersion, equals(4));
         final rows = await db.select(db.crashLogs).get();
         expect(rows, isEmpty);
       });
 
       test('onUpgrade v2→v3 path is covered on fresh in-memory database', () async {
         // NativeDatabase.memory() cannot simulate a real v2 on-disk file; Story 6-3
-        // will add file-backed migration tests. Here we assert v3 schema is live.
+        // will add file-backed migration tests. Here we assert v4 schema is live.
         await db.customSelect('SELECT 1').get();
-        expect(db.schemaVersion, equals(3));
+        expect(db.schemaVersion, equals(4));
         expect(await db.select(db.meta).get(), isEmpty);
         expect(await db.select(db.activeBoost).get(), isEmpty);
         expect(await db.select(db.countries).get(), isEmpty);
@@ -263,6 +294,7 @@ void main() {
         expect(await db.select(db.completedMissions).get(), isEmpty);
         expect(await db.select(db.dailyStreaks).get(), isEmpty);
         expect(await db.select(db.activeGoldenEffect).get(), isEmpty);
+        expect(await db.select(db.settings).get(), isEmpty);
       });
 
       test(
@@ -355,6 +387,7 @@ void main() {
             await upgradedDb.select(upgradedDb.activeGoldenEffect).get(),
             isEmpty,
           );
+          expect(await upgradedDb.select(upgradedDb.settings).get(), isEmpty);
         },
       );
     });
@@ -381,11 +414,11 @@ void main() {
         });
         final m = _ThrowingMigrator(db);
         await expectLater(
-          () => db.migration.onUpgrade(m, 2, 3),
+          () => db.migration.onUpgrade(m, 3, 4),
           throwsA(
             isA<MigrationFailureException>()
-                .having((e) => e.fromVersion, 'from', 2)
-                .having((e) => e.toVersion, 'to', 3)
+                .having((e) => e.fromVersion, 'from', 3)
+                .having((e) => e.toVersion, 'to', 4)
                 .having((e) => e.cause, 'cause', contains('synthetic')),
           ),
         );

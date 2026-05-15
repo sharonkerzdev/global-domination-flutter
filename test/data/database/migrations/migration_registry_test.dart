@@ -5,6 +5,7 @@ import 'package:global_domination/data/database/app_database.dart';
 import 'package:global_domination/data/database/migrations/migration_registry.dart';
 import 'package:global_domination/data/database/migrations/v1_to_v2.dart';
 import 'package:global_domination/data/database/migrations/v2_to_v3.dart';
+import 'package:global_domination/data/database/migrations/v3_to_v4.dart';
 
 class _RecordingMigrator extends Migrator {
   _RecordingMigrator(super.database);
@@ -30,16 +31,22 @@ void main() {
       expect(step.fromVersion, 2);
       expect(step.toVersion, 3);
     });
+
+    test('V3ToV4 has fromVersion=3, toVersion=4', () {
+      const step = V3ToV4();
+      expect(step.fromVersion, 3);
+      expect(step.toVersion, 4);
+    });
   });
 
   group('MigrationRegistry.run', () {
-    test('executes steps in order for v1→v3', () async {
+    test('executes steps in order for v1→v4', () async {
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async {
         await db.close();
       });
       final m = _RecordingMigrator(db);
-      await MigrationRegistry.run(m, db, from: 1, to: 3);
+      await MigrationRegistry.run(m, db, from: 1, to: 4);
       expect(m.tablesCreated, [
         'crash_logs',
         'meta',
@@ -54,6 +61,7 @@ void main() {
         'continent_milestones',
         'daily_streaks',
         'earned_achievements',
+        'settings',
       ]);
     });
 
@@ -63,7 +71,7 @@ void main() {
         await db.close();
       });
       final m = _RecordingMigrator(db);
-      await MigrationRegistry.run(m, db, from: 3, to: 3);
+      await MigrationRegistry.run(m, db, from: 4, to: 4);
       expect(m.tablesCreated, isEmpty);
     });
 

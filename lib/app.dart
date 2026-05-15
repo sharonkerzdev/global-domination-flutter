@@ -10,10 +10,9 @@ import 'package:global_domination/providers/modal_providers.dart';
 import 'package:global_domination/providers/offline_catchup_providers.dart';
 import 'package:global_domination/services/game_lifecycle_observer.dart';
 import 'package:global_domination/ui/boot_error_screen.dart';
-import 'package:global_domination/ui/debug/support_screen.dart';
 import 'package:global_domination/ui/features/map/game_loop.dart';
 import 'package:global_domination/ui/app_scaffold.dart';
-import 'package:global_domination/ui/features/modals/offline_reward_modal_host.dart';
+import 'package:global_domination/ui/features/modals/modal_queue_host.dart';
 import 'package:global_domination/ui/save_recovery_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
 import 'package:path_provider/path_provider.dart';
@@ -77,7 +76,7 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
               error: (error, stack) =>
                   BootErrorScreen(message: error.toString()),
               data: (_) {
-                ref.watch(offlineRewardModalControllerProvider.notifier);
+                ref.watch(modalQueueProvider.notifier);
                 final offlineBoot = ref.watch(offlineCatchupBootProvider);
                 return offlineBoot.when(
                   loading: () => MaterialApp(
@@ -90,8 +89,10 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
                       BootErrorScreen(message: error.toString()),
                   data: (_) => MaterialApp(
                     theme: _theme,
-                    home: const OfflineRewardModalHost(
-                      child: _SaveRepositoryBootstrap(child: _GameScreen()),
+                    home: const ModalQueueHost(
+                      child: _SaveRepositoryBootstrap(
+                        child: GameLoop(child: AppScaffold()),
+                      ),
                     ),
                   ),
                 );
@@ -135,47 +136,4 @@ class _SaveRepositoryBootstrapState
 
   @override
   Widget build(BuildContext context) => widget.child;
-}
-
-// TEMPORARY: Long-press trigger replaced by Settings modal gear icon in Story 7.6.
-class _GameScreen extends StatefulWidget {
-  const _GameScreen();
-
-  @override
-  State<_GameScreen> createState() => _GameScreenState();
-}
-
-class _GameScreenState extends State<_GameScreen> {
-  Timer? _longPressTimer;
-
-  void _onLongPressStart(LongPressStartDetails details) {
-    _longPressTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (ctx) => const SupportScreen()),
-        );
-      }
-    });
-  }
-
-  void _cancelLongPress() {
-    _longPressTimer?.cancel();
-    _longPressTimer = null;
-  }
-
-  @override
-  void dispose() {
-    _longPressTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPressStart: _onLongPressStart,
-      onLongPressEnd: (_) => _cancelLongPress(),
-      onLongPressCancel: _cancelLongPress,
-      child: const GameLoop(child: AppScaffold()),
-    );
-  }
 }

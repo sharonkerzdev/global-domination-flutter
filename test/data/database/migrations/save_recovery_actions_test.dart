@@ -232,21 +232,20 @@ void main() {
     );
   });
 
-  test(
-    'restoreLatestBackup uses injectable clock for quarantine stem',
-    () async {
-      await File('${tempDir.path}/global_domination.sqlite').writeAsString('x');
-      await File('${tempDir.path}/schema_backup_v2.sqlite').writeAsString('y');
-      final t = DateTime.utc(2040, 2, 2, 12);
-      await SaveRecoveryActions.restoreLatestBackup(
-        currentSchemaVersion: 3,
-        now: () => t,
-      );
-      final epoch = t.toUtc().millisecondsSinceEpoch;
-      expect(
-        File('${tempDir.path}/app_v3_corrupt_$epoch.sqlite').existsSync(),
-        isTrue,
-      );
-    },
-  );
+  test('restoreLatestBackup uses injectable clock for quarantine stem', () async {
+    await File('${tempDir.path}/global_domination.sqlite').writeAsString('x');
+    await File('${tempDir.path}/schema_backup_v2.sqlite').writeAsString('y');
+    final t = DateTime.utc(2040, 2, 2, 12);
+    await SaveRecoveryActions.restoreLatestBackup(
+      currentSchemaVersion: AppDatabase.currentSchemaVersion,
+      now: () => t,
+    );
+    final epoch = t.toUtc().millisecondsSinceEpoch;
+    expect(
+      File(
+        '${tempDir.path}/app_v${AppDatabase.currentSchemaVersion}_corrupt_$epoch.sqlite',
+      ).existsSync(),
+      isTrue,
+    );
+  });
 }

@@ -4,11 +4,12 @@ import '../app_database.dart';
 import 'migration_step.dart';
 import 'v1_to_v2.dart';
 import 'v2_to_v3.dart';
+import 'v3_to_v4.dart';
 
 class MigrationRegistry {
   MigrationRegistry._();
 
-  static const List<MigrationStep> _steps = [V1ToV2(), V2ToV3()];
+  static const List<MigrationStep> _steps = [V1ToV2(), V2ToV3(), V3ToV4()];
 
   static Future<void> run(
     Migrator m,

@@ -1,5 +1,14 @@
 # generated: 2026-04-21
-# last_updated: 2026-04-28
+# last_updated: 2026-04-29
+# 2026-04-29: Story 7-6 code review patch pass -> done (bottom-nav-visible sheet, provider-only Settings UI reads, root-navigator Support routing, movement-cancel hold, semantic long-press Support, Credits assertion fixed; settings modal/HUD/provider/repository/architecture tests + analyze green)
+# 2026-04-29: Story 7-6 code review -> in-progress (6 patch findings recorded: bottom nav visibility, UI data-layer import, nested-navigator Support pop, hold drag/scroll cancellation, semantic long-press Support action, Credits widget-test assertion; flutter analyze clean, settings modal widget test red on Credits + semantic long-press)
+# 2026-04-29: Story 7-6 → review (settings table schema v4 + V3ToV4, SettingsRepository + Riverpod providers, HUD settings modal with toggles/Credits/5s Support + semantics, Support long-press removed from app.dart; tests + dart analyze — run full flutter test after resolving Windows sqlite3.dll native-asset copy locks)
+# 2026-04-29: Story 7-7 created -> ready-for-dev (Upgrades tab replaces placeholder with unlocked-continent sections, per-country IP cards, 1/10/25 bulk buy via PurchaseUpgrade, next-unlock teaser via existing selectors, direct UnlockCountry dispatch, IncomeCalculator/CurrencyBadge/token/a11y guardrails, provider/widget/architecture tests; preserves concurrent 7-4/7-5/7-6 work)
+# 2026-04-28: Story 7-5 → review (Stats screen: stats_providers, MultiplierStackHelpers + IncomeCalculator refactor, StatsScreen UI, HUD/app scaffold/stats tests; flutter analyze + full flutter test green)
+# 2026-04-28: Story 7-6 created -> ready-for-dev (Settings modal expands HUD gear sheet; adds Drift settings schema v4 + SettingsRepository/providers for sound/haptics/notifications prefs; Credits row + 5s Support long-press relocation from app.dart; preserves ModalQueueHost/offline boot ordering and treats Story 7-5 stats work as concurrent/out of scope)
+# 2026-04-28: Story 7-4 code review patch pass -> done (resume daily waits behind offline catch-up, modal CTAs idempotent, mounted post-frame guard; modal/provider/architecture tests + analyze green)
+# 2026-04-28: Story 7-4 → review (priority modal queue, ModalQueueHost, daily/continent/achievement/purchase modals; modal_providers + host tests + app wiring guard; flutter test + analyze green)
+# 2026-04-28: Story 7-5 created -> ready-for-dev (Stats screen reachable from HUD; reactive progress totals for Influence/Intel, countries/continents/achievements, stable multiplier breakdown via provider summaries, content-derived denominators including placeholder-country guardrail, Navigator 1.0 route preservation, token/a11y/no-duplicate-income guardrails)
 # 2026-04-28: Story 7-3 code review patch pass -> done (fixed analyzer infos in CurrencyBadge/test listeners; flutter analyze + targeted HUD/provider/widget/architecture tests green)
 # 2026-04-28: Story 7-4 created -> ready-for-dev (generic priority modal queue replacing offline-only FIFO; preserves boot-time offline buffering, adds Daily/Continent/Achievement/Purchase modal entry guidance, root ModalQueueHost, fake-dismiss provider tests, accessibility/token guardrails)
 # 2026-04-28: Story 7-3 → review (Global HUD, currency providers, CurrencyBadge/AnimatedCounter, stats/settings placeholders; flutter test + analyze green)
@@ -118,7 +127,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-21
-last_updated: 2026-04-28
+last_updated: 2026-04-29
 # 2026-04-24: Story 4-1 created → ready-for-dev (UnlockCountry command + CountryUnlocked event + applyUnlockCountry reducer in lib/game/features/continents/; def.unlockCost from content, continent-gate via totalInfluence >= continentDef.unlockThreshold)
 # 2026-04-22: Story 3-2 created → ready-for-dev (IP upgrade single and bulk purchase)
 # 2026-04-22: Story 3-1 created → ready-for-dev (IncomeCalculator.compute: pure multiplier-stack function + BalanceConfig + GameState extension with zero-effect defaults; refactor tickCountries to route through it; grep-guard architecture test)
@@ -217,10 +226,10 @@ development_status:
   7-1-theme-tokens-and-design-system-foundation: done
   7-2-app-scaffold-with-5-tab-bottom-navigation-and-indexedstack: done
   7-3-global-hud-with-influence-and-intel-currency-badges: done
-  7-4-sequential-modal-queue-with-priority: ready-for-dev
-  7-5-stats-screen-reachable-from-hud: backlog
-  7-6-settings-modal-overlay-from-hud-gear-icon: backlog
-  7-7-upgrades-tab-unlocked-countries-next-unlock-teaser-per-continent: backlog
+  7-4-sequential-modal-queue-with-priority: done
+  7-5-stats-screen-reachable-from-hud: done
+  7-6-settings-modal-overlay-from-hud-gear-icon: done
+  7-7-upgrades-tab-unlocked-countries-next-unlock-teaser-per-continent: ready-for-dev
   7-8-leaders-tab-grouped-by-continent-accordion: backlog
   7-9-map-as-default-cold-launch-screen-auto-focus-post-tutorial: backlog
   7-10-continent-progression-visual-indicators: backlog

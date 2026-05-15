@@ -1,6 +1,6 @@
 # Story 7.4: Sequential Modal Queue With Priority
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -66,121 +66,127 @@ so that rewards and confirmations feel clear instead of stacked or overwhelming.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Preflight current modal and shell state (AC: #1, #2, #15)
-  - [ ] 1.1 Confirm Story 7.3's branch status and avoid overlapping edits to HUD/shell files where possible.
-  - [ ] 1.2 Confirm `OfflineRewardModalHost` is still the only production host for modal dialogs before this story.
-  - [ ] 1.3 Confirm `lib/app.dart` initializes the modal provider before `offlineCatchupBootProvider`; preserve the same ordering with `modalQueueProvider.notifier`.
-  - [ ] 1.4 Confirm `GameLoop` remains the only runtime owner of `Ticker` / `SingleTickerProviderStateMixin`.
-  - [ ] 1.5 Confirm `dailyRewardAvailableProvider` and `ClaimDailyReward` exist before adding Daily Reward UI. If either is missing, halt and finish Story 5.4 work first.
+- [x] Task 1: Preflight current modal and shell state (AC: #1, #2, #15)
+  - [x] 1.1 Confirm Story 7.3's branch status and avoid overlapping edits to HUD/shell files where possible.
+  - [x] 1.2 Confirm `OfflineRewardModalHost` is still the only production host for modal dialogs before this story.
+  - [x] 1.3 Confirm `lib/app.dart` initializes the modal provider before `offlineCatchupBootProvider`; preserve the same ordering with `modalQueueProvider.notifier`.
+  - [x] 1.4 Confirm `GameLoop` remains the only runtime owner of `Ticker` / `SingleTickerProviderStateMixin`.
+  - [x] 1.5 Confirm `dailyRewardAvailableProvider` and `ClaimDailyReward` exist before adding Daily Reward UI. If either is missing, halt and finish Story 5.4 work first.
 
-- [ ] Task 2: Replace offline-only queue with generic modal queue state (AC: #1, #2, #3, #4, #5, #11, #14, #15)
-  - [ ] 2.1 Refactor `lib/providers/modal_providers.dart` into the home of the global modal queue. Do not create a parallel `global_modal_providers.dart` unless the old file becomes a compatibility export only.
-  - [ ] 2.2 Add a priority model with stable ordering:
+- [x] Task 2: Replace offline-only queue with generic modal queue state (AC: #1, #2, #3, #4, #5, #11, #14, #15)
+  - [x] 2.1 Refactor `lib/providers/modal_providers.dart` into the home of the global modal queue. Do not create a parallel `global_modal_providers.dart` unless the old file becomes a compatibility export only.
+  - [x] 2.2 Add a priority model with stable ordering:
     - Offline Reward = 0
     - Daily Reward = 1
     - Celebration/Continent Complete = 2
     - Achievement Earned = 3
     - Purchase Confirm = 4
-  - [ ] 2.3 Add immutable queue entry types. Preferred shape:
+  - [x] 2.3 Add immutable queue entry types. Preferred shape:
     - `OfflineRewardModalEntry`
     - `DailyRewardModalEntry`
     - `ContinentCompleteModalEntry`
     - `AchievementEarnedModalEntry`
     - `PurchaseConfirmModalEntry`
-  - [ ] 2.4 Preserve the existing `OfflineRewardModalEntry` public fields (`totalEarned`, `elapsed`, `at`) if practical so `OfflineRewardModal` changes stay small.
-  - [ ] 2.5 Add a `ModalQueueState` with `current`, immutable `pending`, and helper getters for test inspection. No public mutable `List`.
-  - [ ] 2.6 Add `ModalQueueController extends StateNotifier<ModalQueueState>`.
-  - [ ] 2.7 Queue rule: if no modal is current, a new entry becomes `current`; if a modal is current, the new entry is inserted into pending by priority, then FIFO sequence within the same priority. Current is never preempted.
-  - [ ] 2.8 Add duplicate prevention by stable entry key for Daily Reward and Purchase Confirm. Do not dedupe Offline Reward, Continent Complete, or Achievement entries that can legitimately happen multiple times with different event timestamps/ids.
-  - [ ] 2.9 Add `dismissCurrent(String entryId)` or equivalent that removes only the matching current entry and promotes the next pending entry.
-  - [ ] 2.10 Add a fake-dismissal test seam, such as `modalDismissalStreamProvider`, that provider tests can override to drive `dismissCurrent` without widget dialogs.
-  - [ ] 2.11 Remove or deprecate `OfflineRewardModalController`, `OfflineRewardModalQueue`, and `offlineRewardModalControllerProvider` so there is one production queue. If a temporary alias is kept, it must not subscribe to `gameWorldEventsProvider` independently.
+  - [x] 2.4 Preserve the existing `OfflineRewardModalEntry` public fields (`totalEarned`, `elapsed`, `at`) if practical so `OfflineRewardModal` changes stay small.
+  - [x] 2.5 Add a `ModalQueueState` with `current`, immutable `pending`, and helper getters for test inspection. No public mutable `List`.
+  - [x] 2.6 Add `ModalQueueController extends StateNotifier<ModalQueueState>`.
+  - [x] 2.7 Queue rule: if no modal is current, a new entry becomes `current`; if a modal is current, the new entry is inserted into pending by priority, then FIFO sequence within the same priority. Current is never preempted.
+  - [x] 2.8 Add duplicate prevention by stable entry key for Daily Reward and Purchase Confirm. Do not dedupe Offline Reward, Continent Complete, or Achievement entries that can legitimately happen multiple times with different event timestamps/ids.
+  - [x] 2.9 Add `dismissCurrent(String entryId)` or equivalent that removes only the matching current entry and promotes the next pending entry.
+  - [x] 2.10 Add a fake-dismissal test seam, such as `modalDismissalStreamProvider`, that provider tests can override to drive `dismissCurrent` without widget dialogs.
+  - [x] 2.11 Remove or deprecate `OfflineRewardModalController`, `OfflineRewardModalQueue`, and `offlineRewardModalControllerProvider` so there is one production queue. If a temporary alias is kept, it must not subscribe to `gameWorldEventsProvider` independently.
 
-- [ ] Task 3: Map game events and daily availability into queue entries (AC: #4, #5, #6, #8, #9, #10, #15)
-  - [ ] 3.1 The queue controller subscribes to `gameWorldEventsProvider` once and cancels the subscription in `dispose()`.
-  - [ ] 3.2 On `OfflineEarningsApplied`, enqueue only when `totalEarned > Influence.zero`.
-  - [ ] 3.3 On `ContinentCompleted`, enqueue `ContinentCompleteModalEntry(continentId, at)`.
-  - [ ] 3.4 On `AchievementEarned`, enqueue `AchievementEarnedModalEntry(achievementId, rewardType, rewardValue, at)`.
-  - [ ] 3.5 Do not enqueue anything for `MilestoneReached(25/50/75)` in this story. Epic 8/Story 7.10 can decide milestone-specific visual treatment later.
-  - [ ] 3.6 Add a Daily Reward enqueue bridge that checks `dailyRewardAvailableProvider` after boot and after app resume. It may live in `ModalQueueHost` if it needs `WidgetsBindingObserver`, but queue insertion still goes through `modalQueueProvider.notifier`.
-  - [ ] 3.7 Use `clockProvider.now().toLocal()` to create a stable daily entry key such as `daily:YYYY-MM-DD`; never use `DateTime.now()` directly.
-  - [ ] 3.8 When `DailyRewardClaimed` is observed, ensure the daily entry for that local date cannot be re-enqueued in the same app session.
-  - [ ] 3.9 On app resume, invalidate or re-read `dailyRewardAvailableProvider` before deciding whether to enqueue Daily Reward. This avoids the provider's documented midnight staleness caveat.
-  - [ ] 3.10 Do not compute offline earnings, inspect Drift, or read `meta.lastSavedAt` from this story. Offline math remains Story 6.4.
+- [x] Task 3: Map game events and daily availability into queue entries (AC: #4, #5, #6, #8, #9, #10, #15)
+  - [x] 3.1 The queue controller subscribes to `gameWorldEventsProvider` once and cancels the subscription in `dispose()`.
+  - [x] 3.2 On `OfflineEarningsApplied`, enqueue only when `totalEarned > Influence.zero`.
+  - [x] 3.3 On `ContinentCompleted`, enqueue `ContinentCompleteModalEntry(continentId, at)`.
+  - [x] 3.4 On `AchievementEarned`, enqueue `AchievementEarnedModalEntry(achievementId, rewardType, rewardValue, at)`.
+  - [x] 3.5 Do not enqueue anything for `MilestoneReached(25/50/75)` in this story. Epic 8/Story 7.10 can decide milestone-specific visual treatment later.
+  - [x] 3.6 Add a Daily Reward enqueue bridge that checks `dailyRewardAvailableProvider` after boot and after app resume. It may live in `ModalQueueHost` if it needs `WidgetsBindingObserver`, but queue insertion still goes through `modalQueueProvider.notifier`.
+  - [x] 3.7 Use `clockProvider.now().toLocal()` to create a stable daily entry key such as `daily:YYYY-MM-DD`; never use `DateTime.now()` directly.
+  - [x] 3.8 When `DailyRewardClaimed` is observed, ensure the daily entry for that local date cannot be re-enqueued in the same app session.
+  - [x] 3.9 On app resume, invalidate or re-read `dailyRewardAvailableProvider` before deciding whether to enqueue Daily Reward. This avoids the provider's documented midnight staleness caveat.
+  - [x] 3.10 Do not compute offline earnings, inspect Drift, or read `meta.lastSavedAt` from this story. Offline math remains Story 6.4.
 
-- [ ] Task 4: Add or refactor modal widgets (AC: #7, #12, #13, #16, #17)
-  - [ ] 4.1 Keep `lib/ui/features/modals/offline_reward_modal.dart` as the Offline Reward presentation widget and continue using `Influence.format()` plus event `elapsed`.
-  - [ ] 4.2 Add `lib/ui/features/modals/daily_reward_modal.dart`. It may show a concise reward-ready surface and a single primary Claim CTA. If it previews reward values, compute them from existing `GameState`, `ContentRegistry.dailyRewards`, and `clockProvider` without duplicating reducer side effects.
-  - [ ] 4.3 Add `lib/ui/features/modals/continent_complete_modal.dart`. Resolve a friendly continent name from `ContentRegistry.continents[continentId]?.name` when available; fall back to the id value.
-  - [ ] 4.4 Add `lib/ui/features/modals/achievement_earned_modal.dart`. Resolve a friendly achievement name from `ContentRegistry.achievements` when available; fall back to the achievement id.
-  - [ ] 4.5 Add `lib/ui/features/modals/purchase_confirm_modal.dart` or a generic confirmation modal that displays title/message/confirm/cancel text from `PurchaseConfirmModalEntry`.
-  - [ ] 4.6 Every modal must use current Material theme, `Spacing.*`, `textTheme`, and `colorScheme`/theme extensions. Do not introduce raw `Color(...)` or `Colors.*` outside `lib/ui/theme/**`.
-  - [ ] 4.7 Reward/celebration modals should use a single CTA such as `Collect`, `Claim`, or `Continue`. Purchase Confirm must use `Cancel` and `Confirm`.
-  - [ ] 4.8 Wrap each dialog route body with readable `Semantics(namesRoute: true, label: ...)` or equivalent.
-  - [ ] 4.9 Keep layouts narrow-width safe. Long numbers, continent names, achievement names, and larger text scaling must not overflow.
+- [x] Task 4: Add or refactor modal widgets (AC: #7, #12, #13, #16, #17)
+  - [x] 4.1 Keep `lib/ui/features/modals/offline_reward_modal.dart` as the Offline Reward presentation widget and continue using `Influence.format()` plus event `elapsed`.
+  - [x] 4.2 Add `lib/ui/features/modals/daily_reward_modal.dart`. It may show a concise reward-ready surface and a single primary Claim CTA. If it previews reward values, compute them from existing `GameState`, `ContentRegistry.dailyRewards`, and `clockProvider` without duplicating reducer side effects.
+  - [x] 4.3 Add `lib/ui/features/modals/continent_complete_modal.dart`. Resolve a friendly continent name from `ContentRegistry.continents[continentId]?.name` when available; fall back to the id value.
+  - [x] 4.4 Add `lib/ui/features/modals/achievement_earned_modal.dart`. Resolve a friendly achievement name from `ContentRegistry.achievements` when available; fall back to the achievement id.
+  - [x] 4.5 Add `lib/ui/features/modals/purchase_confirm_modal.dart` or a generic confirmation modal that displays title/message/confirm/cancel text from `PurchaseConfirmModalEntry`.
+  - [x] 4.6 Every modal must use current Material theme, `Spacing.*`, `textTheme`, and `colorScheme`/theme extensions. Do not introduce raw `Color(...)` or `Colors.*` outside `lib/ui/theme/**`.
+  - [x] 4.7 Reward/celebration modals should use a single CTA such as `Collect`, `Claim`, or `Continue`. Purchase Confirm must use `Cancel` and `Confirm`.
+  - [x] 4.8 Wrap each dialog route body with readable `Semantics(namesRoute: true, label: ...)` or equivalent.
+  - [x] 4.9 Keep layouts narrow-width safe. Long numbers, continent names, achievement names, and larger text scaling must not overflow.
 
-- [ ] Task 5: Replace the root host with `ModalQueueHost` (AC: #1, #2, #7, #12, #13, #15, #16)
-  - [ ] 5.1 Create `lib/ui/features/modals/modal_queue_host.dart`.
-  - [ ] 5.2 `ModalQueueHost` listens to `modalQueueProvider` and calls `showDialog<void>` only when a new `current` entry exists and no modal route is already showing.
-  - [ ] 5.3 Use `useRootNavigator: true`, `barrierDismissible: false`, and a route-specific barrier label.
-  - [ ] 5.4 Wrap route builders with `PopScope(canPop: false, child: ...)` so system back does not bypass the queue.
-  - [ ] 5.5 After a modal Future completes, call `dismissCurrent(entry.id)` and drain the next pending entry on a post-frame callback.
-  - [ ] 5.6 For Daily Reward Claim, dispatch `const ClaimDailyReward()` before dismissing. Do not add reward amounts directly in UI.
-  - [ ] 5.7 For Purchase Confirm, dispatch the stored `GameCommand` exactly once only on Confirm. Cancel dismisses without dispatch.
-  - [ ] 5.8 Preserve `_isShowing`, `mounted` checks, and deferred post-frame drain behavior from `OfflineRewardModalHost`.
-  - [ ] 5.9 Replace `OfflineRewardModalHost` usage in `lib/app.dart` with `ModalQueueHost`.
-  - [ ] 5.10 Delete `offline_reward_modal_host.dart` or leave it as a compatibility wrapper around `ModalQueueHost` only if existing imports require it. It must not read `offlineRewardModalControllerProvider`.
+- [x] Task 5: Replace the root host with `ModalQueueHost` (AC: #1, #2, #7, #12, #13, #15, #16)
+  - [x] 5.1 Create `lib/ui/features/modals/modal_queue_host.dart`.
+  - [x] 5.2 `ModalQueueHost` listens to `modalQueueProvider` and calls `showDialog<void>` only when a new `current` entry exists and no modal route is already showing.
+  - [x] 5.3 Use `useRootNavigator: true`, `barrierDismissible: false`, and a route-specific barrier label.
+  - [x] 5.4 Wrap route builders with `PopScope(canPop: false, child: ...)` so system back does not bypass the queue.
+  - [x] 5.5 After a modal Future completes, call `dismissCurrent(entry.id)` and drain the next pending entry on a post-frame callback.
+  - [x] 5.6 For Daily Reward Claim, dispatch `const ClaimDailyReward()` before dismissing. Do not add reward amounts directly in UI.
+  - [x] 5.7 For Purchase Confirm, dispatch the stored `GameCommand` exactly once only on Confirm. Cancel dismisses without dispatch.
+  - [x] 5.8 Preserve `_isShowing`, `mounted` checks, and deferred post-frame drain behavior from `OfflineRewardModalHost`.
+  - [x] 5.9 Replace `OfflineRewardModalHost` usage in `lib/app.dart` with `ModalQueueHost`.
+  - [x] 5.10 Delete `offline_reward_modal_host.dart` or leave it as a compatibility wrapper around `ModalQueueHost` only if existing imports require it. It must not read `offlineRewardModalControllerProvider`.
 
-- [ ] Task 6: Preserve boot/resume ordering in `app.dart` (AC: #6, #8, #15)
-  - [ ] 6.1 In the successful persisted snapshot branch, initialize the new queue provider before `offlineCatchupBootProvider`, mirroring the old Story 6.5 pattern:
+- [x] Task 6: Preserve boot/resume ordering in `app.dart` (AC: #6, #8, #15)
+  - [x] 6.1 In the successful persisted snapshot branch, initialize the new queue provider before `offlineCatchupBootProvider`, mirroring the old Story 6.5 pattern:
     ```dart
     ref.watch(modalQueueProvider.notifier);
     final offlineBoot = ref.watch(offlineCatchupBootProvider);
     ```
-  - [ ] 6.2 Keep `OfflineCatchupBootProvider` and `GameLoop` resume catch-up behavior unchanged.
-  - [ ] 6.3 Keep `ModalQueueHost` inside the real `MaterialApp` and outside `_SaveRepositoryBootstrap(child: _GameScreen())`.
-  - [ ] 6.4 Do not move `ProviderScope`, `MaterialApp`, database bootstrap, content bootstrap, save recovery, or support long-press setup.
-  - [ ] 6.5 If Story 7.3 has added HUD stats/settings placeholders or imports, preserve them.
+  - [x] 6.2 Keep `OfflineCatchupBootProvider` and `GameLoop` resume catch-up behavior unchanged.
+  - [x] 6.3 Keep `ModalQueueHost` inside the real `MaterialApp` and outside `_SaveRepositoryBootstrap(child: _GameScreen())`.
+  - [x] 6.4 Do not move `ProviderScope`, `MaterialApp`, database bootstrap, content bootstrap, save recovery, or support long-press setup.
+  - [x] 6.5 If Story 7.3 has added HUD stats/settings placeholders or imports, preserve them.
 
-- [ ] Task 7: Provider and ordering tests (AC: #1, #2, #3, #4, #5, #8, #9, #10, #11, #14, #15)
-  - [ ] 7.1 Add `test/providers/modal_providers_test.dart`.
-  - [ ] 7.2 Test offline positive events enqueue; zero and negative events do not.
-  - [ ] 7.3 Test current modal is not preempted by a higher-priority entry.
-  - [ ] 7.4 Test pending entries are promoted by priority order after dismissal.
-  - [ ] 7.5 Test FIFO order within the same priority.
-  - [ ] 7.6 Test two achievement events with different ids/timestamps both enqueue.
-  - [ ] 7.7 Test Daily Reward duplicate suppression for the same local calendar date.
-  - [ ] 7.8 Test `modalDismissalStreamProvider` or the chosen fake-dismiss seam advances the queue without widget dialogs.
-  - [ ] 7.9 Test queue state pending lists are immutable.
-  - [ ] 7.10 Test purchase confirm entry remains pending/current until dismissed and carries the configured command without dispatching during enqueue.
+- [x] Task 7: Provider and ordering tests (AC: #1, #2, #3, #4, #5, #8, #9, #10, #11, #14, #15)
+  - [x] 7.1 Add `test/providers/modal_providers_test.dart`.
+  - [x] 7.2 Test offline positive events enqueue; zero and negative events do not.
+  - [x] 7.3 Test current modal is not preempted by a higher-priority entry.
+  - [x] 7.4 Test pending entries are promoted by priority order after dismissal.
+  - [x] 7.5 Test FIFO order within the same priority.
+  - [x] 7.6 Test two achievement events with different ids/timestamps both enqueue.
+  - [x] 7.7 Test Daily Reward duplicate suppression for the same local calendar date.
+  - [x] 7.8 Test `modalDismissalStreamProvider` or the chosen fake-dismiss seam advances the queue without widget dialogs.
+  - [x] 7.9 Test queue state pending lists are immutable.
+  - [x] 7.10 Test purchase confirm entry remains pending/current until dismissed and carries the configured command without dispatching during enqueue.
 
-- [ ] Task 8: Host and modal widget tests (AC: #1, #2, #7, #12, #13, #15, #16, #17)
-  - [ ] 8.1 Replace or extend `test/ui/features/modals/offline_reward_modal_host_test.dart` with `modal_queue_host_test.dart`.
-  - [ ] 8.2 Test an event buffered before host mount still shows when `ModalQueueHost` starts.
-  - [ ] 8.3 Test Offline Reward followed by Daily Reward followed by Achievement displays sequentially after each CTA, with only one dialog visible at a time.
-  - [ ] 8.4 Test outside barrier tap and system back do not dismiss reward/celebration dialogs.
-  - [ ] 8.5 Test Daily Claim dispatches `ClaimDailyReward` exactly once through a spy `GameWorldNotifier`.
-  - [ ] 8.6 Test Purchase Cancel dispatches no command; Purchase Confirm dispatches the configured command exactly once.
-  - [ ] 8.7 Test modal semantics labels for Offline Reward, Daily Reward, Continent Complete, Achievement Earned, and Purchase Confirm.
-  - [ ] 8.8 Test narrow-width and large-value layouts do not overflow.
-  - [ ] 8.9 Keep existing `offline_reward_modal_test.dart` coverage for elapsed formatting, amount formatting, CTA behavior, and large Influence values.
+- [x] Task 8: Host and modal widget tests (AC: #1, #2, #7, #12, #13, #15, #16, #17)
+  - [x] 8.1 Replace or extend `test/ui/features/modals/offline_reward_modal_host_test.dart` with `modal_queue_host_test.dart`.
+  - [x] 8.2 Test an event buffered before host mount still shows when `ModalQueueHost` starts.
+  - [x] 8.3 Test Offline Reward followed by Daily Reward followed by Achievement displays sequentially after each CTA, with only one dialog visible at a time.
+  - [x] 8.4 Test outside barrier tap and system back do not dismiss reward/celebration dialogs.
+  - [x] 8.5 Test Daily Claim dispatches `ClaimDailyReward` exactly once through a spy `GameWorldNotifier`.
+  - [x] 8.6 Test Purchase Cancel dispatches no command; Purchase Confirm dispatches the configured command exactly once.
+  - [x] 8.7 Test modal semantics labels for Offline Reward, Daily Reward, Continent Complete, Achievement Earned, and Purchase Confirm.
+  - [x] 8.8 Test narrow-width and large-value layouts do not overflow.
+  - [x] 8.9 Keep existing `offline_reward_modal_test.dart` coverage for elapsed formatting, amount formatting, CTA behavior, and large Influence values.
 
-- [ ] Task 9: Architecture and regression guardrails (AC: #17, #18)
-  - [ ] 9.1 Run or extend `test/architecture/ui_design_tokens_test.dart` so every new modal widget avoids raw widget color literals.
-  - [ ] 9.2 Run `test/architecture/game_boundary_test.dart`; this story should not add Flutter imports under `lib/game/**`.
-  - [ ] 9.3 Add or extend a small source guard if needed to ensure `ModalQueueHost` is the only production modal host wired in `app.dart`.
-  - [ ] 9.4 Ensure no new Drift imports appear in `lib/ui/**`.
-  - [ ] 9.5 Ensure no new packages are added to `pubspec.yaml`.
+- [x] Task 9: Architecture and regression guardrails (AC: #17, #18)
+  - [x] 9.1 Run or extend `test/architecture/ui_design_tokens_test.dart` so every new modal widget avoids raw widget color literals.
+  - [x] 9.2 Run `test/architecture/game_boundary_test.dart`; this story should not add Flutter imports under `lib/game/**`.
+  - [x] 9.3 Add or extend a small source guard if needed to ensure `ModalQueueHost` is the only production modal host wired in `app.dart`.
+  - [x] 9.4 Ensure no new Drift imports appear in `lib/ui/**`.
+  - [x] 9.5 Ensure no new packages are added to `pubspec.yaml`.
 
-- [ ] Task 10: Verification (AC: all)
-  - [ ] 10.1 Run `dart format --set-exit-if-changed` on changed Dart and test files.
-  - [ ] 10.2 Run `flutter test test/providers/modal_providers_test.dart`.
-  - [ ] 10.3 Run `flutter test test/ui/features/modals`.
-  - [ ] 10.4 Run `flutter test test/providers/feature_providers_test.dart`.
-  - [ ] 10.5 Run `flutter test test/ui/app_scaffold_test.dart` if Story 7.3 shell/HUD changes are present.
-  - [ ] 10.6 Run `flutter test test/architecture`.
-  - [ ] 10.7 Run `flutter analyze`.
-  - [ ] 10.8 Run full `flutter test` if time permits.
+- [x] Task 10: Verification (AC: all)
+  - [x] 10.1 Run `dart format --set-exit-if-changed` on changed Dart and test files.
+  - [x] 10.2 Run `flutter test test/providers/modal_providers_test.dart`.
+  - [x] 10.3 Run `flutter test test/ui/features/modals`.
+  - [x] 10.4 Run `flutter test test/providers/feature_providers_test.dart`.
+  - [x] 10.5 Run `flutter test test/ui/app_scaffold_test.dart` if Story 7.3 shell/HUD changes are present.
+  - [x] 10.6 Run `flutter test test/architecture`.
+  - [x] 10.7 Run `flutter analyze`.
+  - [x] 10.8 Run full `flutter test` if time permits.
+
+### Review Findings
+
+- [x] [Review][Patch] Daily reward can overtake resume offline reward [lib/ui/features/modals/modal_queue_host.dart:43]
+- [x] [Review][Patch] Daily claim and purchase confirm actions are not idempotent [lib/ui/features/modals/daily_reward_modal.dart:58]
+- [x] [Review][Patch] Initial post-frame daily enqueue reads ref after disposal if host unmounts early [lib/ui/features/modals/modal_queue_host.dart:30]
 
 ## Dev Notes
 
@@ -388,14 +394,42 @@ Recent commits are directly relevant:
 
 ### Agent Model Used
 
-TBD by dev agent.
+Composer (Cursor agent).
 
 ### Debug Log References
 
+(none)
+
 ### Completion Notes List
+
+- Implemented priority modal queue in `modal_providers.dart` (`ModalQueueController`, sealed `ModalQueueEntry` variants, `modalQueueProvider`, sync `modalDismissalStreamProvider` for tests).
+- `ModalQueueHost` replaces offline-only host: root `showDialog`, `PopScope`, post-frame drain, `WidgetsBindingObserver` resume + `dailyRewardAvailableProvider` invalidation, `maybeEnqueueDailyReward` guarded when sim/content is not ready.
+- Added Daily / Continent / Achievement / Purchase modals with theme tokens, semantics, 48dp CTAs; purchase dispatches `GameCommand` only on Confirm.
+- Tests: `modal_providers_test.dart`, `modal_queue_host_test.dart` (buffered boot, barrier/back, sequential offline→daily→achievement, semantics), `modal_host_wiring_test.dart`; `offline_reward_modal_test` updated for new `OfflineRewardModalEntry` shape.
+- `dart format --set-exit-if-changed`, `flutter analyze`, full `flutter test` green.
+- Code review patch pass: resume Daily Reward enqueue waits behind resume offline catch-up, Daily/Purchase CTAs are idempotent, and initial post-frame callback checks `mounted` before reading `ref`.
 
 ### File List
 
+- lib/providers/modal_providers.dart
+- lib/app.dart
+- lib/ui/features/modals/offline_reward_modal.dart
+- lib/ui/features/modals/daily_reward_modal.dart
+- lib/ui/features/modals/continent_complete_modal.dart
+- lib/ui/features/modals/achievement_earned_modal.dart
+- lib/ui/features/modals/purchase_confirm_modal.dart
+- lib/ui/features/modals/modal_queue_host.dart
+- test/providers/modal_providers_test.dart
+- test/ui/features/modals/modal_queue_host_test.dart
+- test/ui/features/modals/offline_reward_modal_test.dart
+- test/architecture/modal_host_wiring_test.dart
+
+### Change Log
+
+- 2026-04-28: Story 7.4 implementation — global priority modal queue, `ModalQueueHost`, new modal surfaces, provider/widget/architecture tests; removed `offline_reward_modal_host.dart`.
+
+- 2026-04-28: Code review patches applied; modal/provider/architecture tests and `flutter analyze` green.
+
 ## Story Completion Status
 
-Ultimate context engine analysis completed - comprehensive developer guide created.
+Implementation complete; story marked **done** after code review patches. All acceptance criteria addressed via queue ordering, event bridges, host behavior, accessibility/theming, and automated tests.
