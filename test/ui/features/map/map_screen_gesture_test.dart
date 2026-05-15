@@ -40,6 +40,7 @@ Widget _buildApp(List<CountryPath> countries) {
   return ProviderScope(
     overrides: [
       geoProvider.overrideWith((ref) async => countries),
+      mapWidgetTestContentOverride(countries),
       mapWidgetTestGameWorldOverride(),
     ],
     child: MaterialApp(theme: appTheme(), home: const MapScreen()),

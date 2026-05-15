@@ -7,8 +7,11 @@ import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
+import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/geo_providers.dart';
+import 'package:global_domination/providers/map_focus_providers.dart';
+import 'package:global_domination/ui/features/map/auto_focus_target.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
 import 'package:global_domination/ui/features/map/country_paints.dart';
 import 'package:global_domination/ui/features/map/country_visual_state.dart';
@@ -23,35 +26,50 @@ class MapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final geoAsync = ref.watch(geoProvider);
-    final gameState = ref.watch(gameWorldProvider);
+    final contentAsync = ref.watch(contentRegistryProvider);
 
-    return geoAsync.when(
-      loading: () {
-        final theme = Theme.of(context);
-        return Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(color: theme.colorScheme.primary),
-          ),
-        );
-      },
-      error: (error, _) {
-        final theme = Theme.of(context);
-        return Scaffold(
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(Spacing.md),
-              child: Text(
-                'Map load error: $error',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-                textAlign: TextAlign.center,
+    Widget loading() {
+      final theme = Theme.of(context);
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        ),
+      );
+    }
+
+    Widget errorView(Object error) {
+      final theme = Theme.of(context);
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Text(
+              'Map load error: $error',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.error,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-        );
-      },
-      data: (countries) => _MapView(countries: countries, gameState: gameState),
+        ),
+      );
+    }
+
+    return geoAsync.when(
+      loading: loading,
+      error: (error, _) => errorView(error),
+      data: (countries) => contentAsync.when(
+        loading: loading,
+        error: (error, _) => errorView(error),
+        data: (content) {
+          final gameState = ref.watch(gameWorldProvider);
+          return _MapView(
+            countries: countries,
+            gameState: gameState,
+            contentCountryOrder: content.countries.keys.toList(growable: false),
+          );
+        },
+      ),
     );
   }
 }
@@ -72,10 +90,15 @@ Map<CountryId, CountryVisualState> _deriveVisualStates(GameState state) {
 }
 
 class _MapView extends ConsumerStatefulWidget {
-  const _MapView({required this.countries, required this.gameState});
+  const _MapView({
+    required this.countries,
+    required this.gameState,
+    required this.contentCountryOrder,
+  });
 
   final List<CountryPath> countries;
   final GameState gameState;
+  final List<CountryId> contentCountryOrder;
 
   @override
   ConsumerState<_MapView> createState() => _MapViewState();
@@ -88,6 +111,12 @@ class _MapViewState extends ConsumerState<_MapView> {
   Matrix4 _viewTransform = Matrix4.identity();
   double _gestureScale = 1.0;
   Offset? _lastFocalPoint;
+  bool _autoFocusApplied = false;
+  bool _autoFocusCallbackScheduled = false;
+  bool _autoFocusWaitingForTutorial = false;
+
+  late final ProviderSubscription<CountryId?> _recentUnlockSubscription;
+  late final ProviderSubscription<bool> _tutorialCompletedSubscription;
 
   WorldMapPainter? _painter;
   CountryPaints? _paints;
@@ -95,6 +124,102 @@ class _MapViewState extends ConsumerState<_MapView> {
   Matrix4? _lastTransform;
 
   late final PolygonHitTester _hitTester = PolygonHitTester(widget.countries);
+
+  @override
+  void initState() {
+    super.initState();
+    _recentUnlockSubscription = ref.listenManual<CountryId?>(
+      recentlyUnlockedCountryProvider,
+      (_, _) {},
+    );
+    _tutorialCompletedSubscription = ref.listenManual<bool>(
+      tutorialCompletedProvider,
+      (_, next) {
+        if (next && _autoFocusWaitingForTutorial && mounted) {
+          setState(() => _autoFocusWaitingForTutorial = false);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _recentUnlockSubscription.close();
+    _tutorialCompletedSubscription.close();
+    super.dispose();
+  }
+
+  CountryPath? _countryPathById(
+    Map<CountryId, CountryPath> pathsById,
+    CountryId id,
+  ) {
+    return pathsById[id];
+  }
+
+  CountryPath? _fallbackTarget(Map<CountryId, CountryPath> pathsById) {
+    for (final id in widget.contentCountryOrder) {
+      final countryState = widget.gameState.countries[id];
+      if (countryState?.unlocked != true) continue;
+      final path = _countryPathById(pathsById, id);
+      if (path != null) return path;
+    }
+    return null;
+  }
+
+  void _tryAutoFocus(Size canvasSize) {
+    if (_autoFocusApplied) return;
+    if (!canvasSize.width.isFinite ||
+        !canvasSize.height.isFinite ||
+        canvasSize.width <= 2 * Spacing.lg ||
+        canvasSize.height <= 2 * Spacing.lg) {
+      return;
+    }
+    final tutorialCompleted = ref.read(tutorialCompletedProvider);
+    if (!tutorialCompleted) {
+      _autoFocusWaitingForTutorial = true;
+      return;
+    }
+    _autoFocusWaitingForTutorial = false;
+
+    final pathsById = {for (final c in widget.countries) c.id: c};
+    final recentId = ref.read(recentlyUnlockedCountryProvider);
+    CountryPath? target;
+    if (recentId != null &&
+        widget.gameState.countries[recentId]?.unlocked == true) {
+      target = _countryPathById(pathsById, recentId);
+    }
+    target ??= _fallbackTarget(pathsById);
+
+    if (target == null) {
+      _autoFocusApplied = true;
+      return;
+    }
+
+    final newTransform = computeContinentFitTransform(
+      targetCountry: target,
+      allCountries: widget.countries,
+      canvasSize: canvasSize,
+    );
+
+    setState(() {
+      _viewTransform = newTransform;
+      _autoFocusApplied = true;
+    });
+  }
+
+  void _scheduleAutoFocus(Size canvasSize) {
+    if (_autoFocusApplied ||
+        _autoFocusCallbackScheduled ||
+        _autoFocusWaitingForTutorial) {
+      return;
+    }
+    _autoFocusCallbackScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _autoFocusCallbackScheduled = false;
+      _tryAutoFocus(canvasSize);
+    });
+  }
 
   void _onScaleStart(ScaleStartDetails details) {
     _lastFocalPoint = details.localFocalPoint;
@@ -188,6 +313,7 @@ class _MapViewState extends ConsumerState<_MapView> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+          _scheduleAutoFocus(canvasSize);
           return GestureDetector(
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,

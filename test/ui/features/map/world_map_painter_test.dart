@@ -165,6 +165,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) => completer.future),
+            mapWidgetTestContentOverride(fakeCountries),
             mapWidgetTestGameWorldOverride(),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -181,6 +182,7 @@ void main() {
           ProviderScope(
             overrides: [
               geoProvider.overrideWith((ref) async => fakeCountries),
+              mapWidgetTestContentOverride(fakeCountries),
               mapWidgetTestGameWorldOverride(),
             ],
             child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -204,6 +206,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => fakeCountries),
+            mapWidgetTestContentOverride(fakeCountries),
             mapWidgetTestGameWorldOverride(),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -233,6 +236,7 @@ void main() {
             geoProvider.overrideWith(
               (ref) => Future<List<CountryPath>>.error('boom'),
             ),
+            mapWidgetTestContentOverride(fakeCountries),
             mapWidgetTestGameWorldOverride(),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -255,6 +259,7 @@ void main() {
           ProviderScope(
             overrides: [
               geoProvider.overrideWith((ref) async => fakeCountries),
+              mapWidgetTestContentOverride(fakeCountries),
               mapWidgetTestGameWorldOverride(
                 GameState(totalInfluence: Influence(Decimal.parse('1e38'))),
               ),

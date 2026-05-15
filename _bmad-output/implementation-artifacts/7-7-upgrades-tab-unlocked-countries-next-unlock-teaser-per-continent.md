@@ -1,6 +1,6 @@
 # Story 7.7: Upgrades Tab - Unlocked Countries + Next-Unlock Teaser per Continent
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -75,106 +75,111 @@ so that I can efficiently spend Influence without navigating the map.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Preflight current shell, placeholder, and concurrent work (AC: #1, #2)
-  - [ ] 1.1 Run `git status --short` and note existing user-owned/uncommitted Story 7.4, 7.5, and 7.6 files. Preserve them.
-  - [ ] 1.2 Confirm `AppScaffold` still renders tabs in Map, Upgrades, Leaders, Achievements, Minigames order with `IndexedStack`.
-  - [ ] 1.3 Confirm `UpgradesScreen` is still the placeholder in `lib/ui/features/upgrades/upgrades_screen.dart`; expand this file rather than adding another route.
-  - [ ] 1.4 Confirm `feature_providers.dart` still exposes `nextUnlockInContinentProvider` and `nextUnlockOverallProvider`.
-  - [ ] 1.5 Confirm `PurchaseUpgrade` and `UnlockCountry` signatures match the story expectations.
-  - [ ] 1.6 Confirm current Story 7.6 settings work has not landed before touching shared HUD/app files. This story should not edit settings.
+- [x] Task 1: Preflight current shell, placeholder, and concurrent work (AC: #1, #2)
+  - [x] 1.1 Run `git status --short` and note existing user-owned/uncommitted Story 7.4, 7.5, and 7.6 files. Preserve them.
+  - [x] 1.2 Confirm `AppScaffold` still renders tabs in Map, Upgrades, Leaders, Achievements, Minigames order with `IndexedStack`.
+  - [x] 1.3 Confirm `UpgradesScreen` is still the placeholder in `lib/ui/features/upgrades/upgrades_screen.dart`; expand this file rather than adding another route.
+  - [x] 1.4 Confirm `feature_providers.dart` still exposes `nextUnlockInContinentProvider` and `nextUnlockOverallProvider`.
+  - [x] 1.5 Confirm `PurchaseUpgrade` and `UnlockCountry` signatures match the story expectations.
+  - [x] 1.6 Confirm current Story 7.6 settings work has not landed before touching shared HUD/app files. This story should not edit settings.
 
-- [ ] Task 2: Add Upgrades tab provider models (AC: #2, #3, #4, #5, #6, #7, #12, #15, #17, #21)
-  - [ ] 2.1 Create `lib/providers/upgrades_providers.dart` unless the team strongly prefers `feature_providers.dart`. Keep derived Upgrades models UI-independent.
-  - [ ] 2.2 Add immutable DTOs such as `UpgradesTabModel`, `ContinentUpgradeSection`, `CountryUpgradeRow`, and `NextUnlockTeaserRow`.
-  - [ ] 2.3 Sections should be built from `ContentRegistry.continents` sorted by unlock threshold, then id for deterministic ordering.
-  - [ ] 2.4 Show only sections where `state.unlockedContinents[continent.id] == true`.
-  - [ ] 2.5 Country rows should be built from `ContentRegistry.countries.values` in content order, filtered to the section continent and `state.countries[id]?.unlocked == true`.
-  - [ ] 2.6 Derive country display names from id with a single helper, for example split on `_`/`-`, capitalize words, and preserve stable output in tests.
-  - [ ] 2.7 For each row, include `countryId`, display name, `ipLevel`, `isMaxLevel`, and `currentRate = IncomeCalculator.compute(...)`.
-  - [ ] 2.8 Do not read `CountryDef.baseInfluence` in UI for rate display. It is acceptable inside provider code only as part of the `IncomeCalculator.compute(...)` call.
-  - [ ] 2.9 Expose a pure helper for upgrade affordability/cost, such as `upgradePurchasePreview(row, bulk, totalInfluence)` or a provider family. It must use `IncomeCalculator.upgradeCost(...)`.
-  - [ ] 2.10 Reuse `nextUnlockInContinentProvider` semantics for teaser country choice. If wrapping it in an Upgrades provider, keep the underlying selector behavior aligned with Story 4.5.
-  - [ ] 2.11 Include a model state for completed sections / future continent teaser / world complete so the widget never guesses from nulls.
+- [x] Task 2: Add Upgrades tab provider models (AC: #2, #3, #4, #5, #6, #7, #12, #15, #17, #21)
+  - [x] 2.1 Create `lib/providers/upgrades_providers.dart` unless the team strongly prefers `feature_providers.dart`. Keep derived Upgrades models UI-independent.
+  - [x] 2.2 Add immutable DTOs such as `UpgradesTabModel`, `ContinentUpgradeSection`, `CountryUpgradeRow`, and `NextUnlockTeaserRow`.
+  - [x] 2.3 Sections should be built from `ContentRegistry.continents` sorted by unlock threshold, then id for deterministic ordering.
+  - [x] 2.4 Show only sections where `state.unlockedContinents[continent.id] == true`.
+  - [x] 2.5 Country rows should be built from `ContentRegistry.countries.values` in content order, filtered to the section continent and `state.countries[id]?.unlocked == true`.
+  - [x] 2.6 Derive country display names from id with a single helper, for example split on `_`/`-`, capitalize words, and preserve stable output in tests.
+  - [x] 2.7 For each row, include `countryId`, display name, `ipLevel`, `isMaxLevel`, and `currentRate = IncomeCalculator.compute(...)`.
+  - [x] 2.8 Do not read `CountryDef.baseInfluence` in UI for rate display. It is acceptable inside provider code only as part of the `IncomeCalculator.compute(...)` call.
+  - [x] 2.9 Expose a pure helper for upgrade affordability/cost, such as `upgradePurchasePreview(row, bulk, totalInfluence)` or a provider family. It must use `IncomeCalculator.upgradeCost(...)`.
+  - [x] 2.10 Reuse `nextUnlockInContinentProvider` semantics for teaser country choice. If wrapping it in an Upgrades provider, keep the underlying selector behavior aligned with Story 4.5.
+  - [x] 2.11 Include a model state for completed sections / future continent teaser / world complete so the widget never guesses from nulls.
 
-- [ ] Task 3: Replace placeholder with real Upgrades tab UI (AC: #1, #2, #3, #4, #5, #12, #15, #16, #18, #19, #20)
-  - [ ] 3.1 Modify `lib/ui/features/upgrades/upgrades_screen.dart`.
-  - [ ] 3.2 Prefer `ConsumerStatefulWidget` or small child widgets so per-card bulk selection can be local UI state.
-  - [ ] 3.3 Remove the nested placeholder copy. The Upgrades tab should be a real tool surface, not a "coming soon" screen.
-  - [ ] 3.4 Avoid a nested `Scaffold` unless a concrete Flutter issue requires it; `AppScaffold` already provides the shell.
-  - [ ] 3.5 Use a single vertical scrollable layout. `ListView.builder` or slivers are preferred for scaling to 79 countries.
-  - [ ] 3.6 Render continent headers as unframed section headers with the continent name and count of unlocked countries in that section.
-  - [ ] 3.7 Render cards only for individual country rows and teaser rows. Do not put cards inside other cards.
-  - [ ] 3.8 Use compact, repeatable card layout: country name, IP level, rate, cost, bulk selector, Buy button.
-  - [ ] 3.9 Use Material icons where helpful (`Icons.trending_up`, `Icons.lock_open`, `Icons.public`, etc.); no emoji or new assets.
-  - [ ] 3.10 Make long values resilient with `Flexible`, wrapping text, `FittedBox` only for compact numeric chips, and stable card constraints.
+- [x] Task 3: Replace placeholder with real Upgrades tab UI (AC: #1, #2, #3, #4, #5, #12, #15, #16, #18, #19, #20)
+  - [x] 3.1 Modify `lib/ui/features/upgrades/upgrades_screen.dart`.
+  - [x] 3.2 Prefer `ConsumerStatefulWidget` or small child widgets so per-card bulk selection can be local UI state.
+  - [x] 3.3 Remove the nested placeholder copy. The Upgrades tab should be a real tool surface, not a "coming soon" screen.
+  - [x] 3.4 Avoid a nested `Scaffold` unless a concrete Flutter issue requires it; `AppScaffold` already provides the shell.
+  - [x] 3.5 Use a single vertical scrollable layout. `ListView.builder` or slivers are preferred for scaling to 79 countries.
+  - [x] 3.6 Render continent headers as unframed section headers with the continent name and count of unlocked countries in that section.
+  - [x] 3.7 Render cards only for individual country rows and teaser rows. Do not put cards inside other cards.
+  - [x] 3.8 Use compact, repeatable card layout: country name, IP level, rate, cost, bulk selector, Buy button.
+  - [x] 3.9 Use Material icons where helpful (`Icons.trending_up`, `Icons.lock_open`, `Icons.public`, etc.); no emoji or new assets.
+  - [x] 3.10 Make long values resilient with `Flexible`, wrapping text, `FittedBox` only for compact numeric chips, and stable card constraints.
 
-- [ ] Task 4: Implement per-card bulk selector and Buy command path (AC: #5, #7, #8, #9, #10, #11, #18)
-  - [ ] 4.1 Use `SegmentedButton<int>` with `ButtonSegment<int>` values 1, 10, and 25, or a token-consistent Material equivalent if layout tests prove segmented buttons do not fit.
-  - [ ] 4.2 Keep selected bulk in widget state keyed by `CountryId`; default to 1.
-  - [ ] 4.3 When computing cost, calculate `actualLevels = min(selectedBulk, BalanceConfig.maxIpLevel - ipLevel)` and call `IncomeCalculator.upgradeCost(def, ipLevel, actualLevels)`.
-  - [ ] 4.4 Disable Buy if `actualLevels < 1`, `cost == null`, or `state.totalInfluence < cost`.
-  - [ ] 4.5 On Buy, call `gameWorldProvider.notifier.apply(PurchaseUpgrade(countryId: id, bulk: selectedBulk))`.
-  - [ ] 4.6 Do not rely on `GameWorldNotifier.apply` returning a `Result`; it currently returns `void`. If exposing command failures becomes necessary, make that a tiny, tested refactor and update all affected call sites.
-  - [ ] 4.7 Do not route Buy through the modal queue or purchase-confirm modal in this story. Epic 7.4 made that queue available for future flows, but Story 7.7 acceptance expects direct dispatch.
+- [x] Task 4: Implement per-card bulk selector and Buy command path (AC: #5, #7, #8, #9, #10, #11, #18)
+  - [x] 4.1 Use `SegmentedButton<int>` with `ButtonSegment<int>` values 1, 10, and 25, or a token-consistent Material equivalent if layout tests prove segmented buttons do not fit.
+  - [x] 4.2 Keep selected bulk in widget state keyed by `CountryId`; default to 1.
+  - [x] 4.3 When computing cost, calculate `actualLevels = min(selectedBulk, BalanceConfig.maxIpLevel - ipLevel)` and call `IncomeCalculator.upgradeCost(def, ipLevel, actualLevels)`.
+  - [x] 4.4 Disable Buy if `actualLevels < 1`, `cost == null`, or `state.totalInfluence < cost`.
+  - [x] 4.5 On Buy, call `gameWorldProvider.notifier.apply(PurchaseUpgrade(countryId: id, bulk: selectedBulk))`.
+  - [x] 4.6 Do not rely on `GameWorldNotifier.apply` returning a `Result`; it currently returns `void`. If exposing command failures becomes necessary, make that a tiny, tested refactor and update all affected call sites.
+  - [x] 4.7 Do not route Buy through the modal queue or purchase-confirm modal in this story. Epic 7.4 made that queue available for future flows, but Story 7.7 acceptance expects direct dispatch.
 
-- [ ] Task 5: Implement next-unlock teaser behavior (AC: #12, #13, #14, #15, #16, #17, #18)
-  - [ ] 5.1 Use `nextUnlockInContinentProvider(continentId)` or equivalent wrapper data for the section's active teaser.
-  - [ ] 5.2 If a same-continent teaser exists, render display name, `unlockCost.format()`, and an Unlock button.
-  - [ ] 5.3 Disable Unlock if `state.totalInfluence < unlockCost`.
-  - [ ] 5.4 On Unlock, call `gameWorldProvider.notifier.apply(UnlockCountry(countryId: teaser.countryId))`.
-  - [ ] 5.5 If no same-continent teaser exists, render one non-actionable teaser slot. Use clear state such as complete, future continent, or world complete; do not create a command button.
-  - [ ] 5.6 If using `nextUnlockOverallProvider` to name a future target, never render a full section for a locked future continent.
-  - [ ] 5.7 Do not alter content JSON, country ordering, continent thresholds, unlock reducer logic, or milestone/completion reducers.
+- [x] Task 5: Implement next-unlock teaser behavior (AC: #12, #13, #14, #15, #16, #17, #18)
+  - [x] 5.1 Use `nextUnlockInContinentProvider(continentId)` or equivalent wrapper data for the section's active teaser.
+  - [x] 5.2 If a same-continent teaser exists, render display name, `unlockCost.format()`, and an Unlock button.
+  - [x] 5.3 Disable Unlock if `state.totalInfluence < unlockCost`.
+  - [x] 5.4 On Unlock, call `gameWorldProvider.notifier.apply(UnlockCountry(countryId: teaser.countryId))`.
+  - [x] 5.5 If no same-continent teaser exists, render one non-actionable teaser slot. Use clear state such as complete, future continent, or world complete; do not create a command button.
+  - [x] 5.6 If using `nextUnlockOverallProvider` to name a future target, never render a full section for a locked future continent.
+  - [x] 5.7 Do not alter content JSON, country ordering, continent thresholds, unlock reducer logic, or milestone/completion reducers.
 
-- [ ] Task 6: Preserve architecture boundaries and state ownership (AC: #6, #10, #14, #20, #21, #22)
-  - [ ] 6.1 UI dispatches commands only through `gameWorldProvider.notifier.apply(...)`; UI never mutates `GameState`.
-  - [ ] 6.2 UI and providers do not import Drift database classes, table classes, or repositories.
-  - [ ] 6.3 No `lib/game/**` changes are required. If a pure helper is extracted, keep it Flutter-free and covered by `package:test/test.dart`.
-  - [ ] 6.4 No `lib/data/**` changes, schema migrations, generated Drift files, save repository edits, or persistence write changes belong to this story.
-  - [ ] 6.5 No package additions, router additions, custom map libraries, global event bus changes, service calls, haptics, audio, or animations.
-  - [ ] 6.6 Keep `AppScaffold`, `GlobalHud`, `ModalQueueHost`, stats, settings, and `GameLoop` wiring intact.
+- [x] Task 6: Preserve architecture boundaries and state ownership (AC: #6, #10, #14, #20, #21, #22)
+  - [x] 6.1 UI dispatches commands only through `gameWorldProvider.notifier.apply(...)`; UI never mutates `GameState`.
+  - [x] 6.2 UI and providers do not import Drift database classes, table classes, or repositories.
+  - [x] 6.3 No `lib/game/**` changes are required. If a pure helper is extracted, keep it Flutter-free and covered by `package:test/test.dart`.
+  - [x] 6.4 No `lib/data/**` changes, schema migrations, generated Drift files, save repository edits, or persistence write changes belong to this story.
+  - [x] 6.5 No package additions, router additions, custom map libraries, global event bus changes, service calls, haptics, audio, or animations.
+  - [x] 6.6 Keep `AppScaffold`, `GlobalHud`, `ModalQueueHost`, stats, settings, and `GameLoop` wiring intact.
 
-- [ ] Task 7: Provider tests (AC: #2, #3, #4, #6, #7, #8, #12, #15, #16, #17, #21)
-  - [ ] 7.1 Add `test/providers/upgrades_providers_test.dart`.
-  - [ ] 7.2 Test locked continents are not included as sections.
-  - [ ] 7.3 Test an unlocked continent with no unlocked countries still has a teaser row.
-  - [ ] 7.4 Test unlocked country rows are grouped by continent and follow content order.
-  - [ ] 7.5 Test current rate for a country equals `IncomeCalculator.compute(...)`.
-  - [ ] 7.6 Test bulk cost uses `IncomeCalculator.upgradeCost(...)` for 1, 10, and 25.
-  - [ ] 7.7 Test bulk cost caps levels at `BalanceConfig.maxIpLevel` and reports max state at level 200.
-  - [ ] 7.8 Test affordability booleans for upgrade and unlock costs.
-  - [ ] 7.9 Test same-continent next unlock, completed-continent teaser, future-continent teaser, and world-complete model states.
-  - [ ] 7.10 Test display-name formatting from country ids including underscores and hyphens.
-  - [ ] 7.11 Test missing country state or missing content ids do not crash and are ignored or treated as locked according to selector behavior.
+- [x] Task 7: Provider tests (AC: #2, #3, #4, #6, #7, #8, #12, #15, #16, #17, #21)
+  - [x] 7.1 Add `test/providers/upgrades_providers_test.dart`.
+  - [x] 7.2 Test locked continents are not included as sections.
+  - [x] 7.3 Test an unlocked continent with no unlocked countries still has a teaser row.
+  - [x] 7.4 Test unlocked country rows are grouped by continent and follow content order.
+  - [x] 7.5 Test current rate for a country equals `IncomeCalculator.compute(...)`.
+  - [x] 7.6 Test bulk cost uses `IncomeCalculator.upgradeCost(...)` for 1, 10, and 25.
+  - [x] 7.7 Test bulk cost caps levels at `BalanceConfig.maxIpLevel` and reports max state at level 200.
+  - [x] 7.8 Test affordability booleans for upgrade and unlock costs.
+  - [x] 7.9 Test same-continent next unlock, completed-continent teaser, future-continent teaser, and world-complete model states.
+  - [x] 7.10 Test display-name formatting from country ids including underscores and hyphens.
+  - [x] 7.11 Test missing country state or missing content ids do not crash and are ignored or treated as locked according to selector behavior.
 
-- [ ] Task 8: Widget and shell tests (AC: #1, #5, #9, #10, #11, #12, #13, #14, #18, #19, #20)
-  - [ ] 8.1 Add `test/ui/features/upgrades/upgrades_screen_test.dart`.
-  - [ ] 8.2 Pump `UpgradesScreen` with provider overrides; do not boot real Drift or production filesystem paths.
-  - [ ] 8.3 Test section headers, country upgrade cards, teaser cards, and absence of locked continent sections.
-  - [ ] 8.4 Test changing a card's bulk selector updates that card's displayed cost without changing another card.
-  - [ ] 8.5 Test Buy dispatches `PurchaseUpgrade` with selected bulk exactly once when enabled.
-  - [ ] 8.6 Test Buy is disabled when unaffordable or max level.
-  - [ ] 8.7 Test Unlock dispatches `UnlockCountry` exactly once when enabled.
-  - [ ] 8.8 Test Unlock is disabled when unaffordable.
-  - [ ] 8.9 Test large numbers such as `Influence(Decimal.parse('1e38'))` render through existing formatters without overflow.
-  - [ ] 8.10 Test narrow width and increased text scale do not throw overflow errors.
-  - [ ] 8.11 If `AppScaffold` tests need updates, assert the Upgrades tab still appears at index 1 and the HUD/bottom nav remain mounted.
+- [x] Task 8: Widget and shell tests (AC: #1, #5, #9, #10, #11, #12, #13, #14, #18, #19, #20)
+  - [x] 8.1 Add `test/ui/features/upgrades/upgrades_screen_test.dart`.
+  - [x] 8.2 Pump `UpgradesScreen` with provider overrides; do not boot real Drift or production filesystem paths.
+  - [x] 8.3 Test section headers, country upgrade cards, teaser cards, and absence of locked continent sections.
+  - [x] 8.4 Test changing a card's bulk selector updates that card's displayed cost without changing another card.
+  - [x] 8.5 Test Buy dispatches `PurchaseUpgrade` with selected bulk exactly once when enabled.
+  - [x] 8.6 Test Buy is disabled when unaffordable or max level.
+  - [x] 8.7 Test Unlock dispatches `UnlockCountry` exactly once when enabled.
+  - [x] 8.8 Test Unlock is disabled when unaffordable.
+  - [x] 8.9 Test large numbers such as `Influence(Decimal.parse('1e38'))` render through existing formatters without overflow.
+  - [x] 8.10 Test narrow width and increased text scale do not throw overflow errors.
+  - [x] 8.11 If `AppScaffold` tests need updates, assert the Upgrades tab still appears at index 1 and the HUD/bottom nav remain mounted.
 
-- [ ] Task 9: Architecture and regression guardrails (AC: #6, #20, #21, #22)
-  - [ ] 9.1 Run `test/architecture/ui_design_tokens_test.dart`; Upgrades UI must avoid raw widget color literals.
-  - [ ] 9.2 Run `test/architecture/no_duplicate_income_math_test.dart`; Upgrades must not introduce duplicate `baseInfluence` math.
-  - [ ] 9.3 Run `test/architecture/game_boundary_test.dart`; no Flutter imports under `lib/game/**`.
-  - [ ] 9.4 Add a small source guard if needed to ensure `upgrades_screen.dart` does not import Drift/database/repository classes directly.
-  - [ ] 9.5 Ensure `pubspec.yaml` is unchanged.
+- [x] Task 9: Architecture and regression guardrails (AC: #6, #20, #21, #22)
+  - [x] 9.1 Run `test/architecture/ui_design_tokens_test.dart`; Upgrades UI must avoid raw widget color literals.
+  - [x] 9.2 Run `test/architecture/no_duplicate_income_math_test.dart`; Upgrades must not introduce duplicate `baseInfluence` math.
+  - [x] 9.3 Run `test/architecture/game_boundary_test.dart`; no Flutter imports under `lib/game/**`.
+  - [x] 9.4 Add a small source guard if needed to ensure `upgrades_screen.dart` does not import Drift/database/repository classes directly.
+  - [x] 9.5 Ensure `pubspec.yaml` is unchanged.
 
-- [ ] Task 10: Verification (AC: all)
-  - [ ] 10.1 Run `dart format --set-exit-if-changed` on changed Dart/test files.
-  - [ ] 10.2 Run `flutter test test/providers/upgrades_providers_test.dart`.
-  - [ ] 10.3 Run `flutter test test/ui/features/upgrades/upgrades_screen_test.dart`.
-  - [ ] 10.4 Run `flutter test test/ui/app_scaffold_test.dart` if touched.
-  - [ ] 10.5 Run `flutter test test/architecture`.
-  - [ ] 10.6 Run `flutter analyze`.
-  - [ ] 10.7 Run full `flutter test` if time permits.
+- [x] Task 10: Verification (AC: all)
+  - [x] 10.1 Run `dart format --set-exit-if-changed` on changed Dart/test files.
+  - [x] 10.2 Run `flutter test test/providers/upgrades_providers_test.dart`.
+  - [x] 10.3 Run `flutter test test/ui/features/upgrades/upgrades_screen_test.dart`.
+  - [x] 10.4 Run `flutter test test/ui/app_scaffold_test.dart` if touched.
+  - [x] 10.5 Run `flutter test test/architecture`.
+  - [x] 10.6 Run `flutter analyze`.
+  - [x] 10.7 Run full `flutter test` if time permits.
+
+### Review Findings
+
+- [x] [Review][Patch] Upgrades model watches full GameState and rebuilds all hidden rows on every tick [lib/providers/upgrades_providers.dart:268]
+- [x] [Review][Patch] Buy buttons use a repeated generic semantics label [lib/ui/features/upgrades/upgrades_screen.dart:354]
 
 ## Dev Notes
 
@@ -382,14 +387,33 @@ Recent commits are directly relevant:
 
 ### Agent Model Used
 
-TBD by dev agent.
+claude-sonnet-4-6
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Created `lib/providers/upgrades_providers.dart` with `UpgradesTabModel`, `ContinentUpgradeSection`, `CountryUpgradeRow`, `NextUnlockTeaserRow`, `UpgradePurchasePreview`, `TeaserKind` enum, `countryDisplayName` helper, `upgradePurchasePreview` pure function, and `upgradesTabModelProvider`.
+- Replaced `lib/ui/features/upgrades/upgrades_screen.dart` placeholder with real `UpgradesScreen` (`ConsumerWidget`) using `ListView.builder`, `_UpgradesBody` (`StatefulWidget`) for per-country bulk state keyed by `CountryId`, `SegmentedButton<int>` for 1/10/25 bulk, `FilledButton.tonal` for Buy/Unlock, continent section headers, country upgrade cards, and teaser cards for all four `TeaserKind` states.
+- Added 21 provider tests covering: display name formatting, locked continent filtering, unlocked country rows, income rate via `IncomeCalculator.compute`, bulk cost via `IncomeCalculator.upgradeCost`, level capping, affordability, teaser states, missing country state, section ordering, and tick-only banked-influence rebuild isolation.
+- Added 15 widget tests covering: rendering, locked continent hidden, teaser display, empty state, Buy dispatch, bulk selection dispatch, Buy semantics, Buy disabled states, MAX badge, Unlock dispatch, Unlock disabled, bulk isolation across cards, overflow on narrow widths, large numbers, world complete state.
+- Code review patch pass: narrowed `upgradesTabModelProvider` to an immutable upgrade-relevant `GameState` slice and made Buy semantics country/bulk-specific.
+- All architecture guardrails pass (ui_design_tokens, no_duplicate_income_math, game_boundary).
+- No changes to `lib/game/**`, `lib/data/**`, `pubspec.yaml`, settings, stats, modal queue, or AppScaffold.
+- Full flutter test: 943 tests passed (no regressions).
+
 ### File List
+
+- `lib/providers/upgrades_providers.dart` (created)
+- `lib/ui/features/upgrades/upgrades_screen.dart` (modified)
+- `test/providers/upgrades_providers_test.dart` (created)
+- `test/ui/features/upgrades/upgrades_screen_test.dart` (created)
+
+## Change Log
+
+- Story 7.7 implementation: Upgrades tab — unlocked country cards, bulk selector, Buy/Unlock commands, continent teaser, provider DTOs, 36 tests added (Date: 2026-05-15)
+- Story 7.7 code review patch pass: provider rebuild isolation + Buy semantics (Date: 2026-05-15)
 
 ## Story Completion Status
 
-Ultimate context engine analysis completed - comprehensive developer guide created.
+done

@@ -18,6 +18,7 @@ import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/geo_providers.dart';
+import 'package:global_domination/providers/map_focus_providers.dart';
 
 import '../helpers/map_screen_test_providers.dart';
 import '../helpers/test_content_registry.dart';
@@ -55,6 +56,7 @@ Widget _pumpAppScaffold() {
   return ProviderScope(
     overrides: [
       geoProvider.overrideWith((ref) async => _fakeCountries),
+      mapWidgetTestContentOverride(_fakeCountries),
       mapWidgetTestGameWorldOverride(),
     ],
     child: MaterialApp(theme: appTheme(), home: const AppScaffold()),
@@ -262,6 +264,7 @@ void main() {
               loads++;
               return _fakeCountries;
             }),
+            mapWidgetTestContentOverride(_fakeCountries),
             mapWidgetTestGameWorldOverride(),
           ],
           child: MaterialApp(theme: appTheme(), home: const AppScaffold()),
@@ -313,6 +316,56 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+      'IndexedStack initial index is 0 (Map) and survives a paused→resumed cycle',
+      (tester) async {
+        await tester.pumpWidget(_pumpAppScaffold());
+        await tester.pump();
+
+        IndexedStack stack() => tester.widget(find.byType(IndexedStack));
+        expect(stack().index, 0);
+
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+
+        expect(stack().index, 0);
+      },
+    );
+
+    testWidgets(
+      'tutorialCompletedProvider=false suppresses auto-focus at cold launch',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              geoProvider.overrideWith((ref) async => _fakeCountries),
+              mapWidgetTestContentOverride(_fakeCountries),
+              mapWidgetTestGameWorldOverride(),
+              tutorialCompletedProvider.overrideWith((ref) => false),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const AppScaffold()),
+          ),
+        );
+        // Resolve geo future and run a few frames to flush the post-frame
+        // callback. Avoid pumpAndSettle — global tickers keep producing frames.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 16));
+        await tester.pump(const Duration(milliseconds: 16));
+
+        expect(
+          _matricesNearlyEqual(
+            _mapPainter(tester).viewTransform,
+            Matrix4.identity(),
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('AppScaffold architecture', () {

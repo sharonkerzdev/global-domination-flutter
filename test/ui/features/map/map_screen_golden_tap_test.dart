@@ -11,6 +11,7 @@ import 'package:global_domination/game/support/clock.dart';
 import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
+import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/geo_providers.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
@@ -97,6 +98,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => [_bigCountry(cid)]),
+            contentRegistryProvider.overrideWith((ref) async => _emptyContent),
             gameWorldProvider.overrideWith((ref) => spy),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -119,6 +121,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => [_bigCountry(cid)]),
+            contentRegistryProvider.overrideWith((ref) async => _emptyContent),
             gameWorldProvider.overrideWith((ref) => spy),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -148,6 +151,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => [_bigCountry(cid)]),
+            contentRegistryProvider.overrideWith((ref) async => _emptyContent),
             gameWorldProvider.overrideWith((ref) => spy),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -185,6 +189,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => [_bigCountry(cid)]),
+            contentRegistryProvider.overrideWith((ref) async => _emptyContent),
             gameWorldProvider.overrideWith((ref) => spy),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
@@ -223,6 +228,7 @@ void main() {
         ProviderScope(
           overrides: [
             geoProvider.overrideWith((ref) async => [_bigCountry(cid)]),
+            contentRegistryProvider.overrideWith((ref) async => _emptyContent),
             gameWorldProvider.overrideWith((ref) => spy),
           ],
           child: MaterialApp(theme: appTheme(), home: const MapScreen()),
