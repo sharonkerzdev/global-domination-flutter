@@ -285,6 +285,26 @@ void main() {
           expect(s, Sfx.collect);
         }
       });
+
+      test('backward clock movement does not suppress next tap', () async {
+        events.add(
+          CountryTapped(
+            clock.now(),
+            countryId: country,
+            collected: Influence.zero,
+          ),
+        );
+        clock.advance(const Duration(seconds: -1));
+        events.add(
+          CountryTapped(
+            clock.now(),
+            countryId: country,
+            collected: Influence.zero,
+          ),
+        );
+        await tick();
+        expect(backend.playCalls, [Sfx.collect, Sfx.collect]);
+      });
     });
 
     test('non-tap events are not rate-limited', () async {
@@ -340,6 +360,66 @@ void main() {
       );
       await tick();
       expect(backend.playCalls, isEmpty);
+    });
+  });
+
+  group('AudioService attach lifecycle', () {
+    final t0 = DateTime.utc(2026, 1, 1);
+    final country = const CountryId('egypt');
+
+    Future<void> tick() => Future<void>.delayed(Duration.zero);
+
+    test('subscribes before preload completes', () async {
+      final events = StreamController<GameEvent>.broadcast(sync: true);
+      final backend = FakeAudioBackend();
+      final preloadGate = Completer<void>();
+      backend.onPreload = () => preloadGate.future;
+      final service = AudioService(
+        events: events.stream,
+        readEnabled: () => true,
+        clock: FakeClock(t0),
+        backend: backend,
+      );
+      addTearDown(service.dispose);
+      addTearDown(events.close);
+
+      final attachFuture = service.attach();
+      events.add(
+        CountryTapped(t0, countryId: country, collected: Influence.zero),
+      );
+      await tick();
+
+      expect(backend.playCalls, [Sfx.collect]);
+      preloadGate.complete();
+      await attachFuture;
+    });
+
+    test('dispose during preload cancels the subscription', () async {
+      final events = StreamController<GameEvent>.broadcast(sync: true);
+      final backend = FakeAudioBackend();
+      final preloadGate = Completer<void>();
+      backend.onPreload = () => preloadGate.future;
+      final service = AudioService(
+        events: events.stream,
+        readEnabled: () => true,
+        clock: FakeClock(t0),
+        backend: backend,
+      );
+      addTearDown(service.dispose);
+      addTearDown(events.close);
+
+      final attachFuture = service.attach();
+      await tick();
+      await service.dispose();
+      preloadGate.complete();
+      await attachFuture;
+
+      events.add(
+        CountryTapped(t0, countryId: country, collected: Influence.zero),
+      );
+      await tick();
+      expect(backend.playCalls, isEmpty);
+      expect(backend.disposed, isTrue);
     });
   });
 }

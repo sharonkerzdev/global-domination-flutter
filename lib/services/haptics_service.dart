@@ -42,7 +42,7 @@ class HapticsService {
   }
 
   void _onEvent(GameEvent e) {
-    if (!_readEnabled()) return;
+    if (!_isEnabled()) return;
     switch (e) {
       // Fire even when collected==Influence.zero; see Story 8.1 AC #12.
       case CountryTapped():
@@ -87,17 +87,35 @@ class HapticsService {
   }
 
   void _safeRun(String label, Future<void> Function() action) {
-    unawaited(
-      action().catchError((Object e, StackTrace s) {
-        _log.warning('$label failed', e, s);
-      }),
-    );
+    try {
+      unawaited(
+        action().catchError((Object e, StackTrace s) {
+          _log.warning('$label failed', e, s);
+        }),
+      );
+    } on Object catch (e, s) {
+      _log.warning('$label failed', e, s);
+    }
+  }
+
+  bool _isEnabled() {
+    try {
+      return _readEnabled();
+    } on Object catch (e, s) {
+      _log.warning('read enabled failed', e, s);
+      return false;
+    }
+  }
+
+  bool _withinTapRateLimit(DateTime now, DateTime last) {
+    final elapsed = now.difference(last);
+    return !elapsed.isNegative && elapsed < _tapRateLimit;
   }
 
   void _hapticRateLimitedTap() {
     final now = _clock.now();
     final last = _lastTapHapticAt;
-    if (last != null && now.difference(last) < _tapRateLimit) return;
+    if (last != null && _withinTapRateLimit(now, last)) return;
     _lastTapHapticAt = now;
     _safeRun('lightImpact', _backend.lightImpact);
   }

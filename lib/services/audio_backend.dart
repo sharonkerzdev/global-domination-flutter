@@ -50,7 +50,7 @@ class AudioPlayersBackend implements AudioBackend {
   @override
   Future<void> preload() async {
     if (_preloaded) return;
-    _preloaded = true;
+    var allSucceeded = true;
     for (final sfx in Sfx.values) {
       final player = _players[sfx]!;
       try {
@@ -58,9 +58,11 @@ class AudioPlayersBackend implements AudioBackend {
         await player.setPlayerMode(PlayerMode.lowLatency);
         await player.setSource(AssetSource(sfx.assetPath));
       } on Object catch (e, s) {
+        allSucceeded = false;
         _log.warning('preload failed for ${sfx.name}', e, s);
       }
     }
+    _preloaded = allSucceeded;
   }
 
   @override

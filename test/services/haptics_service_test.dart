@@ -245,6 +245,26 @@ void main() {
       expect(backend.calls, ['light', 'light']);
     });
 
+    test('backward clock movement does not suppress next tap', () async {
+      events.add(
+        CountryTapped(
+          clock.now(),
+          countryId: country,
+          collected: Influence.zero,
+        ),
+      );
+      clock.advance(const Duration(seconds: -1));
+      events.add(
+        CountryTapped(
+          clock.now(),
+          countryId: country,
+          collected: Influence.zero,
+        ),
+      );
+      await tick();
+      expect(backend.calls, ['light', 'light']);
+    });
+
     test('non-tap haptics not rate-limited', () async {
       for (var i = 0; i < 5; i++) {
         events.add(

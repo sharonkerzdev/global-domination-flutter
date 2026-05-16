@@ -4,11 +4,16 @@ class FakeAudioBackend implements AudioBackend {
   final List<Sfx> playCalls = [];
   int preloadCalls = 0;
   bool disposed = false;
+  Future<void> Function()? onPreload;
   Future<void> Function(Sfx sfx)? onPlay;
 
   @override
   Future<void> preload() async {
     preloadCalls += 1;
+    final hook = onPreload;
+    if (hook != null) {
+      await hook();
+    }
   }
 
   @override

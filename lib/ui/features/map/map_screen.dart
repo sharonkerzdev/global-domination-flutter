@@ -15,6 +15,7 @@ import 'package:global_domination/ui/features/map/auto_focus_target.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
 import 'package:global_domination/ui/features/map/country_paints.dart';
 import 'package:global_domination/ui/features/map/country_visual_state.dart';
+import 'package:global_domination/ui/features/map/flying_number.dart';
 import 'package:global_domination/ui/features/map/hit_test/polygon_hit_tester.dart';
 import 'package:global_domination/ui/features/map/world_map_painter.dart';
 import 'package:global_domination/ui/theme/country_colors.dart';
@@ -104,6 +105,13 @@ class _MapView extends ConsumerStatefulWidget {
   ConsumerState<_MapView> createState() => _MapViewState();
 }
 
+class _FlyingEntry {
+  _FlyingEntry({required this.amount, required this.offset, required this.key});
+  final String amount;
+  final Offset offset;
+  final Key key;
+}
+
 class _MapViewState extends ConsumerState<_MapView> {
   static const double _minZoom = 1.0;
   static const double _maxZoom = 15.0;
@@ -114,6 +122,8 @@ class _MapViewState extends ConsumerState<_MapView> {
   bool _autoFocusApplied = false;
   bool _autoFocusCallbackScheduled = false;
   bool _autoFocusWaitingForTutorial = false;
+
+  final List<_FlyingEntry> _flyingNumbers = [];
 
   late final ProviderSubscription<CountryId?> _recentUnlockSubscription;
   late final ProviderSubscription<bool> _tutorialCompletedSubscription;
@@ -278,10 +288,31 @@ class _MapViewState extends ConsumerState<_MapView> {
             .apply(ClaimGolden(goldenId: candidates.first.id));
         return;
       }
+
+      final bankedBefore =
+          state.countries[countryId]?.bankedInfluence ?? Influence.zero;
       ref
           .read(gameWorldProvider.notifier)
           .apply(TapCountry(countryId: countryId));
+
+      if (bankedBefore > Influence.zero) {
+        setState(() {
+          _flyingNumbers.add(
+            _FlyingEntry(
+              amount: bankedBefore.format(),
+              offset: sp,
+              key: UniqueKey(),
+            ),
+          );
+        });
+      }
     }
+  }
+
+  void _removeFlyingNumber(Key key) {
+    setState(() {
+      _flyingNumbers.removeWhere((e) => e.key == key);
+    });
   }
 
   @override
@@ -309,18 +340,32 @@ class _MapViewState extends ConsumerState<_MapView> {
       _lastTransform = _viewTransform;
     }
 
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
           _scheduleAutoFocus(canvasSize);
-          return GestureDetector(
-            onScaleStart: _onScaleStart,
-            onScaleUpdate: _onScaleUpdate,
-            onTapUp: (details) => _onTapUp(details, canvasSize),
-            child: RepaintBoundary(
-              child: CustomPaint(size: Size.infinite, painter: _painter),
-            ),
+          return Stack(
+            children: [
+              GestureDetector(
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onTapUp: (details) => _onTapUp(details, canvasSize),
+                child: RepaintBoundary(
+                  child: CustomPaint(size: Size.infinite, painter: _painter),
+                ),
+              ),
+              for (final entry in _flyingNumbers)
+                FlyingNumber(
+                  key: entry.key,
+                  amount: entry.amount,
+                  screenOffset: entry.offset,
+                  reduceMotion: reduceMotion,
+                  onEnd: () => _removeFlyingNumber(entry.key),
+                ),
+            ],
           );
         },
       ),

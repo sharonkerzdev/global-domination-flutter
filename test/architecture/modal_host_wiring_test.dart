@@ -12,6 +12,7 @@ void main() {
     expect(text, contains('modalQueueProvider.notifier'));
     expect(text, contains('offlineCatchupBootProvider'));
     expect(text, contains('_FeedbackServicesBootstrap'));
+    expect(text, contains('unawaited(_audio.dispose())'));
     final idxModal = text.indexOf('modalQueueProvider.notifier');
     final idxOffline = text.indexOf('offlineCatchupBootProvider');
     expect(idxModal, lessThan(idxOffline));

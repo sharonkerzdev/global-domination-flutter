@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:decimal/decimal.dart';
 
 import 'package:global_domination/game/content/content_registry.dart';
+import 'package:global_domination/game/features/countries/country_state.dart';
+import 'package:global_domination/game/features/leaders/leader_tier.dart';
 import 'package:global_domination/game/game_command.dart';
 import 'package:global_domination/game/game_state.dart';
 import 'package:global_domination/game/game_world.dart';
@@ -10,10 +13,12 @@ import 'package:global_domination/game/support/clock.dart';
 import 'package:global_domination/game/support/rng.dart';
 import 'package:global_domination/game/values/continent_id.dart';
 import 'package:global_domination/game/values/country_id.dart';
+import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/geo_providers.dart';
 import 'package:global_domination/ui/features/map/country_path.dart';
+import 'package:global_domination/ui/features/map/flying_number.dart';
 import 'package:global_domination/ui/features/map/map_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
 
@@ -32,13 +37,13 @@ final _emptyContent = const ContentRegistry(
 );
 
 class _SpyGameWorldNotifier extends GameWorldNotifier {
-  _SpyGameWorldNotifier()
+  _SpyGameWorldNotifier([GameState? initialState])
     : super(
         GameWorld(
           content: _emptyContent,
           clock: const SystemClock(),
           rng: SeededRng(0),
-          initialState: GameState(),
+          initialState: initialState ?? GameState(),
         ),
       );
 
@@ -101,6 +106,21 @@ CountryPath _smallCountry(String id) {
   );
 }
 
+GameState _stateWithBankedInfluence(String id, int bankedInfluence) {
+  final countryId = CountryId(id);
+  return GameState(
+    countries: {
+      countryId: CountryState(
+        id: countryId,
+        unlocked: true,
+        ipLevel: 1,
+        leaderTier: LeaderTier.none,
+        bankedInfluence: Influence(Decimal.fromInt(bankedInfluence)),
+      ),
+    },
+  );
+}
+
 Widget _buildApp({
   required List<CountryPath> countries,
   required _SpyGameWorldNotifier spy,
@@ -141,6 +161,46 @@ void main() {
         (spy.applied.first as TapCountry).countryId,
         const CountryId('eg'),
       );
+    });
+
+    testWidgets('tap on country with banked influence shows flying number', (
+      tester,
+    ) async {
+      final spy = _SpyGameWorldNotifier(_stateWithBankedInfluence('eg', 42));
+      await tester.pumpWidget(
+        _buildApp(countries: [_bigCountry('eg')], spy: spy),
+      );
+      await tester.pump();
+
+      await tester.tapAt(tester.getCenter(find.byType(GestureDetector)));
+      await tester.pump();
+
+      expect(spy.applied.single, isA<TapCountry>());
+      expect(find.byType(FlyingNumber), findsOneWidget);
+      expect(find.text('42'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(FlyingNumber), findsNothing);
+      expect(find.text('42'), findsNothing);
+    });
+
+    testWidgets('tap on country with zero banked influence suppresses flyout', (
+      tester,
+    ) async {
+      final spy = _SpyGameWorldNotifier(_stateWithBankedInfluence('eg', 0));
+      await tester.pumpWidget(
+        _buildApp(countries: [_bigCountry('eg')], spy: spy),
+      );
+      await tester.pump();
+
+      await tester.tapAt(tester.getCenter(find.byType(GestureDetector)));
+      await tester.pump();
+
+      expect(spy.applied.single, isA<TapCountry>());
+      expect(find.byType(FlyingNumber), findsNothing);
+      expect(find.text('0'), findsNothing);
     });
 
     testWidgets('tap on ocean dispatches nothing', (tester) async {

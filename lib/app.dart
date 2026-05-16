@@ -135,7 +135,7 @@ class _FeedbackServicesBootstrapState
 
   @override
   void dispose() {
-    unawaited(_audio.detach());
+    unawaited(_audio.dispose());
     unawaited(_haptics.detach());
     super.dispose();
   }

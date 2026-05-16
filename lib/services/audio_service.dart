@@ -18,8 +18,7 @@ class AudioService {
        _readEnabled = readEnabled,
        _clock = clock,
        _backend = backend ?? AudioPlayersBackend(),
-       _tapRateLimit = tapRateLimit,
-       _ownsBackend = backend == null;
+       _tapRateLimit = tapRateLimit;
 
   static final _log = Logger('AudioService');
 
@@ -28,16 +27,20 @@ class AudioService {
   final Clock _clock;
   final AudioBackend _backend;
   final Duration _tapRateLimit;
-  final bool _ownsBackend;
 
   StreamSubscription<GameEvent>? _sub;
   DateTime? _lastTapPlayedAt;
+  Future<void>? _disposeFuture;
+  bool _disposed = false;
 
   Future<void> attach() async {
-    if (_ownsBackend) {
-      await _backend.preload();
-    }
+    if (_disposed) return;
     _sub ??= _events.listen(_onEvent, onError: _onError);
+    try {
+      await _backend.preload();
+    } on Object catch (e, s) {
+      _log.warning('preload failed', e, s);
+    }
   }
 
   Future<void> detach() async {
@@ -45,13 +48,18 @@ class AudioService {
     _sub = null;
   }
 
-  Future<void> dispose() async {
-    await detach();
-    await _backend.dispose();
+  Future<void> dispose() {
+    final existing = _disposeFuture;
+    if (existing != null) return existing;
+    _disposed = true;
+    return _disposeFuture = () async {
+      await detach();
+      await _backend.dispose();
+    }();
   }
 
   void _onEvent(GameEvent e) {
-    if (!_readEnabled()) return;
+    if (_disposed || !_isEnabled()) return;
     switch (e) {
       case Tick():
         break;
@@ -96,17 +104,35 @@ class AudioService {
   }
 
   void _safePlay(Sfx sfx) {
-    unawaited(
-      _backend.play(sfx).catchError((Object e, StackTrace s) {
-        _log.warning('play failed for ${sfx.name}', e, s);
-      }),
-    );
+    try {
+      unawaited(
+        _backend.play(sfx).catchError((Object e, StackTrace s) {
+          _log.warning('play failed for ${sfx.name}', e, s);
+        }),
+      );
+    } on Object catch (e, s) {
+      _log.warning('play failed for ${sfx.name}', e, s);
+    }
+  }
+
+  bool _isEnabled() {
+    try {
+      return _readEnabled();
+    } on Object catch (e, s) {
+      _log.warning('read enabled failed', e, s);
+      return false;
+    }
+  }
+
+  bool _withinTapRateLimit(DateTime now, DateTime last) {
+    final elapsed = now.difference(last);
+    return !elapsed.isNegative && elapsed < _tapRateLimit;
   }
 
   void _playRateLimitedTap() {
     final now = _clock.now();
     final last = _lastTapPlayedAt;
-    if (last != null && now.difference(last) < _tapRateLimit) return;
+    if (last != null && _withinTapRateLimit(now, last)) return;
     _lastTapPlayedAt = now;
     _safePlay(Sfx.collect);
   }
