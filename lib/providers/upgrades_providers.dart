@@ -80,12 +80,18 @@ class CountryUpgradeRow {
 class ContinentUpgradeSection {
   final ContinentId continentId;
   final String continentName;
+  final int ownedCount;
+  final int totalCount;
+  final Set<int> reachedMilestoneTiers;
   final List<CountryUpgradeRow> countries;
   final NextUnlockTeaserRow teaser;
 
   const ContinentUpgradeSection({
     required this.continentId,
     required this.continentName,
+    required this.ownedCount,
+    required this.totalCount,
+    required this.reachedMilestoneTiers,
     required this.countries,
     required this.teaser,
   });
@@ -170,6 +176,9 @@ class _UpgradesStateSlice {
   static const _countriesEq = MapEquality<CountryId, _CountryUpgradeState>();
   static const _continentEq = MapEquality<ContinentId, bool>();
   static const _stringSetEq = SetEquality<String>();
+  static final _reachedMilestonesEq = MapEquality<ContinentId, Set<int>>(
+    values: const SetEquality<int>(),
+  );
   static final DateTime _syntheticBoostExpiry =
       DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
@@ -182,6 +191,7 @@ class _UpgradesStateSlice {
     required this.activeGlobalUpgradeIds,
     required this.goldenOpportunityMultiplier,
     required this.boostMultiplier,
+    required this.reachedMilestones,
   });
 
   final Map<CountryId, _CountryUpgradeState> countries;
@@ -192,6 +202,7 @@ class _UpgradesStateSlice {
   final Set<String> activeGlobalUpgradeIds;
   final Decimal goldenOpportunityMultiplier;
   final Decimal? boostMultiplier;
+  final Map<ContinentId, Set<int>> reachedMilestones;
 
   static _UpgradesStateSlice fromState(GameState state) {
     return _UpgradesStateSlice(
@@ -214,6 +225,10 @@ class _UpgradesStateSlice {
       }),
       goldenOpportunityMultiplier: state.goldenOpportunityMultiplier,
       boostMultiplier: state.activeBoost?.multiplier,
+      reachedMilestones: Map<ContinentId, Set<int>>.unmodifiable({
+        for (final entry in state.reachedMilestones.entries)
+          entry.key: Set<int>.unmodifiable(entry.value),
+      }),
     );
   }
 
@@ -235,6 +250,7 @@ class _UpgradesStateSlice {
               multiplier: boostMultiplier!,
               expiresAt: _syntheticBoostExpiry,
             ),
+      reachedMilestones: reachedMilestones,
     );
   }
 
@@ -258,7 +274,11 @@ class _UpgradesStateSlice {
             other.activeGlobalUpgradeIds,
           ) &&
           goldenOpportunityMultiplier == other.goldenOpportunityMultiplier &&
-          boostMultiplier == other.boostMultiplier);
+          boostMultiplier == other.boostMultiplier &&
+          _reachedMilestonesEq.equals(
+            reachedMilestones,
+            other.reachedMilestones,
+          ));
 
   @override
   int get hashCode => Object.hashAll([
@@ -270,6 +290,7 @@ class _UpgradesStateSlice {
     _stringSetEq.hash(activeGlobalUpgradeIds),
     goldenOpportunityMultiplier,
     boostMultiplier,
+    _reachedMilestonesEq.hash(reachedMilestones),
   ]);
 }
 
@@ -334,6 +355,11 @@ UpgradesTabModel _buildUpgradesTabModel(
   for (final continent in sortedContinents) {
     if (state.unlockedContinents[continent.id] != true) continue;
 
+    final totalCount = content.countries.values
+        .where((d) => d.continent == continent.id)
+        .length;
+    if (totalCount == 0) continue;
+
     // Collect unlocked country rows in content order
     final rows = <CountryUpgradeRow>[];
     for (final def in content.countries.values) {
@@ -358,10 +384,17 @@ UpgradesTabModel _buildUpgradesTabModel(
     // Build teaser
     final teaser = _buildTeaser(state, content, continent);
 
+    // Compute owned count from unlocked rows.
+    final ownedCount = rows.length;
+    final reachedTiers = state.reachedMilestones[continent.id] ?? const <int>{};
+
     sections.add(
       ContinentUpgradeSection(
         continentId: continent.id,
         continentName: continent.name,
+        ownedCount: ownedCount,
+        totalCount: totalCount,
+        reachedMilestoneTiers: reachedTiers,
         countries: List.unmodifiable(rows),
         teaser: teaser,
       ),

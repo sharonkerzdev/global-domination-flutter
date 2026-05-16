@@ -2,8 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:global_domination/providers/continent_progress_providers.dart';
 import 'package:global_domination/providers/feature_providers.dart';
 import 'package:global_domination/providers/stats_providers.dart';
+import 'package:global_domination/ui/features/continents/continent_progress_bar.dart';
 import 'package:global_domination/ui/theme/spacing.dart';
 import 'package:global_domination/ui/widgets/currency_badge.dart';
 
@@ -46,6 +48,8 @@ class _StatsBody extends ConsumerWidget {
                   _CurrencyHeader(),
                   SizedBox(height: Spacing.md),
                   _ProgressSection(),
+                  SizedBox(height: Spacing.lg),
+                  _ContinentProgressSection(),
                   SizedBox(height: Spacing.lg),
                   _MultiplierSection(),
                   SizedBox(height: Spacing.lg),
@@ -147,6 +151,96 @@ class _ProgressSection extends ConsumerWidget {
                 '${summary.earnedAchievements} of ${summary.totalAchievements} achievements',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContinentProgressSection extends ConsumerWidget {
+  const _ContinentProgressSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rows = ref.watch(continentProgressRowsProvider);
+    if (rows == null || rows.isEmpty) return const SizedBox.shrink();
+
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Continent progress',
+            style: textTheme.titleMedium?.copyWith(color: scheme.onSurface),
+          ),
+          const SizedBox(height: Spacing.sm),
+          for (final row in rows) _ContinentProgressRow(row: row),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContinentProgressRow extends StatelessWidget {
+  const _ContinentProgressRow({required this.row});
+
+  final ContinentProgressRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Semantics(
+      container: true,
+      label:
+          '${row.continentName} progress, ${row.ownedCount} of ${row.totalCount} owned, ${row.highestReachedTier} percent reached',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    row.continentName,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Spacing.xs),
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.sm,
+                    vertical: 2,
+                  ),
+                  child: Text(
+                    '${row.ownedCount} / ${row.totalCount} owned',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.xs),
+            ContinentProgressBar(
+              ownedCount: row.ownedCount,
+              totalCount: row.totalCount,
+              reachedMilestoneTiers: row.reachedMilestoneTiers,
+            ),
+            const SizedBox(height: Spacing.sm),
+          ],
+        ),
       ),
     );
   }

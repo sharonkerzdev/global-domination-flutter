@@ -19,6 +19,7 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
+import 'package:global_domination/ui/features/continents/continent_progress_bar.dart';
 import 'package:global_domination/ui/features/upgrades/upgrades_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
 
@@ -500,6 +501,71 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Continent progress header', () {
+    testWidgets('shows X / Y owned badge in continent header', (tester) async {
+      final content = _twoContinent();
+      final state = GameState(
+        countries: {
+          CountryId('egypt'): _unlocked('egypt'),
+          CountryId('nigeria'): _locked('nigeria'),
+          CountryId('france'): _locked('france'),
+        },
+        unlockedContinents: {ContinentId('africa'): true},
+        totalInfluence: Influence(Decimal.parse('100')),
+      );
+      await tester.pumpWidget(_pump(content: content, state: state));
+      await tester.pump();
+
+      // Egypt is unlocked (1 owned), Nigeria is locked — total Africa = 2.
+      expect(find.text('1 / 2 owned'), findsOneWidget);
+    });
+
+    testWidgets('mounts ContinentProgressBar under the Africa header', (
+      tester,
+    ) async {
+      final content = _twoContinent();
+      final state = GameState(
+        countries: {
+          CountryId('egypt'): _unlocked('egypt'),
+          CountryId('nigeria'): _locked('nigeria'),
+          CountryId('france'): _locked('france'),
+        },
+        unlockedContinents: {ContinentId('africa'): true},
+        totalInfluence: Influence(Decimal.parse('100')),
+      );
+      await tester.pumpWidget(_pump(content: content, state: state));
+      await tester.pump();
+
+      expect(find.byType(ContinentProgressBar), findsOneWidget);
+    });
+
+    testWidgets('ContinentProgressBar reflects reachedMilestones from state', (
+      tester,
+    ) async {
+      final content = _twoContinent();
+      final state = GameState(
+        countries: {
+          CountryId('egypt'): _unlocked('egypt'),
+          CountryId('nigeria'): _locked('nigeria'),
+          CountryId('france'): _locked('france'),
+        },
+        unlockedContinents: {ContinentId('africa'): true},
+        reachedMilestones: {
+          const ContinentId('africa'): {25},
+        },
+        totalInfluence: Influence(Decimal.parse('100')),
+      );
+      final spy = _SpyNotifier(content: content, initialState: state);
+      await tester.pumpWidget(_pump(content: content, state: state, spy: spy));
+      await tester.pump();
+
+      final bar = tester.widget<ContinentProgressBar>(
+        find.byType(ContinentProgressBar),
+      );
+      expect(bar.reachedMilestoneTiers, contains(25));
     });
   });
 

@@ -6,6 +6,7 @@ import 'package:global_domination/game/values/country_id.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/upgrades_providers.dart';
+import 'package:global_domination/ui/features/continents/continent_progress_bar.dart';
 import 'package:global_domination/ui/theme/spacing.dart';
 
 class UpgradesScreen extends ConsumerWidget {
@@ -94,10 +95,7 @@ class _UpgradesBodyState extends State<_UpgradesBody> {
       itemBuilder: (context, index) {
         final item = items[index];
         if (item is _HeaderItem) {
-          return _ContinentHeader(
-            name: item.section.continentName,
-            unlockedCount: item.section.countries.length,
-          );
+          return _ContinentHeader(section: item.section);
         } else if (item is _CountryItem) {
           final row = item.row;
           return _CountryUpgradeCard(
@@ -136,10 +134,9 @@ class _TeaserItem extends _ListItem {
 // ---------------------------------------------------------------------------
 
 class _ContinentHeader extends StatelessWidget {
-  const _ContinentHeader({required this.name, required this.unlockedCount});
+  const _ContinentHeader({required this.section});
 
-  final String name;
-  final int unlockedCount;
+  final ContinentUpgradeSection section;
 
   @override
   Widget build(BuildContext context) {
@@ -151,28 +148,69 @@ class _ContinentHeader extends StatelessWidget {
         top: Spacing.lg,
         bottom: Spacing.xs,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.public, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: Spacing.xs),
-          Text(
-            name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Icon(Icons.public, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: Spacing.xs),
+              Text(
+                section.continentName,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              _OwnedBadge(
+                ownedCount: section.ownedCount,
+                totalCount: section.totalCount,
+              ),
+            ],
           ),
-          const Spacer(),
-          Text(
-            '$unlockedCount unlocked',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          const SizedBox(height: Spacing.xs),
+          ContinentProgressBar(
+            ownedCount: section.ownedCount,
+            totalCount: section.totalCount,
+            reachedMilestoneTiers: section.reachedMilestoneTiers,
+            semanticLabel:
+                '${section.continentName} progress, ${section.ownedCount} of ${section.totalCount} owned, ${_highestTierOf(section.reachedMilestoneTiers)} percent reached',
           ),
         ],
       ),
     );
   }
+}
+
+class _OwnedBadge extends StatelessWidget {
+  const _OwnedBadge({required this.ownedCount, required this.totalCount});
+
+  final int ownedCount;
+  final int totalCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: 2),
+      child: Text(
+        '$ownedCount / $totalCount owned',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+int _highestTierOf(Set<int> tiers) {
+  return tiers.isEmpty ? 0 : tiers.reduce((a, b) => a > b ? a : b);
 }
 
 // ---------------------------------------------------------------------------

@@ -228,6 +228,58 @@ void main() {
         expect(africaSection.teaser.kind, TeaserKind.nextUnlock);
       },
     );
+
+    test('unlocked empty continent is skipped', () async {
+      final continents = jsonEncode([
+        {
+          'id': 'africa',
+          'name': 'Africa',
+          'unlockThreshold': '0',
+          'completionBonus': '0.25',
+          'milestoneRewards': <dynamic>[],
+        },
+        {
+          'id': 'empty_continent',
+          'name': 'Empty',
+          'unlockThreshold': '0',
+          'completionBonus': '0.0',
+          'milestoneRewards': <dynamic>[],
+        },
+      ]);
+      final countries = jsonEncode([
+        {
+          'id': 'egypt',
+          'continent': 'africa',
+          'baseInfluence': '1',
+          'unlockCost': '0',
+          'tier': 1,
+          'generationSeconds': 1,
+        },
+      ]);
+      final content = ContentRegistry.fromJsonStrings(
+        countriesJson: countries,
+        continentsJson: continents,
+        leadersJson: '[]',
+        achievementsJson: trivial27AchievementsJson(),
+        missionsJson: '[]',
+        globalUpgradesJson: '[]',
+        dailyRewardsJson: testDailyRewardsJson(),
+      );
+      const africa = ContinentId('africa');
+      const emptyContinent = ContinentId('empty_continent');
+      final state = GameState(
+        countries: {const CountryId('egypt'): _unlocked('egypt')},
+        unlockedContinents: {africa: true, emptyContinent: true},
+        totalInfluence: Influence(Decimal.parse('100')),
+      );
+      final container = _container(content, state);
+      await container.read(contentRegistryProvider.future);
+
+      final model = container.read(upgradesTabModelProvider).value!;
+
+      expect(model.sections, hasLength(1));
+      expect(model.sections.single.continentId, africa);
+    });
   });
 
   group('upgradesTabModelProvider — row fields', () {
@@ -551,6 +603,53 @@ void main() {
       );
 
       expect(notifications, 1);
+    });
+  });
+
+  group('ContinentUpgradeSection extension', () {
+    test('exposes ownedCount, totalCount, reachedMilestoneTiers', () async {
+      final content = _twoContinent();
+      const africa = ContinentId('africa');
+      const egypt = CountryId('egypt');
+      final state = GameState(
+        countries: {
+          egypt: _unlocked('egypt'),
+          CountryId('nigeria'): _locked('nigeria'),
+          CountryId('france'): _locked('france'),
+        },
+        unlockedContinents: {africa: true},
+        reachedMilestones: {
+          africa: {25},
+        },
+        totalInfluence: Influence(Decimal.parse('0')),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          contentRegistryProvider.overrideWith((_) async => content),
+          gameWorldProvider.overrideWith(
+            (_) => _SpyNotifier(content: content, initialState: state),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Wait for content to load
+      await container.read(contentRegistryProvider.future);
+
+      final tabModel = container.read(upgradesTabModelProvider);
+      expect(tabModel, isNotNull);
+      tabModel.when(
+        loading: () => fail('Should not be loading'),
+        error: (e, st) => fail('Error: $e'),
+        data: (m) {
+          expect(m.sections.length, 1);
+          final section = m.sections.first;
+          expect(section.ownedCount, 1); // Egypt
+          expect(section.totalCount, 2); // Egypt + Nigeria
+          expect(section.reachedMilestoneTiers, {25});
+        },
+      );
     });
   });
 }

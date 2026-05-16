@@ -144,7 +144,7 @@ class SettingsModal extends ConsumerWidget {
                                 style: theme.textTheme.titleMedium,
                               ),
                               subtitle: Text(
-                                'In-game audio (Epic 8)',
+                                'In-game audio',
                                 style: theme.textTheme.bodySmall,
                               ),
                               value: soundEnabled,
@@ -159,7 +159,7 @@ class SettingsModal extends ConsumerWidget {
                                 style: theme.textTheme.titleMedium,
                               ),
                               subtitle: Text(
-                                'Vibration feedback (Epic 8)',
+                                'Vibration feedback',
                                 style: theme.textTheme.bodySmall,
                               ),
                               value: hapticsEnabled,

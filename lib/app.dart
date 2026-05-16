@@ -8,7 +8,9 @@ import 'package:global_domination/providers/data_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/modal_providers.dart';
 import 'package:global_domination/providers/offline_catchup_providers.dart';
+import 'package:global_domination/services/audio_service.dart';
 import 'package:global_domination/services/game_lifecycle_observer.dart';
+import 'package:global_domination/services/haptics_service.dart';
 import 'package:global_domination/ui/boot_error_screen.dart';
 import 'package:global_domination/ui/features/map/game_loop.dart';
 import 'package:global_domination/ui/app_scaffold.dart';
@@ -90,8 +92,10 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
                   data: (_) => MaterialApp(
                     theme: _theme,
                     home: const ModalQueueHost(
-                      child: _SaveRepositoryBootstrap(
-                        child: GameLoop(child: AppScaffold()),
+                      child: _FeedbackServicesBootstrap(
+                        child: _SaveRepositoryBootstrap(
+                          child: GameLoop(child: AppScaffold()),
+                        ),
                       ),
                     ),
                   ),
@@ -103,6 +107,41 @@ class _GlobalDominationAppState extends ConsumerState<GlobalDominationApp> {
       },
     );
   }
+}
+
+class _FeedbackServicesBootstrap extends ConsumerStatefulWidget {
+  const _FeedbackServicesBootstrap({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_FeedbackServicesBootstrap> createState() =>
+      _FeedbackServicesBootstrapState();
+}
+
+class _FeedbackServicesBootstrapState
+    extends ConsumerState<_FeedbackServicesBootstrap> {
+  late final AudioService _audio;
+  late final HapticsService _haptics;
+
+  @override
+  void initState() {
+    super.initState();
+    _audio = ref.read(audioServiceProvider);
+    unawaited(_audio.attach());
+    _haptics = ref.read(hapticsServiceProvider);
+    _haptics.attach();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_audio.detach());
+    unawaited(_haptics.detach());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _SaveRepositoryBootstrap extends ConsumerStatefulWidget {

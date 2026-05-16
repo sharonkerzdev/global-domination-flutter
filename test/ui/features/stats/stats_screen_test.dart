@@ -12,6 +12,7 @@ import 'package:global_domination/game/values/influence.dart';
 import 'package:global_domination/providers/app_providers.dart';
 import 'package:global_domination/providers/game_providers.dart';
 import 'package:global_domination/providers/stats_providers.dart';
+import 'package:global_domination/ui/features/continents/continent_progress_bar.dart';
 import 'package:global_domination/ui/features/stats/stats_screen.dart';
 import 'package:global_domination/ui/theme/app_theme.dart';
 import 'package:global_domination/ui/widgets/currency_badge.dart';
@@ -200,6 +201,117 @@ void main() {
       expect(find.byType(StatsScreen), findsNothing);
       expect(find.text('Open stats'), findsOneWidget);
     });
+
+    testWidgets(
+      'continent progress section shows header when a continent is unlocked',
+      (tester) async {
+        final content = testMapperContentRegistry();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameStateBuilder.fullyPopulated(
+            content: content,
+            savedAtUtc: DateTime.utc(2026, 4, 28),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const StatsScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Continent progress'), findsOneWidget);
+        expect(find.byType(ContinentProgressBar), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'continent progress section is hidden when no continents are unlocked',
+      (tester) async {
+        final content = testMapperContentRegistry();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameState(
+            unlockedContinents: {},
+            totalInfluence: Influence(Decimal.parse('0')),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const StatsScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Continent progress'), findsNothing);
+        expect(find.byType(ContinentProgressBar), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'unlocked continent names appear in continent progress section',
+      (tester) async {
+        final content = testMapperContentRegistry();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameStateBuilder.fullyPopulated(
+            content: content,
+            savedAtUtc: DateTime.utc(2026, 4, 28),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const StatsScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // fullyPopulated unlocks Africa and Europe
+        expect(find.text('Africa'), findsWidgets);
+        expect(find.text('Europe'), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'multiplier and temporary effects sections still render after continent section',
+      (tester) async {
+        final content = testMapperContentRegistry();
+        final notifier = _TestGameWorldNotifier(
+          content: content,
+          initialState: GameStateBuilder.fullyPopulated(
+            content: content,
+            savedAtUtc: DateTime.utc(2026, 4, 28),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentRegistryProvider.overrideWith((_) async => content),
+              gameWorldProvider.overrideWith((_) => notifier),
+            ],
+            child: MaterialApp(theme: appTheme(), home: const StatsScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Multiplier section labels
+        expect(find.text('Influence Power'), findsOneWidget);
+        // Temporary effects section still present
+        expect(find.text('Golden Opportunity'), findsOneWidget);
+      },
+    );
 
     test('formatStatMultiplier strips trailing zeros', () {
       expect(formatStatMultiplier(Decimal.parse('2.0')), '2×');

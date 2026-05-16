@@ -11,6 +11,7 @@ void main() {
     expect(text, isNot(contains('OfflineRewardModalHost')));
     expect(text, contains('modalQueueProvider.notifier'));
     expect(text, contains('offlineCatchupBootProvider'));
+    expect(text, contains('_FeedbackServicesBootstrap'));
     final idxModal = text.indexOf('modalQueueProvider.notifier');
     final idxOffline = text.indexOf('offlineCatchupBootProvider');
     expect(idxModal, lessThan(idxOffline));
